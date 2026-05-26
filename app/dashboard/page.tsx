@@ -67,7 +67,7 @@ export default async function DashboardPage() {
         <FeaturedLesson
           courseTitle={featuredLesson.courseTitle}
           duration={formatDuration(featuredLesson.duration)}
-          href={`/dashboard/cursos/${featuredLesson.courseSlug}`}
+          href={`/dashboard/cursos/${featuredLesson.courseSlug}/aulas/${featuredLesson.lessonId}`}
           title={featuredLesson.title}
         />
       )}
@@ -182,7 +182,7 @@ async function getFeaturedLesson(courseIds: string[]) {
 
   const { data: lesson } = await supabase
     .from("lessons")
-    .select("title, duration_seconds")
+    .select("id, title, duration_seconds")
     .eq("module_id", moduleId)
     .eq("published", true)
     .order("sort_order")
@@ -194,6 +194,7 @@ async function getFeaturedLesson(courseIds: string[]) {
   const course = modules[0].courses as unknown as { title: string; slug: string };
   return {
     title: lesson.title,
+    lessonId: lesson.id,
     duration: lesson.duration_seconds,
     courseTitle: course.title,
     courseSlug: course.slug

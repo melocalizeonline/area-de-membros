@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { PlayCircle } from "lucide-react";
 import { Card, CardText, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
@@ -56,7 +57,11 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <CardTitle>{moduleItem.title}</CardTitle>
               <div className="mt-4 divide-y divide-gray-100">
                 {moduleLessons.map((lesson) => (
-                  <div className="flex items-center gap-3 py-3" key={lesson.id}>
+                  <Link
+                    className="flex items-center gap-3 py-3 transition hover:bg-gray-50"
+                    href={`/dashboard/cursos/${slug}/aulas/${lesson.id}`}
+                    key={lesson.id}
+                  >
                     <div className="flex h-10 w-10 items-center justify-center rounded-md bg-teal-50 text-teal-700">
                       <PlayCircle className="h-5 w-5" />
                     </div>
@@ -69,7 +74,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
                     <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 sm:block">
                       {formatDuration(lesson.duration_seconds)}
                     </span>
-                  </div>
+                  </Link>
                 ))}
                 {moduleLessons.length === 0 && (
                   <CardText>Nenhuma aula publicada neste modulo.</CardText>
