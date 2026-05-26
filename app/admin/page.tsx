@@ -37,10 +37,28 @@ export default async function AdminPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
+        <Link href="/admin/membros">
+          <Card className="transition hover:border-teal-500">
+            <CardTitle>Membros</CardTitle>
+            <CardText>Convide usuarios e libere produtos manualmente.</CardText>
+          </Card>
+        </Link>
         <Link href="/admin/produtos">
           <Card className="transition hover:border-teal-500">
             <CardTitle>Produtos</CardTitle>
             <CardText>Mapeie o que sera liberado depois da compra.</CardText>
+          </Card>
+        </Link>
+        <Link href="/admin/cursos">
+          <Card className="transition hover:border-teal-500">
+            <CardTitle>Cursos</CardTitle>
+            <CardText>Cadastre cursos, modulos e aulas.</CardText>
+          </Card>
+        </Link>
+        <Link href="/admin/ferramentas">
+          <Card className="transition hover:border-teal-500">
+            <CardTitle>Ferramentas</CardTitle>
+            <CardText>Crie recursos internos ou links externos.</CardText>
           </Card>
         </Link>
         <Link href="/admin/integracoes">

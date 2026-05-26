@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Home, Plug, Settings, Sparkles, Wrench } from "lucide-react";
+import { BookOpen, Home, Plug, Settings, Sparkles, Users, Wrench } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,10 @@ const memberLinks = [
 
 const adminLinks = [
   { href: "/admin", label: "Resumo", icon: Settings },
+  { href: "/admin/membros", label: "Membros", icon: Users },
   { href: "/admin/produtos", label: "Produtos", icon: Sparkles },
+  { href: "/admin/cursos", label: "Cursos", icon: BookOpen },
+  { href: "/admin/ferramentas", label: "Ferramentas", icon: Wrench },
   { href: "/admin/integracoes", label: "Integracoes", icon: Plug }
 ];
 
