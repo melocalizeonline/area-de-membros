@@ -2,24 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Home, Plug, Settings, Sparkles, Users, Wrench } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { adminNav, memberNav } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-
-const memberLinks = [
-  { href: "/dashboard", label: "Inicio", icon: Home },
-  { href: "/dashboard/cursos", label: "Cursos", icon: BookOpen },
-  { href: "/dashboard/ferramentas", label: "Ferramentas", icon: Wrench }
-];
-
-const adminLinks = [
-  { href: "/admin", label: "Resumo", icon: Settings },
-  { href: "/admin/membros", label: "Membros", icon: Users },
-  { href: "/admin/produtos", label: "Produtos", icon: Sparkles },
-  { href: "/admin/cursos", label: "Cursos", icon: BookOpen },
-  { href: "/admin/ferramentas", label: "Ferramentas", icon: Wrench },
-  { href: "/admin/integracoes", label: "Integracoes", icon: Plug }
-];
 
 export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
@@ -30,7 +15,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
         <Logo />
       </div>
       <nav className="space-y-1 p-3">
-        {memberLinks.map(({ href, label, icon: Icon }) => {
+        {memberNav.map(({ href, label, icon: Icon }) => {
           const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
           return (
             <Link
@@ -52,7 +37,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
             <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
               Admin
             </div>
-            {adminLinks.map(({ href, label, icon: Icon }) => {
+            {adminNav.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <Link

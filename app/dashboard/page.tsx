@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Boxes, Clock3, Plug, Wrench } from "lucide-react";
+import { BookOpen, Boxes, Clock3, FileText, Wrench } from "lucide-react";
 import { ContentCard } from "@/components/content-card";
 import { FeaturedLesson } from "@/components/featured-lesson";
 import { Card, CardText, CardTitle } from "@/components/ui/card";
@@ -89,16 +89,11 @@ export default async function DashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/admin/integracoes">
-          <Card className="group h-full transition hover:-translate-y-0.5 hover:border-amber-500">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-amber-50 text-amber-700">
-                <Plug className="h-5 w-5" />
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-amber-700" />
-            </div>
-            <CardTitle className="mt-4">Integracoes</CardTitle>
-            <CardText>Conecte Kiwify, Eduzz e provedores de video quando estiver pronto.</CardText>
+        <Link href="/dashboard/materiais">
+          <Card className="h-full transition hover:-translate-y-0.5 hover:border-teal-500">
+            <FileText className="h-5 w-5 text-amber-700" />
+            <CardTitle className="mt-4">Materiais</CardTitle>
+            <CardText>PDFs, links, templates e arquivos liberados aparecem aqui.</CardText>
           </Card>
         </Link>
       </div>
