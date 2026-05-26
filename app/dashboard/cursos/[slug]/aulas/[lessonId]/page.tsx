@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Circle, FileText } from "lucide-react";
+import { markLessonCompleted } from "@/app/actions/progress";
 import { LessonPlayer } from "@/components/lesson-player";
+import { Button } from "@/components/ui/button";
 import { Card, CardText, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -78,6 +80,16 @@ export default async function LessonPage({ params }: PageProps) {
   const previousLesson = lessonIndex > 0 ? orderedLessons[lessonIndex - 1] : null;
   const nextLesson = lessonIndex < orderedLessons.length - 1 ? orderedLessons[lessonIndex + 1] : null;
   const currentModule = (modules ?? []).find((moduleItem) => moduleItem.id === lesson.module_id);
+  const lessonIds = orderedLessons.map((item) => item.id);
+  const { data: progressRows } = lessonIds.length
+    ? await supabase
+        .from("lesson_progress")
+        .select("lesson_id, completed")
+        .eq("member_id", user.id)
+        .in("lesson_id", lessonIds)
+    : { data: [] };
+  const completedLessons = new Set((progressRows ?? []).filter((row) => row.completed).map((row) => row.lesson_id));
+  const isCompleted = completedLessons.has(lesson.id);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -107,6 +119,14 @@ export default async function LessonPage({ params }: PageProps) {
               {formatDuration(lesson.duration_seconds)}
             </span>
           </div>
+          <form action={markLessonCompleted} className="mt-5">
+            <input name="lesson_id" type="hidden" value={lesson.id} />
+            <input name="course_slug" type="hidden" value={course.slug} />
+            <Button disabled={isCompleted} type="submit">
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              {isCompleted ? "Aula concluida" : "Marcar como concluida"}
+            </Button>
+          </form>
         </Card>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -153,7 +173,13 @@ export default async function LessonPage({ params }: PageProps) {
                 key={item.id}
               >
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-medium text-gray-700">
-                  {index + 1}
+                  {completedLessons.has(item.id) ? (
+                    <CheckCircle2 className="h-4 w-4 text-teal-700" />
+                  ) : item.id === lesson.id ? (
+                    <Circle className="h-4 w-4 text-teal-700" />
+                  ) : (
+                    index + 1
+                  )}
                 </span>
                 <span className="min-w-0">
                   <span className="line-clamp-2 text-sm font-medium text-gray-900">{item.title}</span>

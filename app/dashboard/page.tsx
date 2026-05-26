@@ -33,7 +33,7 @@ export default async function DashboardPage() {
           .limit(3)
       : Promise.resolve({ data: [] })
   ]);
-  const featuredLesson = await getFeaturedLesson((courses ?? []).map((course) => course.id));
+  const learningProgress = await getLearningProgress(user?.id, courses ?? []);
 
   return (
     <div className="space-y-6">
@@ -63,12 +63,12 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {featuredLesson && (
+      {learningProgress.featuredLesson && (
         <FeaturedLesson
-          courseTitle={featuredLesson.courseTitle}
-          duration={formatDuration(featuredLesson.duration)}
-          href={`/dashboard/cursos/${featuredLesson.courseSlug}/aulas/${featuredLesson.lessonId}`}
-          title={featuredLesson.title}
+          courseTitle={learningProgress.featuredLesson.courseTitle}
+          duration={formatDuration(learningProgress.featuredLesson.duration)}
+          href={`/dashboard/cursos/${learningProgress.featuredLesson.courseSlug}/aulas/${learningProgress.featuredLesson.lessonId}`}
+          title={learningProgress.featuredLesson.title}
         />
       )}
 
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
                 index={index}
                 key={course.id}
                 label="Curso"
-                progress={featuredLesson ? 18 : 0}
+                progress={learningProgress.progressByCourse[course.id] ?? 0}
                 title={course.title}
               />
             ))}
@@ -167,37 +167,75 @@ async function getProductIds(memberId: string | undefined) {
   return (data ?? []).map((item) => item.product_id);
 }
 
-async function getFeaturedLesson(courseIds: string[]) {
-  if (courseIds.length === 0) return null;
+async function getLearningProgress(
+  memberId: string | undefined,
+  courses: { id: string; title: string; slug: string }[]
+) {
+  const empty = {
+    featuredLesson: null as null | {
+      title: string;
+      lessonId: string;
+      duration: number | null;
+      courseTitle: string;
+      courseSlug: string;
+    },
+    progressByCourse: {} as Record<string, number>
+  };
+  const courseIds = courses.map((course) => course.id);
+  if (courseIds.length === 0) return empty;
   const supabase = await createClient();
   const { data: modules } = await supabase
     .from("course_modules")
-    .select("id, course_id, courses(title, slug)")
+    .select("id, course_id")
     .in("course_id", courseIds)
-    .order("sort_order")
-    .limit(1);
+    .order("sort_order");
 
-  const moduleId = modules?.[0]?.id;
-  if (!moduleId) return null;
+  const moduleIds = (modules ?? []).map((moduleItem) => moduleItem.id);
+  if (moduleIds.length === 0) return empty;
 
-  const { data: lesson } = await supabase
+  const { data: lessons } = await supabase
     .from("lessons")
-    .select("id, title, duration_seconds")
-    .eq("module_id", moduleId)
+    .select("id, module_id, title, duration_seconds")
+    .in("module_id", moduleIds)
     .eq("published", true)
-    .order("sort_order")
-    .limit(1)
-    .single();
+    .order("sort_order");
 
-  if (!lesson) return null;
+  if (!lessons?.length) return empty;
 
-  const course = modules[0].courses as unknown as { title: string; slug: string };
+  const lessonIds = lessons.map((lesson) => lesson.id);
+  const { data: progressRows } = memberId
+    ? await supabase
+        .from("lesson_progress")
+        .select("lesson_id, completed")
+        .eq("member_id", memberId)
+        .in("lesson_id", lessonIds)
+    : { data: [] };
+  const completedLessons = new Set((progressRows ?? []).filter((row) => row.completed).map((row) => row.lesson_id));
+  const moduleCourseMap = new Map((modules ?? []).map((moduleItem) => [moduleItem.id, moduleItem.course_id]));
+  const courseMap = new Map(courses.map((course) => [course.id, course]));
+  const progressByCourse: Record<string, number> = {};
+
+  for (const course of courses) {
+    const courseModuleIds = new Set((modules ?? []).filter((moduleItem) => moduleItem.course_id === course.id).map((moduleItem) => moduleItem.id));
+    const courseLessons = lessons.filter((lesson) => courseModuleIds.has(lesson.module_id));
+    const completedCount = courseLessons.filter((lesson) => completedLessons.has(lesson.id)).length;
+    progressByCourse[course.id] = courseLessons.length ? Math.round((completedCount / courseLessons.length) * 100) : 0;
+  }
+
+  const featured = lessons.find((lesson) => !completedLessons.has(lesson.id)) ?? lessons[0];
+  const featuredCourseId = moduleCourseMap.get(featured.module_id);
+  const featuredCourse = featuredCourseId ? courseMap.get(featuredCourseId) : null;
+
+  if (!featuredCourse) return { featuredLesson: null, progressByCourse };
   return {
-    title: lesson.title,
-    lessonId: lesson.id,
-    duration: lesson.duration_seconds,
-    courseTitle: course.title,
-    courseSlug: course.slug
+    featuredLesson: {
+      title: featured.title,
+      lessonId: featured.id,
+      duration: featured.duration_seconds,
+      courseTitle: featuredCourse.title,
+      courseSlug: featuredCourse.slug
+    },
+    progressByCourse
   };
 }
 

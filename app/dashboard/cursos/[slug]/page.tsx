@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { PlayCircle } from "lucide-react";
+import { CheckCircle2, PlayCircle } from "lucide-react";
 import { Card, CardText, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,6 +11,9 @@ interface PageProps {
 export default async function CourseDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
   const { data: course } = await supabase
     .from("courses")
@@ -35,6 +38,16 @@ export default async function CourseDetailPage({ params }: PageProps) {
         .in("module_id", moduleIds)
         .order("sort_order")
     : { data: [] };
+  const lessonIds = (lessons ?? []).map((lesson) => lesson.id);
+  const { data: progressRows } = user && lessonIds.length
+    ? await supabase
+        .from("lesson_progress")
+        .select("lesson_id, completed")
+        .eq("member_id", user.id)
+        .in("lesson_id", lessonIds)
+    : { data: [] };
+  const completedLessons = new Set((progressRows ?? []).filter((row) => row.completed).map((row) => row.lesson_id));
+  const progress = lessonIds.length ? Math.round((completedLessons.size / lessonIds.length) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -45,6 +58,15 @@ export default async function CourseDetailPage({ params }: PageProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">Curso</p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">{course.title}</h1>
             <p className="mt-3 text-sm leading-6 text-white/75">{course.description}</p>
+            <div className="mt-6 max-w-sm">
+              <div className="mb-2 flex items-center justify-between text-xs text-white/75">
+                <span>Progresso</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-white/20">
+                <div className="h-full rounded-full bg-white" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -63,7 +85,11 @@ export default async function CourseDetailPage({ params }: PageProps) {
                     key={lesson.id}
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-md bg-teal-50 text-teal-700">
-                      <PlayCircle className="h-5 w-5" />
+                      {completedLessons.has(lesson.id) ? (
+                        <CheckCircle2 className="h-5 w-5" />
+                      ) : (
+                        <PlayCircle className="h-5 w-5" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-gray-950">{lesson.title}</p>
@@ -72,7 +98,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
                       </p>
                     </div>
                     <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 sm:block">
-                      {formatDuration(lesson.duration_seconds)}
+                      {completedLessons.has(lesson.id) ? "Concluida" : formatDuration(lesson.duration_seconds)}
                     </span>
                   </Link>
                 ))}
