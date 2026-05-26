@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Boxes, Clock3, Plug, Wrench } from "lucide-react";
+import { ContentCard } from "@/components/content-card";
+import { FeaturedLesson } from "@/components/featured-lesson";
 import { Card, CardText, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,7 +17,7 @@ export default async function DashboardPage() {
     productIds.length
       ? supabase
           .from("courses")
-          .select("id, title, slug, description")
+          .select("id, title, slug, description, cover_url")
           .eq("published", true)
           .in("product_id", productIds)
           .order("sort_order")
@@ -24,13 +26,14 @@ export default async function DashboardPage() {
     productIds.length
       ? supabase
           .from("tools")
-          .select("id, name, slug, description")
+          .select("id, name, slug, description, tool_type, external_url")
           .eq("published", true)
           .in("product_id", productIds)
           .order("sort_order")
           .limit(3)
       : Promise.resolve({ data: [] })
   ]);
+  const featuredLesson = await getFeaturedLesson((courses ?? []).map((course) => course.id));
 
   return (
     <div className="space-y-6">
@@ -60,34 +63,29 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {featuredLesson && (
+        <FeaturedLesson
+          courseTitle={featuredLesson.courseTitle}
+          duration={formatDuration(featuredLesson.duration)}
+          href={`/dashboard/cursos/${featuredLesson.courseSlug}`}
+          title={featuredLesson.title}
+        />
+      )}
+
       <div className="grid gap-4 md:grid-cols-3">
         <Link href="/dashboard/cursos">
-          <Card className="group h-full transition hover:-translate-y-0.5 hover:border-teal-500">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-teal-50 text-teal-700">
-                <BookOpen className="h-5 w-5" />
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-teal-700" />
-            </div>
+          <Card className="h-full transition hover:-translate-y-0.5 hover:border-teal-500">
+            <BookOpen className="h-5 w-5 text-teal-700" />
             <CardTitle className="mt-4">Cursos</CardTitle>
-            <CardText>
-              {courses?.length ? `${courses.length} curso(s) recente(s)` : "Nenhum curso liberado ainda."}
-            </CardText>
+            <CardText>{courses?.length ? `${courses.length} curso(s) liberado(s)` : "Nenhum curso liberado ainda."}</CardText>
           </Card>
         </Link>
 
         <Link href="/dashboard/ferramentas">
-          <Card className="group h-full transition hover:-translate-y-0.5 hover:border-teal-500">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-sky-50 text-sky-700">
-                <Wrench className="h-5 w-5" />
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-teal-700" />
-            </div>
+          <Card className="h-full transition hover:-translate-y-0.5 hover:border-teal-500">
+            <Wrench className="h-5 w-5 text-sky-700" />
             <CardTitle className="mt-4">Ferramentas</CardTitle>
-            <CardText>
-              {tools?.length ? `${tools.length} ferramenta(s) recente(s)` : "Nenhuma ferramenta liberada ainda."}
-            </CardText>
+            <CardText>{tools?.length ? `${tools.length} ferramenta(s) liberada(s)` : "Nenhuma ferramenta liberada ainda."}</CardText>
           </Card>
         </Link>
 
@@ -104,6 +102,34 @@ export default async function DashboardPage() {
           </Card>
         </Link>
       </div>
+
+      {(courses ?? []).length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-gray-950">Cursos em destaque</h2>
+              <p className="mt-1 text-sm text-gray-600">Acesse rapidamente os conteudos liberados.</p>
+            </div>
+            <Link className="text-sm font-medium text-teal-700 hover:text-teal-800" href="/dashboard/cursos">
+              Ver todos
+            </Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {(courses ?? []).map((course, index) => (
+              <ContentCard
+                description={course.description ?? "Curso disponivel para sua conta."}
+                href={`/dashboard/cursos/${course.slug}`}
+                icon="BookOpen"
+                index={index}
+                key={course.id}
+                label="Curso"
+                progress={featuredLesson ? 18 : 0}
+                title={course.title}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
         <Card>
@@ -144,4 +170,43 @@ async function getProductIds(memberId: string | undefined) {
     .eq("active", true);
 
   return (data ?? []).map((item) => item.product_id);
+}
+
+async function getFeaturedLesson(courseIds: string[]) {
+  if (courseIds.length === 0) return null;
+  const supabase = await createClient();
+  const { data: modules } = await supabase
+    .from("course_modules")
+    .select("id, course_id, courses(title, slug)")
+    .in("course_id", courseIds)
+    .order("sort_order")
+    .limit(1);
+
+  const moduleId = modules?.[0]?.id;
+  if (!moduleId) return null;
+
+  const { data: lesson } = await supabase
+    .from("lessons")
+    .select("title, duration_seconds")
+    .eq("module_id", moduleId)
+    .eq("published", true)
+    .order("sort_order")
+    .limit(1)
+    .single();
+
+  if (!lesson) return null;
+
+  const course = modules[0].courses as unknown as { title: string; slug: string };
+  return {
+    title: lesson.title,
+    duration: lesson.duration_seconds,
+    courseTitle: course.title,
+    courseSlug: course.slug
+  };
+}
+
+function formatDuration(seconds: number | null) {
+  if (!seconds) return "Aula disponivel";
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return `${minutes} min`;
 }

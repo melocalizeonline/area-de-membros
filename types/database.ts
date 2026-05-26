@@ -130,6 +130,7 @@ export interface Database {
           video_provider: VideoProvider;
           video_url: string | null;
           embed_code: string | null;
+          thumbnail_url: string | null;
           duration_seconds: number | null;
           published: boolean;
           sort_order: number;
@@ -144,6 +145,7 @@ export interface Database {
           video_provider?: VideoProvider;
           video_url?: string | null;
           embed_code?: string | null;
+          thumbnail_url?: string | null;
           duration_seconds?: number | null;
           published?: boolean;
           sort_order?: number;
@@ -158,6 +160,8 @@ export interface Database {
           name: string;
           slug: string;
           description: string | null;
+          cover_url: string | null;
+          icon: string | null;
           tool_type: "internal" | "external";
           external_url: string | null;
           published: boolean;
@@ -171,6 +175,8 @@ export interface Database {
           name: string;
           slug: string;
           description?: string | null;
+          cover_url?: string | null;
+          icon?: string | null;
           tool_type?: "internal" | "external";
           external_url?: string | null;
           published?: boolean;
@@ -217,6 +223,23 @@ export interface Database {
           processed_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["webhook_events"]["Insert"]>;
+        Relationships: [];
+      };
+      lesson_progress: {
+        Row: {
+          member_id: string;
+          lesson_id: string;
+          progress_seconds: number;
+          completed: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          member_id: string;
+          lesson_id: string;
+          progress_seconds?: number;
+          completed?: boolean;
+        };
+        Update: Partial<Database["public"]["Tables"]["lesson_progress"]["Insert"]>;
         Relationships: [];
       };
     };

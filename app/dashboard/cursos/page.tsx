@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ArrowRight, BookOpen } from "lucide-react";
-import { Card, CardText, CardTitle } from "@/components/ui/card";
+import { BookOpen } from "lucide-react";
+import { ContentCard } from "@/components/content-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,7 +19,7 @@ export default async function CoursesPage() {
   const { data: courses } = productIds.length
     ? await supabase
         .from("courses")
-        .select("id, title, slug, description")
+        .select("id, title, slug, description, cover_url")
         .eq("published", true)
         .in("product_id", productIds)
         .order("sort_order")
@@ -41,18 +40,17 @@ export default async function CoursesPage() {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {(courses ?? []).map((course) => (
-            <Link href={`/dashboard/cursos/${course.slug}`} key={course.id}>
-              <Card className="group h-full transition hover:-translate-y-0.5 hover:border-teal-500">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <CardTitle>{course.title}</CardTitle>
-                    <CardText>{course.description ?? "Curso disponivel para sua conta."}</CardText>
-                  </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-teal-700" />
-                </div>
-              </Card>
-            </Link>
+          {(courses ?? []).map((course, index) => (
+            <ContentCard
+              description={course.description ?? "Curso disponivel para sua conta."}
+              href={`/dashboard/cursos/${course.slug}`}
+              icon="BookOpen"
+              index={index}
+              key={course.id}
+              label="Curso"
+              progress={index === 0 ? 18 : 0}
+              title={course.title}
+            />
           ))}
         </div>
       )}

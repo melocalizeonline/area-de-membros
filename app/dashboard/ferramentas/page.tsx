@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ExternalLink, Wrench } from "lucide-react";
-import { Card, CardText, CardTitle } from "@/components/ui/card";
+import { Wrench } from "lucide-react";
+import { ContentCard } from "@/components/content-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,26 +40,23 @@ export default async function ToolsPage() {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {(tools ?? []).map((tool) => {
+          {(tools ?? []).map((tool, index) => {
             const href =
               tool.tool_type === "external" && tool.external_url
                 ? tool.external_url
                 : `/dashboard/ferramentas/${tool.slug}`;
 
             return (
-              <Link href={href} key={tool.id} target={tool.tool_type === "external" ? "_blank" : undefined}>
-                <Card className="group h-full transition hover:-translate-y-0.5 hover:border-teal-500">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>{tool.name}</CardTitle>
-                      <CardText>{tool.description ?? "Ferramenta disponivel para sua conta."}</CardText>
-                    </div>
-                    {tool.tool_type === "external" && (
-                      <ExternalLink className="h-4 w-4 shrink-0 text-gray-400 transition group-hover:text-teal-700" />
-                    )}
-                  </div>
-                </Card>
-              </Link>
+              <ContentCard
+                description={tool.description ?? "Ferramenta disponivel para sua conta."}
+                external={tool.tool_type === "external"}
+                href={href}
+                icon={index === 0 ? "Sparkles" : index === 1 ? "ClipboardCheck" : "Wrench"}
+                index={index + 1}
+                key={tool.id}
+                label={tool.tool_type === "external" ? "Link externo" : "Ferramenta"}
+                title={tool.name}
+              />
             );
           })}
         </div>

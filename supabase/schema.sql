@@ -62,6 +62,7 @@ create table if not exists public.lessons (
   video_provider text not null default 'youtube' check (video_provider in ('youtube', 'vimeo', 'panda', 'embed', 'self_hosted')),
   video_url text,
   embed_code text,
+  thumbnail_url text,
   duration_seconds int,
   published boolean not null default false,
   sort_order int not null default 0,
@@ -75,6 +76,8 @@ create table if not exists public.tools (
   name text not null,
   slug text not null unique,
   description text,
+  cover_url text,
+  icon text,
   tool_type text not null default 'internal' check (tool_type in ('internal', 'external')),
   external_url text,
   published boolean not null default false,
@@ -103,6 +106,15 @@ create table if not exists public.webhook_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.lesson_progress (
+  member_id uuid not null references public.profiles(id) on delete cascade,
+  lesson_id uuid not null references public.lessons(id) on delete cascade,
+  progress_seconds int not null default 0,
+  completed boolean not null default false,
+  updated_at timestamptz not null default now(),
+  primary key (member_id, lesson_id)
+);
+
 alter table public.profiles enable row level security;
 alter table public.products enable row level security;
 alter table public.member_products enable row level security;
@@ -112,6 +124,7 @@ alter table public.lessons enable row level security;
 alter table public.tools enable row level security;
 alter table public.integration_mappings enable row level security;
 alter table public.webhook_events enable row level security;
+alter table public.lesson_progress enable row level security;
 
 create or replace function public.is_admin()
 returns boolean
@@ -209,3 +222,9 @@ create policy "integration_mappings_admin_all" on public.integration_mappings
 
 create policy "webhook_events_admin_select" on public.webhook_events
   for select to authenticated using (public.is_admin());
+
+create policy "lesson_progress_self_or_admin" on public.lesson_progress
+  for select to authenticated using (member_id = auth.uid() or public.is_admin());
+
+create policy "lesson_progress_self_mutation" on public.lesson_progress
+  for all to authenticated using (member_id = auth.uid()) with check (member_id = auth.uid());

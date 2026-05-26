@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { PlayCircle } from "lucide-react";
 import { Card, CardText, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -12,7 +13,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   const { data: course } = await supabase
     .from("courses")
-    .select("id, title, description, published")
+    .select("id, title, description, published, cover_url")
     .eq("slug", slug)
     .single();
 
@@ -28,7 +29,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const { data: lessons } = moduleIds.length
     ? await supabase
         .from("lessons")
-        .select("id, module_id, title, description, video_provider, video_url, embed_code, sort_order")
+    .select("id, module_id, title, description, video_provider, video_url, embed_code, duration_seconds, sort_order")
         .eq("published", true)
         .in("module_id", moduleIds)
         .order("sort_order")
@@ -36,9 +37,15 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-950">{course.title}</h1>
-        <p className="mt-1 text-sm text-gray-600">{course.description}</p>
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="relative min-h-56 bg-gradient-to-br from-gray-950 via-teal-900 to-cyan-800 p-6 text-white">
+          <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_30%_25%,white_0,transparent_24%),radial-gradient(circle_at_75%_55%,white_0,transparent_20%)]" />
+          <div className="relative max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">Curso</p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight">{course.title}</h1>
+            <p className="mt-3 text-sm leading-6 text-white/75">{course.description}</p>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -49,11 +56,19 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <CardTitle>{moduleItem.title}</CardTitle>
               <div className="mt-4 divide-y divide-gray-100">
                 {moduleLessons.map((lesson) => (
-                  <div className="py-3" key={lesson.id}>
-                    <p className="text-sm font-medium text-gray-950">{lesson.title}</p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {lesson.video_provider} {lesson.video_url ? "- video configurado" : "- aguardando video"}
-                    </p>
+                  <div className="flex items-center gap-3 py-3" key={lesson.id}>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-teal-50 text-teal-700">
+                      <PlayCircle className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-950">{lesson.title}</p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {lesson.video_provider} {lesson.video_url ? "- video configurado" : "- aguardando video"}
+                      </p>
+                    </div>
+                    <span className="hidden rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 sm:block">
+                      {formatDuration(lesson.duration_seconds)}
+                    </span>
                   </div>
                 ))}
                 {moduleLessons.length === 0 && (
@@ -66,4 +81,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
       </div>
     </div>
   );
+}
+
+function formatDuration(seconds: number | null) {
+  if (!seconds) return "Aula";
+  return `${Math.max(1, Math.round(seconds / 60))} min`;
 }
