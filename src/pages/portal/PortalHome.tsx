@@ -1,7 +1,8 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePortal } from "@/contexts/PortalContext";
@@ -28,6 +29,43 @@ export default function PortalHome() {
     tenantId: tenant.id,
     accessRole,
   });
+
+  // Solicitações de acesso já feitas (produtos)
+  const { data: requestedIds = [] } = useQuery({
+    queryKey: ["portal-home-requests", tenant.id],
+    enabled: accessRole === "customer",
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data } = await supabase
+        .from("access_requests")
+        .select("product_id")
+        .eq("user_id", user.id)
+        .eq("status", "pending")
+        .not("product_id", "is", null);
+      return (data ?? []).map((r) => r.product_id as string);
+    },
+  });
+  const [justRequested, setJustRequested] = useState<string[]>([]);
+
+  const requestAccess = useCallback(async (productId: string) => {
+    if (requestedIds.includes(productId) || justRequested.includes(productId)) {
+      toast.info("Acesso já solicitado.");
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("access_requests").upsert(
+      { tenant_id: tenant.id, product_id: productId, user_id: user.id, status: "pending" },
+      { onConflict: "product_id,user_id" },
+    );
+    if (error) {
+      toast.error("Não foi possível solicitar agora.");
+      return;
+    }
+    setJustRequested((p) => [...p, productId]);
+    toast.success("Solicitação de acesso enviada!");
+  }, [tenant.id, requestedIds, justRequested]);
   const { data: tenantFooter } = useQuery({
     queryKey: ["portal-tenant-footer", tenant.id],
     queryFn: async () => {
@@ -64,14 +102,18 @@ export default function PortalHome() {
         return {
           id: product.id,
           title: product.name,
-          description: product.description ||
-            (product.benefit === "courses"
-              ? t("portal.home.fallbackShowcaseDescription")
-              : product.benefit === "files"
-              ? t("portal.home.fallbackFilesDescription")
-              : product.benefit === "links"
-              ? t("portal.home.fallbackLinksDescription")
-              : ""),
+          description: !product.hasAccess
+            ? (requestedIds.includes(product.id) || justRequested.includes(product.id)
+                ? "✓ Acesso solicitado"
+                : "🔒 Clique para solicitar acesso")
+            : (product.description ||
+              (product.benefit === "courses"
+                ? t("portal.home.fallbackShowcaseDescription")
+                : product.benefit === "files"
+                ? t("portal.home.fallbackFilesDescription")
+                : product.benefit === "links"
+                ? t("portal.home.fallbackLinksDescription")
+                : "")),
           badge: product.benefit === "courses"
             ? t("products.deliverableTypes.course")
             : product.benefit === "files"
@@ -96,10 +138,10 @@ export default function PortalHome() {
                   navigate(`/${slug}/products/${product.public_id}`);
                 }
               }
-            : () => navigate(`/${slug}/portal/products`),
+            : () => requestAccess(product.id),
         };
       }),
-    [products, t, navigate, slug]
+    [products, t, navigate, slug, requestAccess, requestedIds, justRequested]
   );
 
   const handleSignOut = useCallback(async () => {
