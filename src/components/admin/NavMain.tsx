@@ -111,7 +111,7 @@ export function NavMain() {
 
       {isAdmin && (
         <SidebarGroup>
-          <SidebarGroupLabel>Hubfy</SidebarGroupLabel>
+          <SidebarGroupLabel>Nory</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Superadmin">

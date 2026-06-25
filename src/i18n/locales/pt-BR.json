@@ -363,7 +363,7 @@
       "plan": "Plano"
     },
     "goal": {
-      "title": "O que você espera alcançar com o Hubfy?",
+      "title": "O que você espera alcançar com o Nory Members?",
       "subtitle": "Isso nos ajuda a personalizar sua experiência.",
       "newCommunity": "Criar um novo workspace",
       "newCommunityDesc": "Estou começando do zero e quero montar meu espaço",
@@ -408,7 +408,7 @@
       "checking": "Verificando disponibilidade...",
       "available": "Disponível!",
       "taken": "Essa URL já está em uso. Tente outra.",
-      "referralLabel": "Como conheceu o Hubfy?",
+      "referralLabel": "Como conheceu o Nory Members?",
       "referralPlaceholder": "Ex: Indicação de um amigo",
       "slugUnavailable": "URL indisponível",
       "slugUnavailableDesc": "Escolha outra URL para seu workspace."
@@ -423,7 +423,7 @@
       "freeFeature1": "Até 50 clientes",
       "freeFeature2": "1 curso publicado",
       "freeFeature3": "Discussões e chat",
-      "freeFeature4": "Marca Hubfy",
+      "freeFeature4": "Marca Nory Members",
       "startFree": "Começar grátis",
       "activating": "Ativando...",
       "proTitle": "Pro",
@@ -433,19 +433,19 @@
       "proFeature1": "Clientes ilimitados",
       "proFeature2": "Cursos ilimitados",
       "proFeature3": "Domínio personalizado",
-      "proFeature4": "Sem marca Hubfy",
+      "proFeature4": "Sem marca Nory Members",
       "subscribePro": "Assinar Pro",
       "redirecting": "Redirecionando...",
       "freeActivated": "Plano Free ativado!",
       "proActivated": "Plano Pro ativado!",
-      "welcomeDescription": "Tudo pronto. Bem-vindo ao Hubfy!",
+      "welcomeDescription": "Tudo pronto. Bem-vindo ao Nory Members!",
       "activateError": "Erro ao ativar plano",
       "finalizeError": "Erro ao finalizar",
       "paymentError": "Erro ao iniciar pagamento",
       "paymentCanceled": "Pagamento cancelado",
       "paymentCanceledDesc": "Você pode tentar novamente ou escolher o plano Free."
     },
-    "goalTitle": "Qual seu objetivo com a Hubfy?",
+    "goalTitle": "Qual seu objetivo com a Nory Members?",
     "goal_start_fresh": "Começar do zero",
     "goal_migrate": "Migrar de outra plataforma",
     "goal_exploring": "Só explorando",
@@ -486,7 +486,7 @@
     "invitesSentDesc": "Seus colegas receberão um email com o convite.",
     "invitesError": "Erro ao enviar convites.",
     "completed": "Tudo pronto!",
-    "completedDesc": "Seu workspace está configurado. Bem-vindo à Hubfy!",
+    "completedDesc": "Seu workspace está configurado. Bem-vindo à Nory Members!",
     "checklist": {
       "title": "Comece por aqui",
       "description": "Configure o essencial para sair vendendo hoje",
@@ -616,7 +616,7 @@
       "never": "Nunca",
       "revoked": "Revogada",
       "empty": "Nenhuma chave de API",
-      "emptyDescription": "Crie sua primeira chave para integrar com a API do Hubfy."
+      "emptyDescription": "Crie sua primeira chave para integrar com a API do Nory Members."
     },
     "social": {
       "title": "Redes Sociais",
@@ -869,7 +869,7 @@
     "formatTitle": "Formato do CSV",
     "requiredColumns": "Colunas obrigatórias:",
     "requiredColumnsValue": "email, name, product_ids",
-    "productIdsHint": "Na coluna product_ids, informe o ID do produto cadastrado na Hubfy (ex.: prod_4jn235h1343). Você encontra esse ID na página do produto ou na URL dele no admin. Para vincular mais de um produto ao mesmo cliente, separe os IDs por vírgula.",
+    "productIdsHint": "Na coluna product_ids, informe o ID do produto cadastrado na Nory Members (ex.: prod_4jn235h1343). Você encontra esse ID na página do produto ou na URL dele no admin. Para vincular mais de um produto ao mesmo cliente, separe os IDs por vírgula.",
     "optionalColumns": "Opcionais:",
     "optionalColumnsValue": "first_name, last_name, phone_country_code, phone, city, state, country, document_type, document, external_id",
     "viewSchema": "Ver schema",
@@ -894,7 +894,7 @@
       },
       "product_ids": {
         "field": "ID dos produtos",
-        "description": "IDs dos produtos cadastrados na Hubfy. Veja o ID acessando a página do produto ou na URL do produto no admin da sua conta Hubfy. Ex.: prod_4jn235h1343. Separe múltiplos IDs por vírgula.",
+        "description": "IDs dos produtos cadastrados na Nory Members. Veja o ID acessando a página do produto ou na URL do produto no admin da sua conta Nory Members. Ex.: prod_4jn235h1343. Separe múltiplos IDs por vírgula.",
         "type": "texto"
       },
       "first_name": {
@@ -909,12 +909,12 @@
       },
       "phone_country_code": {
         "field": "DDI",
-        "description": "Código do país do telefone. Ex.: 55. A Hubfy normaliza automaticamente (remove +, parênteses e espaços).",
+        "description": "Código do país do telefone. Ex.: 55. A Nory Members normaliza automaticamente (remove +, parênteses e espaços).",
         "type": "texto"
       },
       "phone": {
         "field": "Telefone",
-        "description": "Número de telefone. Ex.: 11999999999. A Hubfy normaliza automaticamente (mantém apenas dígitos).",
+        "description": "Número de telefone. Ex.: 11999999999. A Nory Members normaliza automaticamente (mantém apenas dígitos).",
         "type": "texto"
       },
       "city": {
@@ -939,7 +939,7 @@
       },
       "document": {
         "field": "Documento",
-        "description": "Número ou código do documento. A Hubfy normaliza automaticamente (mantém apenas letras e números).",
+        "description": "Número ou código do documento. A Nory Members normaliza automaticamente (mantém apenas letras e números).",
         "type": "texto"
       },
       "external_id": {
@@ -1101,7 +1101,7 @@
       "subscription": "Assinatura"
     },
     "sourceLabels": {
-      "hubfy": "Hubfy",
+      "hubfy": "Nory Members",
       "external_gateway": "Gateway externo",
       "manual": "Manual",
       "csv_import": "Importação CSV",
@@ -1356,7 +1356,7 @@
   },
   "dashboard": {
     "greeting": "Olá, {{name}}!",
-    "welcome": "Bem-vindo ao Hubfy",
+    "welcome": "Bem-vindo ao Nory Members",
     "roles": {
       "admin": "Administrador",
       "tenant": "Infoprodutor",
@@ -1494,7 +1494,7 @@
   "upgrade": {
     "title": "Upgrade",
     "alreadyPro": "Você já está no Pro!",
-    "alreadyProDesc": "Você tem acesso a todos os recursos do Hubfy.",
+    "alreadyProDesc": "Você tem acesso a todos os recursos do Nory Members.",
     "cancelAt": "Sua assinatura será cancelada em {{date}}",
     "manageSubscription": "Gerenciar assinatura",
     "pastDueWarning": "O último pagamento falhou. Atualize seu método de pagamento para manter o acesso.",
@@ -1510,13 +1510,13 @@
       "Até 50 clientes",
       "1 curso publicado",
       "Discussões e chat",
-      "Marca Hubfy"
+      "Marca Nory Members"
     ],
     "proFeatures": [
       "Clientes ilimitados",
       "Cursos ilimitados",
       "Domínio personalizado",
-      "Remover marca Hubfy",
+      "Remover marca Nory Members",
       "Todos os recursos"
     ],
     "activating": "Ativando...",
@@ -2231,7 +2231,7 @@
       "castDescription": "Permite reprodução via AirPlay/Chromecast quando disponível no dispositivo.",
       "aiCardTitle": "AI",
       "captionsGenerateLabel": "Gerar legendas automaticamente",
-      "captionsGenerateDescription": "Vídeos que você subir dentro do hosting de vídeos da Hubfy terão legendas multi-idiomas geradas por AI.",
+      "captionsGenerateDescription": "Vídeos que você subir dentro do hosting de vídeos da Nory Members terão legendas multi-idiomas geradas por AI.",
       "captionsDisplayLabel": "Exibição de legendas",
       "captionsDisplayDescription": "Quando ativado, o player exibirá a opção aos alunos nativamente.",
       "seekLabel": "Permitir avanço/retrocesso",
@@ -2518,7 +2518,7 @@
     "creators": {
       "title": "Usado por criadores de todo o",
       "highlight": "Brasil",
-      "subtitle": "Centenas de criadores e empresas já confiam na Hubfy para suas comunidades.",
+      "subtitle": "Centenas de criadores e empresas já confiam na Nory Members para suas comunidades.",
       "creator1": "Ana Costa",
       "role1": "Mentora de Negócios",
       "creator2": "Bruno Silva",
@@ -2578,7 +2578,7 @@
         "Privacidade",
         "Termos de uso"
       ],
-      "copyright": "© 2026 Hubfy. Todos os direitos reservados."
+      "copyright": "© 2026 Nory Members. Todos os direitos reservados."
     }
   },
   "portal": {
@@ -2841,12 +2841,12 @@
       "credentialsSaved": "Credenciais atualizadas.",
       "webhookUrl": "URL do Webhook",
       "products": "Mapeamento de Produtos",
-      "productsHint": "Sincronize os produtos da Hotmart e vincule cada um a um produto da Hubfy.",
+      "productsHint": "Sincronize os produtos da Hotmart e vincule cada um a um produto da Nory Members.",
       "syncProducts": "Sincronizar produtos",
       "syncSuccess": "{{count}} produto(s) sincronizados.",
       "noProducts": "Nenhum produto sincronizado ainda. Clique em \"Sincronizar produtos\" para importar.",
       "externalProduct": "Produto na Hotmart",
-      "hubfyProduct": "Produto na Hubfy",
+      "hubfyProduct": "Produto na Nory Members",
       "selectProduct": "Selecionar produto...",
       "noLink": "Sem vínculo"
     },
@@ -2854,7 +2854,7 @@
       "webhookLabel": "URL do Webhook",
       "webhookDescription": "Copie essa URL e cole no painel do gateway para receber notificações de vendas.",
       "apiCardTitle": "Conectar à API da {{provider}}",
-      "apiCardDescription": "Permite que a Hubfy busque informações da sua conta {{provider}} em tempo real — como dados de produtos, clientes e detalhes de vendas. Isso não substitui o webhook (essencial para receber vendas e pagamentos no momento em que acontecem), mas complementa com sincronizações e informações adicionais.",
+      "apiCardDescription": "Permite que a Nory Members busque informações da sua conta {{provider}} em tempo real — como dados de produtos, clientes e detalhes de vendas. Isso não substitui o webhook (essencial para receber vendas e pagamentos no momento em que acontecem), mas complementa com sincronizações e informações adicionais.",
       "guideTitle": "Como encontrar suas credenciais:",
       "guideStep1Link": "app.hotmart.com → Ferramentas → Credenciais",
       "guideStep1Prefix": "Acesse",
@@ -3076,7 +3076,7 @@
       "offerIdDescription": "The offer code from the platform dashboard (e.g., product or offer code).",
       "offerName": "Offer name",
       "offerNamePlaceholder": "E.g.: Annual Plan, Order Bump...",
-      "products": "Hubfy Products",
+      "products": "Nory Members Products",
       "productsDescription": "Select which products will be unlocked when this offer is purchased.",
       "noProducts": "No products found.",
       "deleteConfirm": {
@@ -3172,7 +3172,7 @@
       "businessModel": "Modelo de negócios"
     },
     "cta": {
-      "title": "Comece a vender pela Hubfy",
+      "title": "Comece a vender pela Nory Members",
       "description": "Crie sua conta de vendedor para aceitar pagamentos diretamente pela plataforma com cartão, Pix e mais."
     },
     "type": {
@@ -3266,7 +3266,7 @@
         "incomplete": "Incompleto",
         "incompleteWarning": "Você não poderá enviar até completar todas as seções.",
         "noDocuments": "Nenhum documento enviado.",
-        "terms": "Ao enviar este formulário, você concorda com nossos Termos de Serviço, autoriza o recebimento de mensagens de texto da Hubfy e confirma que as informações fornecidas estão completas e corretas.",
+        "terms": "Ao enviar este formulário, você concorda com nossos Termos de Serviço, autoriza o recebimento de mensagens de texto da Nory Members e confirma que as informações fornecidas estão completas e corretas.",
         "confirmTitle": "Enviar para aprovação?",
         "confirmDescription": "Seus dados serão validados e sua conta ficará com status Pendente. Você não poderá alterar as informações até a análise ser concluída."
       }
@@ -3300,7 +3300,7 @@
     },
     "approved": {
       "title": "Conta aprovada",
-      "description": "Sua conta de vendedor está ativa. Você já pode aceitar pagamentos pela Hubfy.",
+      "description": "Sua conta de vendedor está ativa. Você já pode aceitar pagamentos pela Nory Members.",
       "requestChange": "Solicitar alteração de dados"
     },
     "rejected": {
@@ -3695,7 +3695,7 @@
   },
   "hotmartMapping": {
     "saveError": "Erro ao salvar",
-    "noProducts": "Nenhum produto encontrado. Crie um produto na Hubfy primeiro.",
+    "noProducts": "Nenhum produto encontrado. Crie um produto na Nory Members primeiro.",
     "product": "Produto",
     "status": "Status",
     "hotmartId": "ID Hotmart"
@@ -3768,7 +3768,7 @@
   "guides": {
     "title": "Guias",
     "listingTitle": "Guias e tutoriais",
-    "listingDescription": "Aprenda a usar Hubfy como um profissional. Guias práticos, explicações claras e exemplos visuais para tirar o máximo da plataforma.",
+    "listingDescription": "Aprenda a usar Nory Members como um profissional. Guias práticos, explicações claras e exemplos visuais para tirar o máximo da plataforma.",
     "allArticles": "Todos os guias",
     "onThisPage": "Nesta página",
     "backToTop": "Voltar ao topo",
@@ -3783,7 +3783,7 @@
         "intro": "O Portal do Cliente é a área exclusiva onde seus alunos e compradores acessam os produtos que adquiriram. Aqui você entende tudo sobre como funciona, o que seus clientes veem e como extrair o máximo dessa funcionalidade.",
         "whatIs": {
           "title": "O que é o Portal do Cliente?",
-          "description": "O Portal é um ambiente seguro e personalizado com a identidade visual do seu negócio. É nele que seus clientes acessam cursos, baixam arquivos, acompanham pedidos e gerenciam seus dados. Cada workspace na Hubfy tem seu próprio portal, acessível por uma URL exclusiva.",
+          "description": "O Portal é um ambiente seguro e personalizado com a identidade visual do seu negócio. É nele que seus clientes acessam cursos, baixam arquivos, acompanham pedidos e gerenciam seus dados. Cada workspace na Nory Members tem seu próprio portal, acessível por uma URL exclusiva.",
           "feature1Title": "Produtos comprados",
           "feature1Desc": "Seus clientes visualizam todos os produtos que já compraram em um só lugar, organizados em cards visuais.",
           "feature2Title": "Aulas e cursos",
@@ -3861,7 +3861,7 @@
       },
       "orderStatuses": {
         "title": "Entendendo os Status dos Pedidos",
-        "intro": "Cada pedido na Hubfy passa por diferentes fases, representadas por um status. Entender o que cada um significa ajuda você a acompanhar suas vendas, identificar problemas rapidamente e saber quando agir.",
+        "intro": "Cada pedido na Nory Members passa por diferentes fases, representadas por um status. Entender o que cada um significa ajuda você a acompanhar suas vendas, identificar problemas rapidamente e saber quando agir.",
         "eachStatusTitle": "O que cada status significa",
         "whenItHappens": "Quando acontece",
         "studentAccess": "Acesso do aluno",
@@ -3924,7 +3924,7 @@
         "flowHappyPath": "Este é o fluxo ideal (happy path) — do pagamento pendente até a conclusão.",
         "flowTip": "Pedidos com status Contestada ou Chargeback seguem um caminho diferente. Veja o guia específico para entender cada cenário.",
         "mockupTitle": "Como aparece na sua tela de pedidos",
-        "mockupIntro": "Aqui está um exemplo de como a tabela de pedidos aparece no painel administrativo da Hubfy, com os badges coloridos para cada status:",
+        "mockupIntro": "Aqui está um exemplo de como a tabela de pedidos aparece no painel administrativo da Nory Members, com os badges coloridos para cada status:",
         "mockup": {
           "order": "Pedido",
           "customer": "Cliente",
@@ -3949,7 +3949,7 @@
           "when": "O cliente abre uma contestação/reclamação no gateway de pagamento. Por exemplo: a Hotmart envia um evento PURCHASE_PROTEST, a Kiwify sinaliza uma disputa aberta.",
           "whatHappens": "O sistema marca o pedido como \"Contestada\", mas NÃO revoga o acesso do aluno e NÃO altera o valor. É apenas uma mudança de status para que você saiba que existe uma contestação em andamento.",
           "access": "Mantido",
-          "accessDetail": "O aluno continua com acesso total ao conteúdo. A Hubfy não toma nenhuma ação automática sobre o acesso enquanto a disputa não for resolvida.",
+          "accessDetail": "O aluno continua com acesso total ao conteúdo. A Nory Members não toma nenhuma ação automática sobre o acesso enquanto a disputa não for resolvida.",
           "nextSteps": "A disputa pode ser resolvida a favor do vendedor (volta para Aprovada) ou evoluir para um chargeback/reembolso. Acompanhe pelo gateway de pagamento.",
           "flowTitle": "Possíveis caminhos de uma disputa"
         },
@@ -3994,8 +3994,8 @@
     "getStarted": "Começar",
     "intro": {
       "badge": "Referencia da API",
-      "title": "Hubfy API",
-      "description": "Documentação completa da API REST do Hubfy — membership e área de membros B2B2C. Todas as requisições usam o método POST, aceitam JSON e retornam JSON.",
+      "title": "Nory Members API",
+      "description": "Documentação completa da API REST do Nory Members — membership e área de membros B2B2C. Todas as requisições usam o método POST, aceitam JSON e retornam JSON.",
       "baseUrl": "Base URL",
       "authentication": "Autenticação",
       "authDescription": "Todas as requisições precisam de um token no header Authorization.",
@@ -4055,7 +4055,7 @@
       "info": "Info"
     },
     "home": {
-      "title": "Tudo o que voce precisa para construir, vender e crescer com a Hubfy.",
+      "title": "Tudo o que voce precisa para construir, vender e crescer com a Nory Members.",
       "descriptionPrefix": "Aprenda a configurar seu workspace, criar cursos e produtos digitais, configurar checkouts, gerenciar clientes e integrar ferramentas de terceiros. Use a sidebar para navegar por assunto ou comece pelos guias recomendados abaixo. Para acesso programatico, visite a",
       "descriptionSuffix": "com endpoints, parametros e exemplos de codigo para cada recurso.",
       "createWorkspace": "Criar workspace",
@@ -4069,14 +4069,14 @@
       "readyCount": "{{readyCount}}/{{totalCount}} prontos"
     },
     "introduction": {
-      "buildTitle": "O que voce pode construir com a Hubfy",
-      "buildDescription": "Um unico workspace da Hubfy pode cobrir as partes principais de um negocio digital moderno.",
-      "flowTitle": "Como a Hubfy funciona",
+      "buildTitle": "O que voce pode construir com a Nory Members",
+      "buildDescription": "Um unico workspace da Nory Members pode cobrir as partes principais de um negocio digital moderno.",
+      "flowTitle": "Como a Nory Members funciona",
       "flowDescription": "O fluxo da plataforma e direto: configure seu workspace, publique seu conteudo, conecte a monetizacao e entregue o acesso."
     },
     "quickstart": {
       "checklistTitle": "Checklist de lancamento",
-      "checklistDescription": "Estes sao os seis passos extraidos da docs ao vivo e adaptados para a nova UI de documentacao da Hubfy.",
+      "checklistDescription": "Estes sao os seis passos extraidos da docs ao vivo e adaptados para a nova UI de documentacao da Nory Members.",
       "nextTitle": "Proximos passos",
       "nextDescription": "Daqui, as proximas docs mais naturais sao precos, cursos, checkouts e operacoes com clientes."
     },

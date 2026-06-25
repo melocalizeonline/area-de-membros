@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BookOpen,
@@ -9,6 +10,7 @@ import {
   ArrowRight,
   Check,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { BRAND_NAME } from "@/lib/brand";
 
 /* ─── Nory Members — Brand Identity ─── */
@@ -41,15 +43,37 @@ const STEPS = [
 ];
 
 export default function LandingPage() {
+  const [userName, setUserName] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      const s = data.session;
+      if (!s) return setUserName(null);
+      const meta = s.user.user_metadata as { name?: string } | undefined;
+      setUserName(meta?.name || s.user.email || "");
+    });
+    return () => { active = false; };
+  }, []);
+
+  const pill = { background: GRADIENT, color: "#06122B", fontWeight: 700, fontSize: 14, padding: "10px 20px", borderRadius: 100 } as const;
+  const firstName = userName ? userName.split(" ")[0].split("@")[0] : "";
+
   return (
     <div style={{ background: NAVY, color: LIGHT, fontFamily: FONT_BODY, minHeight: "100vh", overflowX: "hidden" }}>
       {/* Header */}
       <header style={{ position: "sticky", top: 0, zIndex: 50, borderBottom: `1px solid ${BORDER}`, background: "rgba(10,19,38,.72)", backdropFilter: "blur(12px)" }}>
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link to="/sobre"><img src={LOGO} alt={BRAND_NAME} style={{ height: 26 }} /></Link>
-          <Link to="/admin/login" style={{ background: GRADIENT, color: "#06122B", fontWeight: 700, fontSize: 14, padding: "10px 20px", borderRadius: 100 }}>
-            Acessar
-          </Link>
+          <Link to="/"><img src={LOGO} alt={BRAND_NAME} style={{ height: 30 }} /></Link>
+          {userName ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ color: MUTED, fontSize: 14 }}>Olá, {firstName}</span>
+              <Link to="/admin" style={pill}>Ir para o painel</Link>
+            </div>
+          ) : (
+            <Link to="/admin/login" style={pill}>Acessar</Link>
+          )}
         </div>
       </header>
 

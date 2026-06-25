@@ -135,8 +135,8 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* ═══ Root — redirect to admin ═══ */}
-      <Route path="/" element={<Navigate to="/admin" replace />} />
+      {/* ═══ Root — landing page ═══ */}
+      <Route path="/" element={<LandingPage />} />
 
 
       {/* ═══ Auth pages — NO AuthProvider, direct lazy load (perf: no waterfall) ═══ */}

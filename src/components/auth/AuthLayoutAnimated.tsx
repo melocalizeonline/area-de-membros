@@ -434,16 +434,16 @@ export function AuthLayoutAnimated({
             <img
               src={BRAND_LOGO_DARK}
               alt={BRAND_NAME}
-              width={76}
-              height={28}
-              className="h-[28px] w-auto hidden dark:block"
+              width={150}
+              height={48}
+              className="h-12 w-auto hidden dark:block"
             />
             <img
               src={BRAND_LOGO_LIGHT}
               alt={BRAND_NAME}
-              width={76}
-              height={28}
-              className="h-[28px] w-auto dark:hidden"
+              width={150}
+              height={48}
+              className="h-12 w-auto dark:hidden"
             />
           </div>
         </div>
@@ -467,12 +467,12 @@ export function AuthLayoutAnimated({
           <img
             src={BRAND_LOGO_LIGHT}
             alt={BRAND_NAME}
-            className="h-[28px] w-auto hidden dark:block"
+            className="h-10 w-auto hidden dark:block"
           />
           <img
             src={BRAND_LOGO_DARK}
             alt={BRAND_NAME}
-            className="h-[28px] w-auto dark:hidden"
+            className="h-10 w-auto dark:hidden"
           />
         </div>
 

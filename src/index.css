@@ -42,8 +42,8 @@
     --popover: 223.8136 -172.5242% 100.0000%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 223.8136 0.0000% 8.6104%;
-    --primary-foreground: 223.8136 0.0003% 97.3691%;
+    --primary: 219 100% 54%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 223.8136 0.0001% 92.1478%;
     --secondary-foreground: 223.8136 0.0000% 17.9236%;
@@ -51,7 +51,7 @@
     --muted: 223.8136 0.0002% 96.0587%;
     --muted-foreground: 223.8136 0.0000% 32.3067%;
 
-    --accent: 248 98% 61%;
+    --accent: 219 100% 54%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 358.8683 74.6580% 50.3424%;
@@ -68,7 +68,7 @@
 
     --border: 223.8136 0.0001% 92%;
     --input: 223.8136 0.0001% 92.1478%;
-    --ring: 223.8136 0.0000% 32.3067%;
+    --ring: 219 100% 54%;
     --placeholder-foreground: 223.8136 0.0000% 50%;
 
     --radius: 0.5rem;
@@ -102,25 +102,26 @@
   }
 
   .dark {
-    --background: 223.8136 0.0000% 1.2920%;
-    --foreground: 223.8136 0.0005% 98.6829%;
+    /* Nory Members — navy brand theme */
+    --background: 221 58% 9%;
+    --foreground: 218 35% 92%;
 
-    --card: 223.8136 0.0000% 4.3484%;
-    --card-foreground: 223.8136 0.0001% 92.1478%;
+    --card: 221 50% 13%;
+    --card-foreground: 218 35% 92%;
 
-    --popover: 223.8136 0.0000% 3.9225%;
-    --popover-foreground: 223.8136 -172.5242% 100.0000%;
+    --popover: 221 52% 11%;
+    --popover-foreground: 218 35% 92%;
 
-    --primary: 223.8136 0.0001% 92.1478%;
-    --primary-foreground: 223.8136 0.0000% 1.2920%;
+    --primary: 219 100% 54%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 223.8136 0.0000% 13.1499%;
-    --secondary-foreground: 223.8136 0.0001% 92.1478%;
+    --secondary: 221 40% 18%;
+    --secondary-foreground: 218 35% 92%;
 
-    --muted: 223.8136 0.0000% 11.3040%;
-    --muted-foreground: 223.8136 0.0000% 64.4710%;
+    --muted: 221 40% 16%;
+    --muted-foreground: 217 27% 67%;
 
-    --accent: 248 98% 61%;
+    --accent: 219 100% 54%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 358.7594 101.8439% 69.8357%;
@@ -135,10 +136,10 @@
     --warning: 45 80% 55%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 223.8136 0.0000% 14.0871%;
-    --input: 223.8136 0.0000% 19.8916%;
-    --ring: 223.8136 0.0000% 50.2111%;
-    --placeholder-foreground: 223.8136 0.0000% 48%;
+    --border: 221 35% 20%;
+    --input: 221 35% 22%;
+    --ring: 219 100% 54%;
+    --placeholder-foreground: 217 20% 55%;
 
     --chart-1: 215.56 59.98% 83%;
     --chart-2: 222.4034 59.0500% 75.0997%;
@@ -146,14 +147,14 @@
     --chart-4: 225.7181 51.8948% 50.4104%;
     --chart-5: 236.5829 64.2250% 21.4383%;
 
-    --sidebar: 223.8136 0.0000% 5.1758%;
-    --sidebar-foreground: 223.8136 0.0001% 92.9405%;
-    --sidebar-primary: 223.8136 0.0002% 96.0587%;
-    --sidebar-primary-foreground: 223.8136 0.0001% 92.1478%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 223.8136 0.0000% 14.0871%;
-    --sidebar-ring: 223.8136 0.0000% 50.2111%;
+    --sidebar: 221 55% 10%;
+    --sidebar-foreground: 218 35% 92%;
+    --sidebar-primary: 219 100% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 221 40% 16%;
+    --sidebar-accent-foreground: 218 35% 92%;
+    --sidebar-border: 221 35% 18%;
+    --sidebar-ring: 219 100% 54%;
 
     --shadow-2xs: 0px 0px 1px -0.5px hsl(223.8136 0.0000% 38.8573% / 0.15);
     --shadow-xs: 0px 0px 1px -0.5px hsl(223.8136 0.0000% 38.8573% / 0.15);
@@ -175,33 +176,37 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Geist', system-ui, sans-serif;
+    font-family: 'Manrope', 'Geist', system-ui, sans-serif;
   }
 
   /* Force sans-serif everywhere — kill monospace globally */
   pre, code, kbd, samp {
-    font-family: 'Geist', system-ui, sans-serif !important;
+    font-family: 'Manrope', 'Geist', system-ui, sans-serif !important;
   }
 
   .font-mono {
-    font-family: 'Geist', system-ui, sans-serif !important;
+    font-family: 'Manrope', 'Geist', system-ui, sans-serif !important;
   }
 
-  /* Typography scale - no letter-spacing */
+  /* Typography scale - headings use brand display font (Sora) */
   h1 {
     @apply text-2xl font-semibold tracking-normal;
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
   }
 
   h2 {
     @apply text-lg font-semibold tracking-normal;
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
   }
 
   h3 {
     @apply text-sm font-semibold tracking-normal;
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
   }
 
   h4 {
     @apply text-xs font-medium tracking-normal;
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
   }
 
   /* Reserve scrollbar space to prevent layout shift when dialogs/sheets open */
@@ -254,13 +259,16 @@
     @apply rounded-2xl bg-card p-4;
   }
 
-  /* Gradient utilities */
+  /* Gradient utilities — brand blue → green */
   .gradient-primary {
-    @apply bg-gradient-to-r from-primary to-primary/70;
+    background-image: linear-gradient(105deg, hsl(219 100% 54%), hsl(146 72% 54%));
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent;
+    background-image: linear-gradient(105deg, hsl(219 100% 54%), hsl(146 72% 54%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   /* Glow effects */
