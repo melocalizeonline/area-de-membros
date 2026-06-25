@@ -96,7 +96,7 @@ export default function PortalHome() {
                   navigate(`/${slug}/products/${product.public_id}`);
                 }
               }
-            : undefined,
+            : () => navigate(`/${slug}/portal/products`),
         };
       }),
     [products, t, navigate, slug]

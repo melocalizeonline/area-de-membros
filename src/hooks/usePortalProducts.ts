@@ -21,6 +21,7 @@ export interface PortalProduct {
   showcase: PortalProductShowcase | null;
   courseSlug: string | null;
   hasAccess: boolean;
+  portalVisibility: string;
 }
 
 interface UsePortalProductsParams {
@@ -55,6 +56,7 @@ interface RawProduct {
   cover_url: string | null;
   updated_at: string;
   benefit: string | null;
+  portal_visibility?: string | null;
   product_courses?: RawProductCourseRelation[] | null;
 }
 
@@ -88,6 +90,7 @@ function mapProduct(product: RawProduct): PortalProduct {
     showcase: extractShowcase(product),
     courseSlug: extractCourseSlug(product),
     hasAccess: true,
+    portalVisibility: product.portal_visibility ?? "hidden",
   };
 }
 
@@ -102,7 +105,7 @@ export function usePortalProducts({ tenantId, accessRole }: UsePortalProductsPar
       if (accessRole === "tenant_user") {
         const { data, error } = await supabase
           .from("products")
-          .select("id, public_id, name, description, cover_url, updated_at, benefit, product_courses(courses(slug, showcase_courses(showcases(id, slug, title))))")
+          .select("id, public_id, name, description, cover_url, updated_at, benefit, portal_visibility, product_courses(courses(slug, showcase_courses(showcases(id, slug, title))))")
           .eq("tenant_id", tenantId)
           .eq("status", "active")
           .order("sort_order", { ascending: true });
@@ -128,10 +131,13 @@ export function usePortalProducts({ tenantId, accessRole }: UsePortalProductsPar
         .order("sort_order", { ascending: true });
       if (allProductsError) throw allProductsError;
 
-      return ((allProducts ?? []) as RawProduct[]).map((product) => ({
-        ...mapProduct(product),
-        hasAccess: purchasedProductIds.has(product.id),
-      }));
+      return ((allProducts ?? []) as RawProduct[])
+        .map((product) => ({
+          ...mapProduct(product),
+          hasAccess: purchasedProductIds.has(product.id),
+        }))
+        // Esconde produtos sem acesso, exceto os marcados como "apenas ver" (locked)
+        .filter((p) => p.hasAccess || p.portalVisibility === "locked");
     },
   });
 }
