@@ -5,6 +5,7 @@ import { useTenant } from "@/hooks/useTenant";
 import { useTenantCatalog } from "@/hooks/useTenantCatalog";
 import { InlineCheckboxList } from "@/components/admin/InlineCheckboxList";
 import { enrollCustomer } from "@/lib/enroll";
+import { invokeEdgeFunction } from "@/lib/edge-function-utils";
 import { CustomerAccessSection } from "@/components/admin/CustomerAccessSection";
 import { translateAppError } from "@/lib/app-error-utils";
 import {
@@ -98,6 +99,22 @@ export default function CustomerSheet({
   const { data: catalog } = useTenantCatalog();
   const [enrollProducts, setEnrollProducts] = useState<string[]>([]);
   const [enrollCourses, setEnrollCourses] = useState<string[]>([]);
+  const [resettingPw, setResettingPw] = useState(false);
+
+  const handleResetPassword = async () => {
+    if (!customer) return;
+    setResettingPw(true);
+    try {
+      await invokeEdgeFunction("customer-password-reset", {
+        body: { customer_id: customer.id, origin: window.location.origin },
+      });
+      toast.success("E-mail de redefinição de senha enviado ao cliente.");
+    } catch (err) {
+      toast.error(translateAppError(err, "Não foi possível enviar agora."));
+    } finally {
+      setResettingPw(false);
+    }
+  };
 
   // Populate form when customer changes
   useEffect(() => {
@@ -397,6 +414,22 @@ export default function CustomerSheet({
               userId={customer.user_id ?? null}
               email={customer.email}
             />
+          )}
+
+          {isEdit && customer && (
+            <Section title="Suporte">
+              <p className="text-sm text-muted-foreground">
+                Envia um e-mail para o cliente redefinir a senha de acesso.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={resettingPw}
+                onClick={handleResetPassword}
+              >
+                {resettingPw ? "Enviando..." : "Enviar redefinição de senha"}
+              </Button>
+            </Section>
           )}
         </div>
 
