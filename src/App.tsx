@@ -100,6 +100,9 @@ const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordAnimated"));
 const TermsPage = lazy(() => import("@/pages/legal/TermsPage"));
 const PrivacyPage = lazy(() => import("@/pages/legal/PrivacyPage"));
 
+// Public landing page (no AuthProvider)
+const LandingPage = lazy(() => import("@/pages/LandingPage"));
+
 
 // Single AuthProvider for all authenticated routes (admin + customer)
 const AuthenticatedApp = lazy(() => import("@/routes/AuthenticatedApp"));
@@ -161,6 +164,9 @@ const AppRoutes = () => {
           </ErrorBoundary>
         )}
       />
+
+      {/* ═══ Public landing page ═══ */}
+      <Route path="/sobre" element={<LandingPage />} />
 
       {/* ═══ Public legal pages ═══ */}
       <Route path="/terms" element={<TermsPage />} />
