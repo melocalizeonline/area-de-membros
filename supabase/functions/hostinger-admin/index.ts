@@ -72,6 +72,10 @@ Deno.serve(async (req) => {
         const r = await hostinger("/domains/v1/portfolio");
         return json({ ok: r.ok, status: r.status, domains: r.ok ? r.data : null, raw: r.ok ? null : r.data });
       }
+      case "list_websites": {
+        const r = await hostinger("/hosting/v1/websites");
+        return json({ ok: r.ok, status: r.status, websites: r.ok ? r.data : null, raw: r.ok ? null : r.data });
+      }
       case "list_tenants": {
         const { data } = await admin
           .from("tenants").select("id, name, slug").order("name");

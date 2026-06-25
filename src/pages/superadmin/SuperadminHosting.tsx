@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Plug, Globe, Check, X } from "lucide-react";
+import { Loader2, Plug, Globe, Server, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edge-function-utils";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface DomainItem { domain?: string; name?: string; status?: string; id?: string | number }
+interface RawItem { domain?: string; name?: string; status?: string; id?: string | number; username?: string; type?: string }
+interface CatalogEntry { label: string; kind: "site" | "domain"; externalId: string | null; status?: string }
 interface Assignment { id: string; domain: string; tenant_id: string; status: string; tenants?: { name: string; slug: string } | null }
 interface HostingRequest { id: string; tenant_id: string; note: string | null; created_at: string; tenants?: { name: string; slug: string } | null }
 
@@ -17,9 +18,9 @@ export default function SuperadminHosting() {
   const qc = useQueryClient();
   const [apiKey, setApiKey] = useState("");
   const [savingKey, setSavingKey] = useState(false);
-  const [loadingDomains, setLoadingDomains] = useState(false);
-  const [domains, setDomains] = useState<DomainItem[] | null>(null);
-  const [domainsError, setDomainsError] = useState<string | null>(null);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [catalog, setCatalog] = useState<CatalogEntry[] | null>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [assignTenant, setAssignTenant] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -71,26 +72,54 @@ export default function SuperadminHosting() {
     finally { setSavingKey(false); }
   };
 
-  const loadDomains = async () => {
-    setLoadingDomains(true); setDomainsError(null);
-    try {
-      const { data } = await invokeEdgeFunction("hostinger-admin", { body: { action: "list_domains" } });
-      const r = data as { ok: boolean; domains: unknown; raw: unknown };
-      if (!r.ok) { setDomainsError(JSON.stringify(r.raw).slice(0, 300)); setDomains([]); return; }
-      const list = Array.isArray(r.domains) ? r.domains : (r.domains as { data?: DomainItem[] })?.data ?? [];
-      setDomains(list as DomainItem[]);
-    } catch (e) { setDomainsError(e instanceof Error ? e.message : "Erro"); }
-    finally { setLoadingDomains(false); }
+  const toArray = (payload: unknown): RawItem[] => {
+    if (Array.isArray(payload)) return payload as RawItem[];
+    const d = (payload as { data?: RawItem[] } | null)?.data;
+    return Array.isArray(d) ? d : [];
   };
 
-  const assign = async (domain: string) => {
-    const tenantId = assignTenant[domain];
-    if (!tenantId) { toast.error("Selecione um tenant."); return; }
-    setBusy(domain);
+  const loadCatalog = async () => {
+    setLoadingCatalog(true); setCatalogError(null);
     try {
-      await invokeEdgeFunction("hostinger-admin", { body: { action: "assign", tenantId, domain } });
+      const [sitesRes, domainsRes] = await Promise.all([
+        invokeEdgeFunction("hostinger-admin", { body: { action: "list_websites" } }),
+        invokeEdgeFunction("hostinger-admin", { body: { action: "list_domains" } }),
+      ]);
+      const sitesR = sitesRes.data as { ok: boolean; websites: unknown; raw: unknown };
+      const domainsR = domainsRes.data as { ok: boolean; domains: unknown; raw: unknown };
+
+      const errors: string[] = [];
+      if (!sitesR?.ok && sitesR?.raw) errors.push(`Sites: ${JSON.stringify(sitesR.raw).slice(0, 150)}`);
+      if (!domainsR?.ok && domainsR?.raw) errors.push(`Domínios: ${JSON.stringify(domainsR.raw).slice(0, 150)}`);
+
+      const entries = new Map<string, CatalogEntry>();
+      for (const w of toArray(sitesR?.ok ? sitesR.websites : null)) {
+        const label = (w.domain || w.name || "").toLowerCase().trim();
+        if (!label) continue;
+        entries.set(label, { label, kind: "site", externalId: String(w.id ?? w.username ?? "") || null, status: w.status });
+      }
+      for (const d of toArray(domainsR?.ok ? domainsR.domains : null)) {
+        const label = (d.domain || d.name || "").toLowerCase().trim();
+        if (!label || entries.has(label)) continue;
+        entries.set(label, { label, kind: "domain", externalId: String(d.id ?? "") || null, status: d.status });
+      }
+
+      const list = [...entries.values()].sort((a, b) => a.label.localeCompare(b.label));
+      setCatalog(list);
+      if (list.length === 0 && errors.length) setCatalogError(errors.join(" · "));
+      else setCatalogError(null);
+    } catch (e) { setCatalogError(e instanceof Error ? e.message : "Erro"); }
+    finally { setLoadingCatalog(false); }
+  };
+
+  const assign = async (entry: CatalogEntry) => {
+    const tenantId = assignTenant[entry.label];
+    if (!tenantId) { toast.error("Selecione um tenant."); return; }
+    setBusy(entry.label);
+    try {
+      await invokeEdgeFunction("hostinger-admin", { body: { action: "assign", tenantId, domain: entry.label, externalId: entry.externalId } });
       await qc.invalidateQueries({ queryKey: ["hosting-assignments"] });
-      toast.success("Domínio vinculado.");
+      toast.success(entry.kind === "site" ? "Site vinculado." : "Domínio vinculado.");
     } catch { toast.error("Falha ao vincular."); }
     finally { setBusy(null); }
   };
@@ -136,39 +165,42 @@ export default function SuperadminHosting() {
         </CardContent>
       </Card>
 
-      {/* Domínios */}
+      {/* Sites e domínios */}
       <Card variant="bordered">
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Domínios</CardTitle>
-          <Button variant="secondary" size="sm" onClick={loadDomains} disabled={loadingDomains || !status?.configured}>
-            {loadingDomains ? <Loader2 className="size-4 animate-spin" /> : "Carregar domínios"}
+          <CardTitle>Sites e domínios</CardTitle>
+          <Button variant="secondary" size="sm" onClick={loadCatalog} disabled={loadingCatalog || !status?.configured}>
+            {loadingCatalog ? <Loader2 className="size-4 animate-spin" /> : "Carregar da Hostinger"}
           </Button>
         </CardHeader>
         <CardContent className="space-y-3">
-          {domainsError && <p className="text-sm text-destructive">Erro ao buscar: {domainsError}</p>}
-          {domains === null ? (
-            <p className="text-sm text-muted-foreground">Clique em "Carregar domínios" para listar da Hostinger.</p>
-          ) : domains.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum domínio retornado.</p>
+          {catalogError && <p className="text-sm text-destructive">Erro ao buscar: {catalogError}</p>}
+          {catalog === null ? (
+            <p className="text-sm text-muted-foreground">Clique em "Carregar da Hostinger" para listar todos os sites e domínios.</p>
+          ) : catalog.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum site ou domínio retornado.</p>
           ) : (
             <div className="space-y-2">
-              {domains.map((d, i) => {
-                const dom = d.domain || d.name || String(d.id ?? i);
-                return (
-                  <div key={dom} className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="inline-flex items-center gap-2 text-sm font-medium"><Globe className="size-4" /> {dom}</span>
-                    <div className="flex items-center gap-2">
-                      <Select value={assignTenant[dom] ?? ""} onValueChange={(v) => setAssignTenant((p) => ({ ...p, [dom]: v }))}>
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Vincular a um tenant" /></SelectTrigger>
-                        <SelectContent>
-                          {tenants.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Button size="sm" disabled={busy === dom} onClick={() => assign(dom)}>Vincular</Button>
-                    </div>
+              {catalog.map((entry) => (
+                <div key={entry.label} className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="inline-flex items-center gap-2 text-sm font-medium">
+                    {entry.kind === "site" ? <Server className="size-4 text-primary" /> : <Globe className="size-4" />}
+                    {entry.label}
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
+                      {entry.kind === "site" ? "Site" : "Domínio"}
+                    </span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Select value={assignTenant[entry.label] ?? ""} onValueChange={(v) => setAssignTenant((p) => ({ ...p, [entry.label]: v }))}>
+                      <SelectTrigger className="w-48"><SelectValue placeholder="Vincular a um tenant" /></SelectTrigger>
+                      <SelectContent>
+                        {tenants.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" disabled={busy === entry.label} onClick={() => assign(entry)}>Vincular</Button>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
