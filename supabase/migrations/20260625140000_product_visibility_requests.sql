@@ -24,6 +24,11 @@ do $$ begin
   end if;
 end $$;
 
--- Unicidade por produto (a unique(course_id,user_id) já existente cobre cursos)
-create unique index if not exists access_requests_product_user_uniq
-  on public.access_requests(product_id, user_id) where product_id is not null;
+-- Unicidade por produto (constraint normal: NULLs são distintos, não afeta cursos).
+-- Constraint (não índice parcial) para que ON CONFLICT (product_id,user_id) funcione.
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'access_requests_product_user_key') then
+    alter table public.access_requests
+      add constraint access_requests_product_user_key unique (product_id, user_id);
+  end if;
+end $$;
