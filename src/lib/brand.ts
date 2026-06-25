@@ -24,7 +24,7 @@
  */
 
 /** Nome da plataforma — usado em títulos de página e textos de interface. */
-export const BRAND_NAME = "Hubfy";
+export const BRAND_NAME = "Nory Members";
 
 /** Logo horizontal — versão para fundo escuro (dark mode). */
 export const BRAND_LOGO_DARK = "/brand/logo-hubfy-dark.svg";
