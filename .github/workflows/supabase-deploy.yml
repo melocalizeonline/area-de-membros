@@ -1,0 +1,45 @@
+name: Deploy Supabase (Nory Members)
+
+# Aplica migrations e publica edge functions no projeto Nory Members
+# sempre que algo em supabase/ muda na branch main.
+# Secrets necessarios no repo:
+#   SUPABASE_ACCESS_TOKEN  -> Supabase > Account > Access Tokens (sbp_...)
+#   SUPABASE_DB_PASSWORD   -> Projeto appcwchnbmfndgvusxtb > Settings > Database
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+  workflow_dispatch: {}
+
+env:
+  SUPABASE_PROJECT_ID: appcwchnbmfndgvusxtb
+
+concurrency:
+  group: supabase-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Push migrations
+        run: supabase db push
+
+      - name: Deploy edge functions
+        run: supabase functions deploy --use-api --project-ref "$SUPABASE_PROJECT_ID"
