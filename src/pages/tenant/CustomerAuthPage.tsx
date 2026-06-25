@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction, translateEdgeError } from "@/lib/edge-function-utils";
 import { useTenantBySlug } from "@/hooks/useTenantBySlug";
 import { Input } from "@/components/ui/input";
@@ -27,12 +28,15 @@ type AuthStep = "email" | "sent";
 export default function CustomerAuthPage() {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { data: tenant, isLoading: tenantLoading, error } = useTenantBySlug(slug);
   const { toast } = useToast();
 
   const [step, setStep] = useState<AuthStep>("email");
   const [sentEmail, setSentEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const tenantName = tenant?.name || "";
   usePageTitle(tenantName ? joinTitleSegments(t("portal.meta.login", "Login"), tenantName) : null);
@@ -122,6 +126,46 @@ export default function CustomerAuthPage() {
     requestMagicLink({ email: sentEmail });
   };
 
+  // Login com e-mail + senha
+  const handlePasswordLogin = async (data: EmailData) => {
+    if (!password.trim()) {
+      // Sem senha → envia link mágico
+      return requestMagicLink(data);
+    }
+    setLoading(true);
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password,
+      });
+      if (signInError) {
+        toast({
+          variant: "destructive",
+          title: t("common.error"),
+          description: "E-mail ou senha inválidos.",
+        });
+        return;
+      }
+      navigate(`/${slug}`, { replace: true });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login com Google
+  const handleGoogleLogin = async () => {
+    if (!slug) return;
+    setGoogleLoading(true);
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/${slug}` },
+    });
+    if (oauthError) {
+      setGoogleLoading(false);
+      toast({ variant: "destructive", title: t("common.error"), description: translateEdgeError(oauthError) });
+    }
+  };
+
   /* ── Loading / Error states ── */
   if (tenantLoading) {
     return (
@@ -191,7 +235,7 @@ export default function CustomerAuthPage() {
                   </p>
                 </div>
 
-                <form onSubmit={emailForm.handleSubmit(requestMagicLink)} className="space-y-4">
+                <form onSubmit={emailForm.handleSubmit(handlePasswordLogin)} className="space-y-4">
                   <Field data-invalid={!!emailForm.formState.errors.email}>
                     <FieldLabel htmlFor="email" style={{ color: themeColors.textSecondary }}>
                       {t("common.email")}
@@ -212,26 +256,81 @@ export default function CustomerAuthPage() {
                     <FieldError>{emailForm.formState.errors.email?.message}</FieldError>
                   </Field>
 
+                  <Field>
+                    <FieldLabel htmlFor="password" style={{ color: themeColors.textSecondary }}>
+                      Senha
+                    </FieldLabel>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Sua senha"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{
+                        background: themeColors.inputBg,
+                        borderColor: themeColors.inputBorder,
+                        color: themeColors.text,
+                      }}
+                    />
+                  </Field>
+
+                  <div className="text-right -mt-1">
+                    <Link
+                      to={`/${slug}/forgot-password`}
+                      className="text-xs hover:opacity-80"
+                      style={{ color: themeColors.textSecondary }}
+                    >
+                      Esqueci a senha
+                    </Link>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={loading}
                     className="w-full h-11 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
-                    style={{
-                      background: buttonColor,
-                      color: buttonFg,
-                      borderRadius: buttonRadius,
-                    }}
+                    style={{ background: buttonColor, color: buttonFg, borderRadius: buttonRadius }}
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" />
-                        {t("portal.auth.sending")}
-                      </>
-                    ) : (
-                      t("portal.auth.sendLink")
-                    )}
+                    {loading ? <Loader2 className="size-4 animate-spin" /> : "Entrar"}
                   </button>
                 </form>
+
+                {/* Divisor */}
+                <div className="flex items-center gap-3 py-1">
+                  <div className="h-px flex-1" style={{ background: themeColors.inputBorder }} />
+                  <span className="text-xs" style={{ color: themeColors.textSecondary }}>ou</span>
+                  <div className="h-px flex-1" style={{ background: themeColors.inputBorder }} />
+                </div>
+
+                {/* Google */}
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={googleLoading}
+                  className="w-full h-11 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity border"
+                  style={{ background: themeColors.inputBg, borderColor: themeColors.inputBorder, color: themeColors.text, borderRadius: buttonRadius }}
+                >
+                  {googleLoading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84Z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z"/></svg>
+                      Continuar com Google
+                    </>
+                  )}
+                </button>
+
+                {/* Link mágico */}
+                <button
+                  type="button"
+                  onClick={() => emailForm.handleSubmit(requestMagicLink)()}
+                  disabled={loading}
+                  className="w-full h-11 text-sm font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-80"
+                  style={{ color: themeColors.textSecondary }}
+                >
+                  <Mail className="size-4" />
+                  Receber link por e-mail
+                </button>
               </>
             ) : (
               <div className="space-y-6 text-center">
