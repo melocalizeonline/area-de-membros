@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -114,6 +115,7 @@ export default function AdminProductEdit() {
   const [description, setDescription] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
+  const [formVisibility, setFormVisibility] = useState<string>("hidden");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [unsplashOpen, setUnsplashOpen] = useState(false);
@@ -172,9 +174,10 @@ export default function AdminProductEdit() {
     return (
       name !== product.name ||
       description !== (product.description ?? "") ||
-      coverUrl !== cleanCover
+      coverUrl !== cleanCover ||
+      formVisibility !== ((product as { portal_visibility?: string }).portal_visibility ?? "hidden")
     );
-  }, [product, name, description, coverUrl]);
+  }, [product, name, description, coverUrl, formVisibility]);
 
   const isDirtyBenefits = useMemo(() => {
     if (!product) return false;
@@ -225,6 +228,7 @@ export default function AdminProductEdit() {
     setDescription(product.description ?? "");
     setCoverUrl(clean ?? "");
     setCoverPreviewUrl(clean ? getCoversPublicUrl(clean, product.updated_at) : "");
+    setFormVisibility((product as { portal_visibility?: string }).portal_visibility || "hidden");
     setBenefitType((product.benefit as BenefitType | null) ?? null);
     setAssetSearch("");
   }, [product]);
@@ -391,6 +395,10 @@ export default function AdminProductEdit() {
         description: description.trim() || null,
         cover_url: coverUrl.trim() || null,
       });
+      await supabase
+        .from("products")
+        .update({ portal_visibility: formVisibility })
+        .eq("id", product.id);
       queryClient.invalidateQueries({ queryKey: ["product", productId] });
       toast.success(t("productSheet.productUpdated"));
     } catch (error: unknown) {
@@ -574,6 +582,25 @@ export default function AdminProductEdit() {
                     placeholder={t("productSheet.descriptionPlaceholder")}
                     rows={3}
                   />
+                </FieldControl>
+              </Field>
+
+              {/* Visibilidade no portal */}
+              <Field orientation="split">
+                <FieldContent>
+                  <FieldLabel>Visibilidade no portal</FieldLabel>
+                  <FieldDescription>Para quem ainda não tem este produto.</FieldDescription>
+                </FieldContent>
+                <FieldControl>
+                  <Select value={formVisibility} onValueChange={setFormVisibility}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hidden">Oculto (não aparece)</SelectItem>
+                      <SelectItem value="locked">Apenas ver (bloqueado, permite solicitar acesso)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FieldControl>
               </Field>
 
