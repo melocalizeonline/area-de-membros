@@ -5,6 +5,7 @@ import { useTenant } from "@/hooks/useTenant";
 import { useTenantCatalog } from "@/hooks/useTenantCatalog";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { enrollCustomer } from "@/lib/enroll";
+import { CustomerAccessSection } from "@/components/admin/CustomerAccessSection";
 import { translateAppError } from "@/lib/app-error-utils";
 import {
   Sheet,
@@ -388,6 +389,14 @@ export default function CustomerSheet({
                 />
               </div>
             </Section>
+          )}
+
+          {isEdit && customer && allowManualEnrollment && (
+            <CustomerAccessSection
+              customerId={customer.id}
+              userId={customer.user_id ?? null}
+              email={customer.email}
+            />
           )}
         </div>
 
