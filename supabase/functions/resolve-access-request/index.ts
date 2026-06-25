@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
     const { data: request } = await admin
       .from("access_requests")
-      .select("id, tenant_id, course_id, user_id, status")
+      .select("id, tenant_id, course_id, product_id, user_id, status")
       .eq("id", requestId)
       .eq("tenant_id", tenantId)
       .maybeSingle();
@@ -58,13 +58,52 @@ Deno.serve(async (req) => {
     }
 
     if (action === "approve") {
-      const { error: ccError } = await admin
-        .from("course_customers")
-        .upsert(
-          { course_id: request.course_id, user_id: request.user_id },
-          { onConflict: "course_id,user_id", ignoreDuplicates: true },
-        );
-      if (ccError) throw ccError;
+      if (request.course_id) {
+        // Acesso direto ao curso
+        const { error: ccError } = await admin
+          .from("course_customers")
+          .upsert(
+            { course_id: request.course_id, user_id: request.user_id },
+            { onConflict: "course_id,user_id", ignoreDuplicates: true },
+          );
+        if (ccError) throw ccError;
+      } else if (request.product_id) {
+        // Acesso ao produto = pedido manual (trigger libera os cursos vinculados)
+        const { data: customer } = await admin
+          .from("customers")
+          .select("id, email")
+          .eq("tenant_id", tenantId)
+          .eq("user_id", request.user_id)
+          .maybeSingle();
+
+        const { data: existing } = await admin
+          .from("orders")
+          .select("id, status")
+          .eq("tenant_id", tenantId)
+          .eq("customer_id", customer?.id ?? null)
+          .eq("product_id", request.product_id)
+          .eq("source", "manual")
+          .maybeSingle();
+
+        if (existing) {
+          if (existing.status !== "completed") {
+            await admin.from("orders").update({ status: "completed" }).eq("id", existing.id);
+          }
+        } else {
+          const { error: ordError } = await admin.from("orders").insert({
+            tenant_id: tenantId,
+            customer_id: customer?.id ?? null,
+            product_id: request.product_id,
+            status: "completed",
+            source: "manual",
+            payment_method: "free",
+            unit_amount: 0,
+            currency: "BRL",
+            customer_email_snapshot: customer?.email ?? null,
+          });
+          if (ordError) throw ordError;
+        }
+      }
     }
 
     const { error: updError } = await admin

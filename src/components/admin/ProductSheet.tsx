@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTenant } from "@/hooks/useTenant";
 import UnsplashPickerDialog from "@/components/admin/UnsplashPickerDialog";
 import { CoverCropDialog } from "@/components/admin/CoverCropDialog";
@@ -114,6 +115,7 @@ export default function ProductSheet({
   const [description, setDescription] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
+  const [formVisibility, setFormVisibility] = useState<string>("hidden");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [unsplashOpen, setUnsplashOpen] = useState(false);
@@ -224,6 +226,7 @@ export default function ProductSheet({
         cleanCoverUrl ? getCoversPublicUrl(cleanCoverUrl, product.updated_at) : ""
       );
       setBenefitType(product.benefit);
+      setFormVisibility(product.portal_visibility || "hidden");
       setAssetSearch("");
       fetchExistingLinks();
     } else {
@@ -232,6 +235,7 @@ export default function ProductSheet({
       setCoverUrl("");
       setCoverPreviewUrl("");
       setBenefitType(null);
+      setFormVisibility("hidden");
       setSelectedAssetIds([]);
       setSelectedCourseIds([]);
       setLinkItems([]);
@@ -357,6 +361,12 @@ export default function ProductSheet({
           cover_url: coverUrl.trim() || null,
         });
 
+        // Visibilidade no portal (update direto)
+        await supabase
+          .from("products")
+          .update({ portal_visibility: formVisibility })
+          .eq("id", product.id);
+
         // Update deliverable links
         const benefit = product.benefit ?? benefitType;
         if (benefit && onSetDeliverable) {
@@ -455,6 +465,25 @@ export default function ProductSheet({
                 rows={3}
               />
             </div>
+
+            {/* Visibilidade no portal (somente edição) */}
+            {isEdit && (
+              <div className="space-y-2">
+                <Label>Visibilidade no portal</Label>
+                <Select value={formVisibility} onValueChange={setFormVisibility}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hidden">Oculto (não aparece)</SelectItem>
+                    <SelectItem value="locked">Apenas ver (bloqueado, permite solicitar acesso)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Para quem ainda não tem este produto.
+                </p>
+              </div>
+            )}
 
             {/* Cover image */}
             <div className="space-y-3">

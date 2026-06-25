@@ -29,6 +29,7 @@ export interface Product {
   currency: string;
   test_mode: boolean;
   benefit: BenefitType | null;
+  portal_visibility: string;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -80,6 +81,7 @@ interface ProductRow {
   status: ProductStatus;
   test_mode: boolean | null;
   benefit: string | null;
+  portal_visibility: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -129,6 +131,7 @@ export function useProducts(searchQuery = "", statusFilter: ProductStatus[] = []
       status: p.status,
       test_mode: p.test_mode ?? false,
       benefit: p.benefit as BenefitType | null,
+      portal_visibility: p.portal_visibility ?? "hidden",
       sort_order: p.sort_order,
       created_at: p.created_at,
       updated_at: p.updated_at,

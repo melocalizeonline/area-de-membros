@@ -506,7 +506,8 @@ export type Database = {
         Row: {
           id: string
           tenant_id: string
-          course_id: string
+          course_id: string | null
+          product_id: string | null
           user_id: string
           status: string
           created_at: string
@@ -515,7 +516,8 @@ export type Database = {
         Insert: {
           id?: string
           tenant_id: string
-          course_id: string
+          course_id?: string | null
+          product_id?: string | null
           user_id: string
           status?: string
           created_at?: string
@@ -524,7 +526,8 @@ export type Database = {
         Update: {
           id?: string
           tenant_id?: string
-          course_id?: string
+          course_id?: string | null
+          product_id?: string | null
           user_id?: string
           status?: string
           created_at?: string
@@ -1858,6 +1861,7 @@ export type Database = {
           id: string
           name: string
           pay_what_you_want: boolean
+          portal_visibility: string
           public_id: string | null
           sort_order: number
           status: Database["public"]["Enums"]["product_status"]
@@ -1877,6 +1881,7 @@ export type Database = {
           id?: string
           name: string
           pay_what_you_want?: boolean
+          portal_visibility?: string
           public_id?: string | null
           sort_order?: number
           status?: Database["public"]["Enums"]["product_status"]
@@ -1896,6 +1901,7 @@ export type Database = {
           id?: string
           name?: string
           pay_what_you_want?: boolean
+          portal_visibility?: string
           public_id?: string | null
           sort_order?: number
           status?: Database["public"]["Enums"]["product_status"]

@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 
 interface RequestRow {
   id: string;
-  course_id: string;
+  course_id: string | null;
+  product_id: string | null;
   user_id: string;
   created_at: string;
   courses: { title: string } | null;
+  products: { name: string } | null;
   customer?: { name: string | null; email: string };
 }
 
@@ -29,7 +31,7 @@ export default function AdminAccessRequests() {
     queryFn: async () => {
       const { data: reqs } = await supabase
         .from("access_requests")
-        .select("id, course_id, user_id, created_at, courses(title)")
+        .select("id, course_id, product_id, user_id, created_at, courses(title), products(name)")
         .eq("tenant_id", tenantId!)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
@@ -91,7 +93,12 @@ export default function AdminAccessRequests() {
             <Card key={r.id} variant="bordered">
               <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="font-medium truncate">{r.courses?.title ?? "Curso"}</p>
+                  <p className="font-medium truncate">
+                    {r.courses?.title ?? r.products?.name ?? "Item"}
+                    <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+                      {r.product_id ? "Produto" : "Curso"}
+                    </span>
+                  </p>
                   <p className="text-sm text-muted-foreground truncate">
                     {r.customer?.name || r.customer?.email || "Aluno"}
                     {r.customer?.name && r.customer?.email ? ` · ${r.customer.email}` : ""}
