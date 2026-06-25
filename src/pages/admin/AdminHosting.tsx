@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Globe, Mail, Server, Clock } from "lucide-react";
+import { ArrowLeft, Globe, Mail, Server, Clock, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +11,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-interface Assignment { id: string; domain: string; provider: string; status: string }
+interface Capabilities { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean }
+interface Assignment { id: string; domain: string; provider: string; status: string; capabilities: Capabilities | null }
 
 export default function AdminHosting() {
   const { t } = useTranslation();
@@ -28,7 +29,7 @@ export default function AdminHosting() {
     queryFn: async () => {
       const { data } = await supabase
         .from("hosting_assignments")
-        .select("id, domain, provider, status")
+        .select("id, domain, provider, status, capabilities")
         .eq("tenant_id", tenantId!)
         .order("created_at", { ascending: false });
       return (data ?? []) as Assignment[];
@@ -94,16 +95,24 @@ export default function AdminHosting() {
             {loadingAssignments ? (
               <p className="text-sm text-muted-foreground">Carregando...</p>
             ) : hasHosting ? (
-              assignments.map((a) => (
-                <div key={a.id} className="flex items-center justify-between rounded-lg border border-border p-3">
-                  <span className="inline-flex items-center gap-2 text-sm font-medium">
-                    <Globe className="size-4" /> {a.domain}
-                  </span>
-                  <Badge variant={a.status === "active" ? "success" : "outline"}>
-                    {a.status === "active" ? "Ativo" : a.status}
-                  </Badge>
-                </div>
-              ))
+              assignments.map((a) => {
+                const hasTools = a.capabilities && Object.values(a.capabilities).some(Boolean);
+                return (
+                  <div key={a.id} className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="inline-flex items-center gap-2 text-sm font-medium">
+                      <Globe className="size-4" /> {a.domain}
+                      <Badge variant={a.status === "active" ? "success" : "outline"}>
+                        {a.status === "active" ? "Ativo" : a.status}
+                      </Badge>
+                    </span>
+                    {hasTools && (
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/admin/hosting/${encodeURIComponent(a.domain)}`)}>
+                        <Settings2 className="size-4 mr-1.5" /> Gerenciar
+                      </Button>
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">

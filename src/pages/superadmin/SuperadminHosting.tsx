@@ -9,10 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface RawItem { domain?: string; name?: string; status?: string; id?: string | number; username?: string; type?: string }
-interface CatalogEntry { label: string; kind: "site" | "domain"; externalId: string | null; status?: string }
-interface Assignment { id: string; domain: string; tenant_id: string; status: string; tenants?: { name: string; slug: string } | null }
+interface RawItem { domain?: string; name?: string; status?: string; id?: string | number; username?: string; type?: string; vhostType?: string; isEnabled?: boolean }
+interface CatalogEntry { label: string; kind: "site" | "domain"; externalId: string | null; username: string | null; vhostType: string | null; status?: string }
+interface Capabilities { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean }
+interface Assignment { id: string; domain: string; tenant_id: string; hosting_username: string | null; vhost_type: string | null; capabilities: Capabilities | null; status: string; tenants?: { name: string; slug: string } | null }
 interface HostingRequest { id: string; tenant_id: string; note: string | null; created_at: string; tenants?: { name: string; slug: string } | null }
+
+const CAPS: { key: keyof Capabilities; label: string }[] = [
+  { key: "status", label: "Ver status" },
+  { key: "dns", label: "Editar DNS" },
+  { key: "wordpress", label: "WordPress" },
+  { key: "dns_reset", label: "Resetar DNS" },
+];
 
 export default function SuperadminHosting() {
   const qc = useQueryClient();
@@ -96,12 +104,18 @@ export default function SuperadminHosting() {
       for (const w of toArray(sitesR?.ok ? sitesR.websites : null)) {
         const label = (w.domain || w.name || "").toLowerCase().trim();
         if (!label) continue;
-        entries.set(label, { label, kind: "site", externalId: String(w.id ?? w.username ?? "") || null, status: w.status });
+        entries.set(label, {
+          label, kind: "site",
+          externalId: String(w.id ?? "") || null,
+          username: w.username ?? null,
+          vhostType: w.vhostType ?? w.type ?? null,
+          status: w.isEnabled === false ? "disabled" : (w.status ?? "active"),
+        });
       }
       for (const d of toArray(domainsR?.ok ? domainsR.domains : null)) {
         const label = (d.domain || d.name || "").toLowerCase().trim();
         if (!label || entries.has(label)) continue;
-        entries.set(label, { label, kind: "domain", externalId: String(d.id ?? "") || null, status: d.status });
+        entries.set(label, { label, kind: "domain", externalId: String(d.id ?? "") || null, username: null, vhostType: null, status: d.status });
       }
 
       const list = [...entries.values()].sort((a, b) => a.label.localeCompare(b.label));
@@ -117,10 +131,26 @@ export default function SuperadminHosting() {
     if (!tenantId) { toast.error("Selecione um tenant."); return; }
     setBusy(entry.label);
     try {
-      await invokeEdgeFunction("hostinger-admin", { body: { action: "assign", tenantId, domain: entry.label, externalId: entry.externalId } });
+      await invokeEdgeFunction("hostinger-admin", {
+        body: {
+          action: "assign", tenantId, domain: entry.label,
+          externalId: entry.externalId, username: entry.username, vhostType: entry.vhostType,
+          capabilities: { status: true }, // por padrão só "ver status"; demais liberados nos toggles
+        },
+      });
       await qc.invalidateQueries({ queryKey: ["hosting-assignments"] });
       toast.success(entry.kind === "site" ? "Site vinculado." : "Domínio vinculado.");
     } catch { toast.error("Falha ao vincular."); }
+    finally { setBusy(null); }
+  };
+
+  const toggleCapability = async (a: Assignment, cap: keyof Capabilities) => {
+    const next = { ...(a.capabilities ?? {}), [cap]: !a.capabilities?.[cap] };
+    setBusy(a.id);
+    try {
+      await invokeEdgeFunction("hostinger-admin", { body: { action: "set_capabilities", id: a.id, capabilities: next } });
+      await qc.invalidateQueries({ queryKey: ["hosting-assignments"] });
+    } catch { toast.error("Falha ao atualizar recursos."); }
     finally { setBusy(null); }
   };
 
@@ -208,17 +238,35 @@ export default function SuperadminHosting() {
 
       {/* Vínculos */}
       <Card variant="bordered">
-        <CardHeader><CardTitle>Domínios vinculados</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
+        <CardHeader><CardTitle>Sites vinculados</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
           {assignments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum domínio vinculado ainda.</p>
+            <p className="text-sm text-muted-foreground">Nenhum site vinculado ainda.</p>
           ) : assignments.map((a) => (
-            <div key={a.id} className="flex items-center justify-between rounded-lg border border-border p-3">
-              <div>
-                <p className="text-sm font-medium">{a.domain}</p>
-                <p className="text-xs text-muted-foreground">{a.tenants?.name ?? a.tenant_id}</p>
+            <div key={a.id} className="space-y-3 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{a.domain}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {a.tenants?.name ?? a.tenant_id}{a.hosting_username ? ` · conta: ${a.hosting_username}` : ""}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" disabled={busy === a.id} onClick={() => unassign(a.id)}>Remover</Button>
               </div>
-              <Button variant="outline" size="sm" disabled={busy === a.id} onClick={() => unassign(a.id)}>Remover</Button>
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                {CAPS.map((c) => (
+                  <label key={c.key} className="inline-flex cursor-pointer items-center gap-1.5 text-xs">
+                    <input
+                      type="checkbox"
+                      className="size-3.5 accent-primary"
+                      checked={!!a.capabilities?.[c.key]}
+                      disabled={busy === a.id}
+                      onChange={() => toggleCapability(a, c.key)}
+                    />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
             </div>
           ))}
         </CardContent>

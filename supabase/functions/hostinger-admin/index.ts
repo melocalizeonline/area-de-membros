@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       case "list_assignments": {
         const { data } = await admin
           .from("hosting_assignments")
-          .select("id, tenant_id, domain, provider, external_id, status, created_at, tenants(name, slug)")
+          .select("id, tenant_id, domain, provider, external_id, hosting_username, vhost_type, capabilities, status, created_at, tenants(name, slug)")
           .order("created_at", { ascending: false });
         return json({ assignments: data ?? [] });
       }
@@ -111,9 +111,27 @@ Deno.serve(async (req) => {
         const domain = (body.domain ?? "").trim();
         if (!tenantId || !domain) return json({ error: "tenantId and domain required", code: "missing_required_field" }, 400);
         const { error } = await admin.from("hosting_assignments").upsert(
-          { tenant_id: tenantId, domain, provider: "hostinger", external_id: body.externalId ?? null, status: "active", updated_at: new Date().toISOString() },
+          {
+            tenant_id: tenantId,
+            domain,
+            provider: "hostinger",
+            external_id: body.externalId ?? null,
+            hosting_username: body.username ?? null,
+            vhost_type: body.vhostType ?? null,
+            capabilities: body.capabilities ?? {},
+            status: "active",
+            updated_at: new Date().toISOString(),
+          },
           { onConflict: "domain" },
         );
+        if (error) throw error;
+        return json({ success: true });
+      }
+      case "set_capabilities": {
+        const id = (body.id ?? "").trim();
+        if (!id) return json({ error: "id required", code: "missing_required_field" }, 400);
+        const { error } = await admin.from("hosting_assignments")
+          .update({ capabilities: body.capabilities ?? {}, updated_at: new Date().toISOString() }).eq("id", id);
         if (error) throw error;
         return json({ success: true });
       }
