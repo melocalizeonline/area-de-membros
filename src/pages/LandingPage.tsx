@@ -23,7 +23,7 @@ const GRADIENT = "linear-gradient(105deg,#1668FF,#34DE7E)";
 const FONT_HEAD = "'Sora',sans-serif";
 const FONT_BODY = "'Manrope',sans-serif";
 const FONT_LABEL = "'Space Grotesk',sans-serif";
-const LOGO = "/brand/logo-nory-dark.png"; // versão branca, para fundo escuro
+const LOGO = "/brand/logo-nory-light.png"; // versão branca, para o fundo navy
 
 const FEATURES = [
   { icon: BookOpen, title: "Cursos completos", desc: "Módulos e aulas organizados, com player de vídeo, materiais e acompanhamento de progresso para cada aluno." },

@@ -26,10 +26,10 @@
 /** Nome da plataforma — usado em títulos de página e textos de interface. */
 export const BRAND_NAME = "Nory Members";
 
-/** Logo horizontal — versão para fundo escuro (dark mode). */
+/** Logo colorida — para fundo claro (tema light). */
 export const BRAND_LOGO_DARK = "/brand/logo-nory-dark.png";
 
-/** Logo horizontal — versão para fundo claro (light mode). */
+/** Logo branca — para fundo escuro (tema dark). */
 export const BRAND_LOGO_LIGHT = "/brand/logo-nory-light.png";
 
 /** Ícone quadrado — versão para fundo escuro. */
