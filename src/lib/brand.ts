@@ -27,10 +27,10 @@
 export const BRAND_NAME = "Nory Members";
 
 /** Logo horizontal — versão para fundo escuro (dark mode). */
-export const BRAND_LOGO_DARK = "/brand/logo-hubfy-dark.svg";
+export const BRAND_LOGO_DARK = "/brand/logo-nory-dark.png";
 
 /** Logo horizontal — versão para fundo claro (light mode). */
-export const BRAND_LOGO_LIGHT = "/brand/logo-hubfy-light.svg";
+export const BRAND_LOGO_LIGHT = "/brand/logo-nory-light.png";
 
 /** Ícone quadrado — versão para fundo escuro. */
 export const BRAND_ICON_DARK = "/brand/icon-hubfy-dark.svg";
