@@ -9,6 +9,7 @@ import {
   Palette,
   Plug,
   Shield,
+  Inbox,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -37,6 +38,7 @@ const mainItems: NavItem[] = [
   { to: "/admin", icon: House, labelKey: "nav.home", end: true },
   { to: "/admin/orders", icon: Receipt, labelKey: "nav.orders" },
   { to: "/admin/customers", icon: Users, labelKey: "nav.customers", tourId: "nav-customers" },
+  { to: "/admin/access-requests", icon: Inbox, labelKey: "nav.accessRequests" },
   { to: "/admin/products", icon: ShoppingBag, labelKey: "nav.products", tourId: "nav-products" },
 ];
 

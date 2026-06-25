@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, Check } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { LIGHT_VARS, DARK_VARS } from "@/lib/showcase-theme";
@@ -12,6 +14,7 @@ interface ShowcaseCourseRow {
   description: string | null;
   cover_horizontal_url: string | null;
   updated_at: string;
+  portal_visibility: string | null;
 }
 
 interface ShowcaseCourseJoin {
@@ -54,6 +57,43 @@ export default function ClubShowcasePage() {
     enabled: !!showcase,
   });
 
+  // Cursos para os quais o usuário já solicitou acesso (pendente)
+  const { data: requestedCourseIds = [] } = useQuery({
+    queryKey: ["access-requests-mine", slug],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data } = await supabase
+        .from("access_requests")
+        .select("course_id")
+        .eq("user_id", user.id)
+        .eq("status", "pending");
+      return (data ?? []).map((r) => r.course_id);
+    },
+    enabled: !!showcase,
+  });
+
+  const [justRequested, setJustRequested] = useState<string[]>([]);
+
+  const requestAccess = async (courseId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Faça login para solicitar acesso.");
+      return;
+    }
+    const tenantId = (showcase as { tenant_id?: string } | null)?.tenant_id;
+    const { error } = await supabase.from("access_requests").upsert(
+      { tenant_id: tenantId, course_id: courseId, user_id: user.id, status: "pending" },
+      { onConflict: "course_id,user_id" },
+    );
+    if (error) {
+      toast.error("Não foi possível enviar a solicitação agora.");
+      return;
+    }
+    setJustRequested((prev) => [...prev, courseId]);
+    toast.success("Solicitação de acesso enviada!");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -86,7 +126,12 @@ export default function ClubShowcasePage() {
       return (a.courses?.title || "").localeCompare(b.courses?.title || "");
     })
     .map((sc) => sc.courses)
-    .filter(Boolean) as ShowcaseCourseRow[] || [];
+    .filter(Boolean)
+    // Esconde cursos sem acesso, exceto os marcados como "apenas ver" (locked)
+    .filter((c) => {
+      const co = c as ShowcaseCourseRow;
+      return accessibleCourseIds.includes(co.id) || co.portal_visibility === "locked";
+    }) as ShowcaseCourseRow[] || [];
 
   return (
     <div
@@ -138,6 +183,8 @@ export default function ClubShowcasePage() {
                   )
                 : null;
               const hasAccess = accessibleCourseIds.includes(course.id);
+              const isRequested =
+                requestedCourseIds.includes(course.id) || justRequested.includes(course.id);
 
               return (
                 <div
@@ -177,6 +224,21 @@ export default function ClubShowcasePage() {
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                         {course.description}
                       </p>
+                    )}
+                    {!hasAccess && (
+                      isRequested ? (
+                        <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                          <Check className="size-4" /> Acesso solicitado
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => requestAccess(course.id)}
+                          className="mt-3 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                        >
+                          <Lock className="size-3.5" /> Solicitar acesso
+                        </button>
+                      )
                     )}
                   </div>
                 </div>

@@ -97,6 +97,7 @@ interface CourseData {
   cover_horizontal_url: string | null;
   updated_at: string;
   is_active: boolean;
+  portal_visibility: string;
   tenant_id: string;
 }
 
@@ -207,6 +208,7 @@ export default function AdminCourseStructure() {
   const [formDescription, setFormDescription] = useState("");
   const [formCategory, setFormCategory] = useState<CourseCategory | "">("");
   const [formCoverPath, setFormCoverPath] = useState("");
+  const [formVisibility, setFormVisibility] = useState<string>("hidden");
   const [formCoverDisplayUrl, setFormCoverDisplayUrl] = useState("");
   const [coverDirty, setCoverDirty] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -246,7 +248,7 @@ export default function AdminCourseStructure() {
 
     const { data: courseData, error: courseError } = await supabase
       .from("courses")
-      .select("id, public_id, title, slug, description, category, cover_horizontal_url, updated_at, is_active, tenant_id")
+      .select("id, public_id, title, slug, description, category, cover_horizontal_url, updated_at, is_active, portal_visibility, tenant_id")
       .eq("public_id", courseId)
       .single();
 
@@ -260,6 +262,7 @@ export default function AdminCourseStructure() {
     setFormTitle(limitNameLength(courseData.title));
     setFormDescription(courseData.description || "");
     setFormCategory(courseData.category || "");
+    setFormVisibility(courseData.portal_visibility || "hidden");
 
     const coverVal = cleanCoverValue(courseData.cover_horizontal_url);
     setFormCoverPath(coverVal);
@@ -330,6 +333,7 @@ export default function AdminCourseStructure() {
       description: formDescription.trim() || null,
       category: (formCategory || null) as CourseCategory | null,
       cover_horizontal_url: formCoverPath || null,
+      portal_visibility: formVisibility,
     };
     if (titleChanged) payload.slug = newSlug;
 
@@ -347,6 +351,7 @@ export default function AdminCourseStructure() {
         description: formDescription.trim() || null,
         category: (formCategory || null) as CourseCategory | null,
         cover_horizontal_url: formCoverPath || null,
+        portal_visibility: formVisibility,
         slug: newSlug,
         updated_at: nextUpdatedAt,
       });
@@ -427,6 +432,7 @@ export default function AdminCourseStructure() {
       formDescription !== (course.description ?? "") ||
       formCategory !== (course.category ?? "") ||
       formCoverPath !== cleanCoverValue(course.cover_horizontal_url) ||
+      formVisibility !== (course.portal_visibility ?? "hidden") ||
       coverDirty);
 
   // Module inline editing
@@ -966,6 +972,29 @@ export default function AdminCourseStructure() {
                           {opt.label}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </FieldControl>
+              </Field>
+
+              <div className="border-t border-border" />
+
+              {/* Visibilidade no portal */}
+              <Field orientation="split">
+                <FieldContent>
+                  <FieldLabel>Visibilidade no portal</FieldLabel>
+                  <FieldDescription>
+                    Para quem ainda não tem acesso a este curso.
+                  </FieldDescription>
+                </FieldContent>
+                <FieldControl>
+                  <Select value={formVisibility} onValueChange={setFormVisibility}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hidden">Oculto (não aparece)</SelectItem>
+                      <SelectItem value="locked">Apenas ver (bloqueado, permite solicitar acesso)</SelectItem>
                     </SelectContent>
                   </Select>
                 </FieldControl>

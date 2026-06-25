@@ -455,6 +455,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          portal_visibility: string
           public_id: string | null
           slug: string
           tenant_id: string
@@ -469,6 +470,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          portal_visibility?: string
           public_id?: string | null
           slug: string
           tenant_id: string
@@ -483,6 +485,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          portal_visibility?: string
           public_id?: string | null
           slug?: string
           tenant_id?: string
@@ -498,6 +501,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      access_requests: {
+        Row: {
+          id: string
+          tenant_id: string
+          course_id: string
+          user_id: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          course_id: string
+          user_id: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          course_id?: string
+          user_id?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       creator_signup_requests: {
         Row: {

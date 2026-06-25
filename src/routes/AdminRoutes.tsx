@@ -18,6 +18,7 @@ const AdminLessonNew = lazy(() => import("@/pages/admin/AdminLessonNew"));
 const AdminCustomers = lazy(() => import("@/pages/admin/AdminCustomers"));
 const AdminCustomerDetail = lazy(() => import("@/pages/admin/AdminCustomerDetail"));
 const AdminCustomerImport = lazy(() => import("@/pages/admin/AdminCustomerImport"));
+const AdminAccessRequests = lazy(() => import("@/pages/admin/AdminAccessRequests"));
 const AdminContactImport = lazy(() => import("@/pages/admin/AdminContactImport"));
 const AdminProducts = lazy(() => import("@/pages/admin/AdminProducts"));
 const AdminProductEdit = lazy(() => import("@/pages/admin/AdminProductEdit"));
@@ -158,6 +159,7 @@ export default function AdminRoutes() {
             <Route path="/customers/import" element={<AdminCustomerImport />} />
             <Route path="/customers/import-contacts" element={<AdminContactImport />} />
             <Route path="/customers/:customerId" element={<AdminCustomerDetail />} />
+            <Route path="/access-requests" element={<AdminAccessRequests />} />
             <Route path="/settings" element={<Navigate to="/admin/settings/general" replace />} />
             <Route path="/settings/:tab" element={<AdminSettings />} />
             <Route path="/profile" element={<Navigate to="/admin/profile/profile" replace />} />
