@@ -125,7 +125,7 @@ export function usePortalProducts({ tenantId, accessRole }: UsePortalProductsPar
 
       const { data: allProducts, error: allProductsError } = await supabase
         .from("products")
-        .select("id, public_id, name, description, cover_url, updated_at, benefit, product_courses(courses(slug, showcase_courses(showcases(id, slug, title))))")
+        .select("id, public_id, name, description, cover_url, updated_at, benefit, portal_visibility, product_courses(courses(slug, showcase_courses(showcases(id, slug, title))))")
         .eq("tenant_id", tenantId)
         .eq("status", "active")
         .order("sort_order", { ascending: true });
