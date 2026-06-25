@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
+import { useTenantCatalog } from "@/hooks/useTenantCatalog";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { enrollCustomer } from "@/lib/enroll";
 import { translateAppError } from "@/lib/app-error-utils";
 import {
   Sheet,
@@ -87,6 +91,13 @@ export default function CustomerSheet({
   const [document, setDocument] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Matrícula manual (apenas no modo criação, se o tenant permitir)
+  const { tenant } = useTenant();
+  const allowManualEnrollment = !!tenant?.allow_manual_enrollment;
+  const { data: catalog } = useTenantCatalog();
+  const [enrollProducts, setEnrollProducts] = useState<string[]>([]);
+  const [enrollCourses, setEnrollCourses] = useState<string[]>([]);
+
   // Populate form when customer changes
   useEffect(() => {
     if (customer) {
@@ -170,6 +181,25 @@ export default function CustomerSheet({
           document_type: normalizedDocumentType || undefined,
           document: normalizedDocument || undefined,
         });
+
+        // Concede acesso manual aos produtos/cursos selecionados (sem checkout)
+        if (allowManualEnrollment && tenant?.id && (enrollProducts.length > 0 || enrollCourses.length > 0)) {
+          try {
+            await enrollCustomer({
+              tenantId: tenant.id,
+              email: email.trim().toLowerCase(),
+              productIds: enrollProducts,
+              courseIds: enrollCourses,
+              action: "grant",
+            });
+          } catch (err) {
+            toast.error(
+              "Cliente criado, mas falhou ao conceder acesso: " +
+                (err instanceof Error ? err.message : ""),
+            );
+          }
+        }
+
         toast.success(t("customerSheet.customerAdded"));
       }
       onOpenChange(false);
@@ -333,6 +363,32 @@ export default function CustomerSheet({
               </div>
             </div>
           </Section>
+
+          {!isEdit && allowManualEnrollment && (
+            <Section title="Acessos (matrícula manual)">
+              <p className="text-sm text-muted-foreground">
+                Conceda acesso a produtos e cursos sem o cliente passar por checkout.
+              </p>
+              <div className="space-y-2">
+                <Label>Produtos</Label>
+                <MultiSelect
+                  options={(catalog?.products ?? []).map((p) => ({ value: p.id, label: p.name }))}
+                  value={enrollProducts}
+                  onValueChange={setEnrollProducts}
+                  placeholder="Selecione produtos"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Cursos</Label>
+                <MultiSelect
+                  options={(catalog?.courses ?? []).map((c) => ({ value: c.id, label: c.title }))}
+                  value={enrollCourses}
+                  onValueChange={setEnrollCourses}
+                  placeholder="Selecione cursos"
+                />
+              </div>
+            </Section>
+          )}
         </div>
 
         <SheetFooter>

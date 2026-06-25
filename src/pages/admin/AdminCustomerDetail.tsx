@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CustomerAccessSection } from "@/components/admin/CustomerAccessSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import {
@@ -415,6 +416,12 @@ export default function AdminCustomerDetail() {
                   </Button>
                 </DangerAction>
               </DangerSection>
+
+              <CustomerAccessSection
+                customerId={customer.id}
+                userId={customer.user_id ?? null}
+                email={customer.email}
+              />
             </TabsContent>
           </Tabs>
         </div>

@@ -2653,6 +2653,7 @@ export type Database = {
           description: string | null
           email_sender_name: string | null
           enable_sale_emails: boolean
+          allow_manual_enrollment: boolean
           facebook_pixel_id: string | null
           ga_tracking_id: string | null
           gumlet_signed_url_secret: string | null
@@ -2694,6 +2695,7 @@ export type Database = {
           description?: string | null
           email_sender_name?: string | null
           enable_sale_emails?: boolean
+          allow_manual_enrollment?: boolean
           facebook_pixel_id?: string | null
           ga_tracking_id?: string | null
           gumlet_signed_url_secret?: string | null
@@ -2735,6 +2737,7 @@ export type Database = {
           description?: string | null
           email_sender_name?: string | null
           enable_sale_emails?: boolean
+          allow_manual_enrollment?: boolean
           facebook_pixel_id?: string | null
           ga_tracking_id?: string | null
           gumlet_signed_url_secret?: string | null

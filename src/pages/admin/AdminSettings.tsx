@@ -95,6 +95,7 @@ export default function AdminSettings() {
     whatsapp: "",
     email_sender_name: "",
     enable_sale_emails: true,
+    allow_manual_enrollment: false,
     social_links: {} as Record<string, string>,
   });
 
@@ -116,6 +117,7 @@ export default function AdminSettings() {
         whatsapp: tenant.whatsapp || "",
         email_sender_name: tenant.email_sender_name || "",
         enable_sale_emails: tenant.enable_sale_emails ?? true,
+        allow_manual_enrollment: tenant.allow_manual_enrollment ?? false,
         social_links: savedLinks,
       }));
 
@@ -136,6 +138,7 @@ export default function AdminSettings() {
       whatsapp: tenant?.whatsapp || "",
       email_sender_name: tenant?.email_sender_name || "",
       enable_sale_emails: tenant?.enable_sale_emails ?? true,
+      allow_manual_enrollment: tenant?.allow_manual_enrollment ?? false,
       social_links: (tenant?.social_links ?? {}) as Record<string, string>,
     }),
     [tenant]
@@ -151,6 +154,7 @@ export default function AdminSettings() {
       formData.whatsapp !== initialData.whatsapp ||
       formData.email_sender_name !== initialData.email_sender_name ||
       formData.enable_sale_emails !== initialData.enable_sale_emails ||
+      formData.allow_manual_enrollment !== initialData.allow_manual_enrollment ||
       JSON.stringify(formData.social_links) !== JSON.stringify(initialData.social_links)
     );
   }, [formData, initialData]);
@@ -327,6 +331,7 @@ export default function AdminSettings() {
         description: formData.description,
         email_sender_name: formData.email_sender_name || null,
         enable_sale_emails: formData.enable_sale_emails,
+        allow_manual_enrollment: formData.allow_manual_enrollment,
         social_links: cleanedLinks,
         support_email: formData.support_email?.trim() || null,
         website_url: formData.website_url?.trim() || null,
@@ -646,6 +651,34 @@ export default function AdminSettings() {
                         rows={3}
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      />
+                    </FieldControl>
+                  </Field>
+                </CardContent>
+              </Card>
+
+              {/* ── Card: Matrícula manual ── */}
+              <Card variant="bordered" className="mt-6">
+                <CardHeader>
+                  <CardTitle>{t("settings.enrollment.title", "Matrícula manual")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Field orientation={isMobile ? "vertical" : "split"}>
+                    <FieldContent>
+                      <FieldLabel>
+                        {t("settings.enrollment.manualLabel", "Permitir adicionar alunos manualmente")}
+                      </FieldLabel>
+                      <FieldDescription>
+                        {t(
+                          "settings.enrollment.manualDescription",
+                          "Quando ativado, você pode conceder acesso a produtos e cursos sem passar por checkout. Desativado, o acesso só é liberado por uma compra.",
+                        )}
+                      </FieldDescription>
+                    </FieldContent>
+                    <FieldControl>
+                      <Switch
+                        checked={formData.allow_manual_enrollment}
+                        onCheckedChange={(checked) => setFormData({ ...formData, allow_manual_enrollment: checked })}
                       />
                     </FieldControl>
                   </Field>
