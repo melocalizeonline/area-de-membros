@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,9 +91,12 @@ export default function PortalHome() {
     enabled: !!tenant.id,
   });
 
+  const ownedProducts = useMemo(() => products.filter((p) => p.hasAccess), [products]);
+  const lockedProducts = useMemo(() => products.filter((p) => !p.hasAccess), [products]);
+
   const galleryItems = useMemo(
     () =>
-      products.map((product) => {
+      ownedProducts.map((product) => {
         const imageSrc =
           (product.coverUrl
             ? getCoversOptimizedUrl(product.coverUrl, "product-card", product.updatedAt)
@@ -102,18 +105,14 @@ export default function PortalHome() {
         return {
           id: product.id,
           title: product.name,
-          description: !product.hasAccess
-            ? (requestedIds.includes(product.id) || justRequested.includes(product.id)
-                ? "✓ Acesso solicitado"
-                : "🔒 Clique para solicitar acesso")
-            : (product.description ||
-              (product.benefit === "courses"
-                ? t("portal.home.fallbackShowcaseDescription")
-                : product.benefit === "files"
-                ? t("portal.home.fallbackFilesDescription")
-                : product.benefit === "links"
-                ? t("portal.home.fallbackLinksDescription")
-                : "")),
+          description: product.description ||
+            (product.benefit === "courses"
+              ? t("portal.home.fallbackShowcaseDescription")
+              : product.benefit === "files"
+              ? t("portal.home.fallbackFilesDescription")
+              : product.benefit === "links"
+              ? t("portal.home.fallbackLinksDescription")
+              : ""),
           badge: product.benefit === "courses"
             ? t("products.deliverableTypes.course")
             : product.benefit === "files"
@@ -129,19 +128,16 @@ export default function PortalHome() {
             ? "green"
             : undefined,
           imageSrc,
-          muted: !product.hasAccess,
-          onClick: product.hasAccess
-            ? () => {
-                if (product.benefit === "courses" && product.courseSlug) {
-                  navigate(`/${slug}/${product.courseSlug}`);
-                } else {
-                  navigate(`/${slug}/products/${product.public_id}`);
-                }
-              }
-            : () => requestAccess(product.id),
+          onClick: () => {
+            if (product.benefit === "courses" && product.courseSlug) {
+              navigate(`/${slug}/${product.courseSlug}`);
+            } else {
+              navigate(`/${slug}/products/${product.public_id}`);
+            }
+          },
         };
       }),
-    [products, t, navigate, slug, requestAccess, requestedIds, justRequested]
+    [ownedProducts, t, navigate, slug]
   );
 
   const handleSignOut = useCallback(async () => {
@@ -207,6 +203,62 @@ export default function PortalHome() {
               radiusClass={galleryRadiusClass}
               themeMode={portalTheme}
             />
+          )}
+
+          {!isLoading && lockedProducts.length > 0 && (
+            <div className="mt-14">
+              <h2 className="mb-4 text-xl font-semibold" style={{ color: isDark ? "#FFFFFF" : "#111111" }}>
+                Disponíveis
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {lockedProducts.map((product) => {
+                  const requested =
+                    requestedIds.includes(product.id) || justRequested.includes(product.id);
+                  const img =
+                    (product.coverUrl
+                      ? getCoversOptimizedUrl(product.coverUrl, "product-card", product.updatedAt)
+                      : null) || PORTAL_PRODUCT_FALLBACK;
+                  return (
+                    <div
+                      key={product.id}
+                      className={`overflow-hidden border ${galleryRadiusClass}`}
+                      style={{
+                        background: isDark ? "#141414" : "#FFFFFF",
+                        borderColor: isDark ? "rgba(255,255,255,.10)" : "rgba(0,0,0,.10)",
+                      }}
+                    >
+                      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                        <img src={img} alt={product.name} className="size-full object-cover" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/55">
+                          <Lock className="size-8 text-white/85" />
+                        </div>
+                      </div>
+                      <div className="space-y-3 p-4">
+                        <h3 className="font-semibold" style={{ color: isDark ? "#FFFFFF" : "#111111" }}>
+                          {product.name}
+                        </h3>
+                        {requested ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 text-sm font-medium"
+                            style={{ color: themeColors.textSecondary }}
+                          >
+                            <Check className="size-4" /> Solicitado
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => requestAccess(product.id)}
+                            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                          >
+                            <Lock className="size-3.5" /> Solicitar acesso
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       </section>
