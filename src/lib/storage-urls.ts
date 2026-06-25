@@ -76,14 +76,12 @@ function toOptimizedUrl(
   const clean = url.split("?")[0];
   if (!clean.includes("/storage/v1/object/public/")) return url;
 
-  // Preserve cache-buster (?t=...) so CDN serves fresh image after re-upload
+  // A transformação de imagem do Supabase (/render/image/) é um recurso pago
+  // e NÃO está habilitada neste projeto (retorna 403 FeatureNotEnabled).
+  // Por isso servimos a URL pública crua — assim as imagens sempre carregam.
+  // (width/height/quality/resize ficam sem uso até a feature ser habilitada.)
   const cacheBuster = extractCacheBuster(url);
-
-  return (
-    clean.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/") +
-    `?width=${width}&height=${height}&resize=${resize}&quality=${quality}` +
-    (cacheBuster ? `&t=${cacheBuster}` : "")
-  );
+  return cacheBuster ? `${clean}?t=${cacheBuster}` : clean;
 }
 
 // ---------------------------------------------------------------------------
