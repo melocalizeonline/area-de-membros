@@ -4,15 +4,27 @@ import {
   CheckCircle2,
   ClipboardList,
   Eye,
+  EyeOff,
   Filter,
   Layers3,
   LibraryBig,
   Plus,
   Search,
   Sparkles,
+  Trash2,
   Video
 } from "lucide-react";
-import { createCourse, createCourseModule, createLesson } from "@/app/actions/admin";
+import {
+  createCourse,
+  createCourseModule,
+  createLesson,
+  deleteCourse,
+  deleteCourseModule,
+  deleteLesson,
+  setCoursePublished,
+  setLessonPublished
+} from "@/app/actions/admin";
+import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { FormField } from "@/components/admin/form-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardText, CardTitle } from "@/components/ui/card";
@@ -283,6 +295,30 @@ export default async function CoursesAdminPage({
                           Visualizar
                         </Link>
                       </div>
+
+                      <div className="flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row">
+                        <form action={setCoursePublished} className="flex-1">
+                          <input name="id" type="hidden" value={course.id} />
+                          <input name="published" type="hidden" value={(!course.published).toString()} />
+                          <button
+                            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 text-sm font-medium text-gray-900 transition hover:bg-gray-50"
+                            type="submit"
+                          >
+                            {course.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {course.published ? "Despublicar" : "Publicar"}
+                          </button>
+                        </form>
+                        <form action={deleteCourse} className="flex-1">
+                          <input name="id" type="hidden" value={course.id} />
+                          <ConfirmSubmit
+                            className="h-10 w-full gap-2 border border-red-200 bg-white px-4 text-red-600 hover:bg-red-50"
+                            message={`Excluir o curso "${course.title}"? Modulos e aulas vinculados tambem serao removidos. Esta acao nao pode ser desfeita.`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Excluir
+                          </ConfirmSubmit>
+                        </form>
+                      </div>
                     </div>
                   </article>
                 );
@@ -442,9 +478,21 @@ export default async function CoursesAdminPage({
                             <p className="truncate text-sm font-medium text-gray-900">{moduleItem.title}</p>
                             <p className="mt-1 text-xs text-gray-500">Ordem {moduleItem.sort_order}</p>
                           </div>
-                          <span className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-600">
-                            {moduleLessons.length} aula(s)
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-600">
+                              {moduleLessons.length} aula(s)
+                            </span>
+                            <form action={deleteCourseModule}>
+                              <input name="id" type="hidden" value={moduleItem.id} />
+                              <ConfirmSubmit
+                                className="h-8 w-8 border border-red-200 bg-white text-red-600 hover:bg-red-50"
+                                message={`Excluir o modulo "${moduleItem.title}"? As aulas vinculadas tambem serao removidas.`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Excluir modulo</span>
+                              </ConfirmSubmit>
+                            </form>
+                          </div>
                         </div>
                         {moduleLessons.length > 0 && (
                           <div className="mt-3 space-y-2">
@@ -459,13 +507,37 @@ export default async function CoursesAdminPage({
                                     {lesson.video_provider} - ordem {lesson.sort_order} - {formatDuration(lesson.duration_seconds ?? 0)}
                                   </p>
                                 </div>
-                                <span
-                                  className={`w-fit rounded-full px-2.5 py-1 text-xs font-medium ${
-                                    lesson.published ? "bg-teal-50 text-teal-700" : "bg-amber-50 text-amber-700"
-                                  }`}
-                                >
-                                  {lesson.published ? "Publicada" : "Rascunho"}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`w-fit rounded-full px-2.5 py-1 text-xs font-medium ${
+                                      lesson.published ? "bg-teal-50 text-teal-700" : "bg-amber-50 text-amber-700"
+                                    }`}
+                                  >
+                                    {lesson.published ? "Publicada" : "Rascunho"}
+                                  </span>
+                                  <form action={setLessonPublished}>
+                                    <input name="id" type="hidden" value={lesson.id} />
+                                    <input name="published" type="hidden" value={(!lesson.published).toString()} />
+                                    <button
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50"
+                                      title={lesson.published ? "Despublicar aula" : "Publicar aula"}
+                                      type="submit"
+                                    >
+                                      {lesson.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                      <span className="sr-only">{lesson.published ? "Despublicar aula" : "Publicar aula"}</span>
+                                    </button>
+                                  </form>
+                                  <form action={deleteLesson}>
+                                    <input name="id" type="hidden" value={lesson.id} />
+                                    <ConfirmSubmit
+                                      className="h-8 w-8 border border-red-200 bg-white text-red-600 hover:bg-red-50"
+                                      message={`Excluir a aula "${lesson.title}"?`}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">Excluir aula</span>
+                                    </ConfirmSubmit>
+                                  </form>
+                                </div>
                               </div>
                             ))}
                           </div>

@@ -92,6 +92,67 @@ export async function createLesson(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+export async function setCoursePublished(formData: FormData) {
+  await assertAdmin();
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase
+    .from("courses")
+    .update({ published: bool(formData, "published") })
+    .eq("id", text(formData, "id"));
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/cursos");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteCourse(formData: FormData) {
+  await assertAdmin();
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase.from("courses").delete().eq("id", text(formData, "id"));
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/cursos");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteCourseModule(formData: FormData) {
+  await assertAdmin();
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase.from("course_modules").delete().eq("id", text(formData, "id"));
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/cursos");
+  revalidatePath("/dashboard");
+}
+
+export async function setLessonPublished(formData: FormData) {
+  await assertAdmin();
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase
+    .from("lessons")
+    .update({ published: bool(formData, "published") })
+    .eq("id", text(formData, "id"));
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/cursos");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteLesson(formData: FormData) {
+  await assertAdmin();
+  const supabase = await createAdminClient();
+
+  const { error } = await supabase.from("lessons").delete().eq("id", text(formData, "id"));
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/cursos");
+  revalidatePath("/dashboard");
+}
+
 export async function createTool(formData: FormData) {
   await assertAdmin();
   const supabase = await createAdminClient();
