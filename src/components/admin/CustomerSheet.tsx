@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useTenant } from "@/hooks/useTenant";
 import { useTenantCatalog } from "@/hooks/useTenantCatalog";
-import { MultiSelect } from "@/components/ui/multi-select";
+import { InlineCheckboxList } from "@/components/admin/InlineCheckboxList";
 import { enrollCustomer } from "@/lib/enroll";
 import { CustomerAccessSection } from "@/components/admin/CustomerAccessSection";
 import { translateAppError } from "@/lib/app-error-utils";
@@ -372,20 +372,20 @@ export default function CustomerSheet({
               </p>
               <div className="space-y-2">
                 <Label>Produtos</Label>
-                <MultiSelect
+                <InlineCheckboxList
                   options={(catalog?.products ?? []).map((p) => ({ value: p.id, label: p.name }))}
                   value={enrollProducts}
                   onValueChange={setEnrollProducts}
-                  placeholder="Selecione produtos"
+                  emptyText="Nenhum produto cadastrado."
                 />
               </div>
               <div className="space-y-2">
                 <Label>Cursos</Label>
-                <MultiSelect
+                <InlineCheckboxList
                   options={(catalog?.courses ?? []).map((c) => ({ value: c.id, label: c.title }))}
                   value={enrollCourses}
                   onValueChange={setEnrollCourses}
-                  placeholder="Selecione cursos"
+                  emptyText="Nenhum curso cadastrado."
                 />
               </div>
             </Section>

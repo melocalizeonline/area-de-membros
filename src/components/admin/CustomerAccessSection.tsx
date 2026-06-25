@@ -6,7 +6,7 @@ import { useTenant } from "@/hooks/useTenant";
 import { useTenantCatalog } from "@/hooks/useTenantCatalog";
 import { enrollCustomer } from "@/lib/enroll";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { MultiSelect } from "@/components/ui/multi-select";
+import { InlineCheckboxList } from "@/components/admin/InlineCheckboxList";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -93,20 +93,20 @@ export function CustomerAccessSection({ customerId, userId }: Props) {
       <CardContent className="space-y-4">
         <div>
           <p className="text-sm font-medium mb-1.5">Produtos</p>
-          <MultiSelect
+          <InlineCheckboxList
             options={(catalog?.products ?? []).map((p) => ({ value: p.id, label: p.name }))}
             value={selProducts}
             onValueChange={setSelProducts}
-            placeholder="Selecione produtos"
+            emptyText="Nenhum produto cadastrado."
           />
         </div>
         <div>
           <p className="text-sm font-medium mb-1.5">Cursos</p>
-          <MultiSelect
+          <InlineCheckboxList
             options={(catalog?.courses ?? []).map((c) => ({ value: c.id, label: c.title }))}
             value={selCourses}
             onValueChange={setSelCourses}
-            placeholder="Selecione cursos"
+            emptyText="Nenhum curso cadastrado."
           />
         </div>
         {!userId && selCourses.length > 0 && (
