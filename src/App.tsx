@@ -96,6 +96,10 @@ const SignupPage = lazy(() => import("@/pages/SignupAnimated"));
 const LoginPage = lazy(() => import("@/pages/LoginAnimated"));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordAnimated"));
 
+// Public legal pages (no AuthProvider)
+const TermsPage = lazy(() => import("@/pages/legal/TermsPage"));
+const PrivacyPage = lazy(() => import("@/pages/legal/PrivacyPage"));
+
 
 // Single AuthProvider for all authenticated routes (admin + customer)
 const AuthenticatedApp = lazy(() => import("@/routes/AuthenticatedApp"));
@@ -157,6 +161,10 @@ const AppRoutes = () => {
           </ErrorBoundary>
         )}
       />
+
+      {/* ═══ Public legal pages ═══ */}
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
 
       {/* ═══ Legacy auth redirects ═══ */}
       <Route path="/login" element={<Navigate to="/admin/login" replace />} />
