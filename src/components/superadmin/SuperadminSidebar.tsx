@@ -6,6 +6,7 @@ import {
   ShoppingBag,
   Store,
   UserCog,
+  Plug,
   ArrowLeft,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -33,6 +34,7 @@ const navItems = [
   { to: "/superadmin/customers", icon: Users, labelKey: "superadmin.nav.customers" },
   { to: "/superadmin/products", icon: ShoppingBag, labelKey: "superadmin.nav.products" },
   { to: "/superadmin/sellers", icon: Store, labelKey: "superadmin.nav.sellers" },
+  { to: "/superadmin/hosting", icon: Plug, labelKey: "superadmin.nav.appsIntegrations" },
 ];
 
 export function SuperadminSidebar(props: React.ComponentProps<typeof Sidebar>) {

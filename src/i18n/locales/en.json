@@ -186,7 +186,7 @@
     "courses": "Courses",
     "showcases": "Showcases",
     "design": "Design",
-    "integrations": "Integrations",
+    "integrations": "Apps & Integrations",
     "settings": "Settings",
     "myProfile": "My profile",
     "darkMode": "Dark mode",
@@ -2731,7 +2731,7 @@
     "es": "Español"
   },
   "integrations": {
-    "title": "Integrations",
+    "title": "Apps & Integrations",
     "subtitle": "Connect external platforms to automate sales and content delivery",
     "connect": "Connect",
     "connected": "Integration connected successfully!",
@@ -3468,6 +3468,7 @@
       "products": "Products",
       "sellers": "Sellers",
       "users": "Users",
+      "appsIntegrations": "Apps & Integrations",
       "backToConsole": "Back to Console"
     },
     "title": "Superadmin",

@@ -30,6 +30,7 @@ const AdminAssets = lazy(() => import("@/pages/admin/AdminAssets"));
 const AdminAssetDetail = lazy(() => import("@/pages/admin/AdminAssetDetail"));
 const AdminShowcases = lazy(() => import("@/pages/admin/AdminShowcases"));
 const AdminIntegrations = lazy(() => import("@/pages/admin/AdminIntegrations"));
+const AdminHosting = lazy(() => import("@/pages/admin/AdminHosting"));
 const AdminSeller = lazy(() => import("@/pages/admin/AdminSeller"));
 // Full-screen pages (no sidebar)
 const AdminLessonEdit = lazy(() => import("@/pages/admin/AdminLessonEdit"));
@@ -172,6 +173,7 @@ export default function AdminRoutes() {
             <Route path="/orders" element={<AdminOrders />} />
             <Route path="/orders/:orderId" element={<AdminOrderDetail />} />
             <Route path="/integrations" element={<AdminIntegrations />} />
+            <Route path="/hosting" element={<AdminHosting />} />
             <Route path="/create-seller" element={<AdminSeller />} />
           </Route>
 

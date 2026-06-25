@@ -186,7 +186,7 @@
     "courses": "Cursos",
     "showcases": "Vitrines",
     "design": "Design",
-    "integrations": "Integrações",
+    "integrations": "Apps e Integrações",
     "settings": "Configurações",
     "myProfile": "Meu perfil",
     "darkMode": "Modo escuro",
@@ -1428,7 +1428,7 @@
     "showcase": "Vitrines",
     "onboarding": "Onboarding",
     "design": "Design",
-    "integrations": "Integrações"
+    "integrations": "Apps e Integrações"
   },
   "showcaseEdit": {
     "sections": {
@@ -2709,7 +2709,7 @@
     "es": "Español"
   },
   "integrations": {
-    "title": "Integrações",
+    "title": "Apps e Integrações",
     "subtitle": "Conecte plataformas externas para automatizar vendas e entregas",
     "connect": "Conectar",
     "connected": "Integração conectada com sucesso!",
@@ -3522,6 +3522,7 @@
       "products": "Produtos",
       "sellers": "Sellers",
       "users": "Usuários",
+      "appsIntegrations": "Apps e Integrações",
       "backToConsole": "Voltar ao Console"
     },
     "title": "Superadmin",

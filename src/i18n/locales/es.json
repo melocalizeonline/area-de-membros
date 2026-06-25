@@ -186,7 +186,7 @@
     "courses": "Cursos",
     "showcases": "Escaparates",
     "design": "Diseño",
-    "integrations": "Integraciones",
+    "integrations": "Apps e Integraciones",
     "settings": "Configuración",
     "myProfile": "Mi perfil",
     "darkMode": "Modo oscuro",
@@ -2730,7 +2730,7 @@
     "es": "Español"
   },
   "integrations": {
-    "title": "Integraciones",
+    "title": "Apps e Integraciones",
     "subtitle": "Conecta plataformas externas para automatizar ventas y entrega de contenido",
     "connect": "Conectar",
     "connected": "¡Integración conectada correctamente!",
@@ -3467,6 +3467,7 @@
       "products": "Productos",
       "sellers": "Vendedores",
       "users": "Usuarios",
+      "appsIntegrations": "Apps e Integraciones",
       "backToConsole": "Volver a la Consola"
     },
     "title": "Superadmin",

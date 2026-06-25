@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Settings } from "lucide-react";
+import { Settings, Server, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -185,6 +185,28 @@ export default function AdminIntegrations() {
         <div className="flex items-center justify-between">
           <h1 className="text-title">{t("integrations.title")}</h1>
         </div>
+
+        {/* Ferramentas Nory */}
+        <div className="space-y-3">
+          <h2 className="text-section">Ferramentas Nory</h2>
+          <button
+            onClick={() => navigate("/admin/hosting")}
+            className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-5 text-left transition-all hover:border-primary/40 hover:shadow-sm"
+          >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Server className="size-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-sm leading-tight">Hospedagem e Emails</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Gerencie domínios e hospedagem contratados com a Nory Members.
+              </p>
+            </div>
+            <ChevronRight className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
+
+        <Separator />
 
         {/* Filtros por categoria */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 sm:flex-wrap sm:overflow-visible">
