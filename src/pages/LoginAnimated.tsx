@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -275,10 +276,16 @@ export default function LoginAnimated({ basePath = "" }: LoginAnimatedProps) {
           )}
         </div>
 
-        <Button type="submit" className="w-full h-12 text-base font-medium" disabled={isLoading}>
-          {isLoading && <Loader2 className="size-4 animate-spin" />}
-          <span>{isLoading ? t("auth.login.submitting") : t("auth.login.submitButton")}</span>
-        </Button>
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        >
+          <Button type="submit" className="w-full h-12 text-base font-medium" disabled={isLoading}>
+            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            <span>{isLoading ? t("auth.login.submitting") : t("auth.login.submitButton")}</span>
+          </Button>
+        </motion.div>
       </form>
 
       {/* Divisor */}
@@ -294,6 +301,11 @@ export default function LoginAnimated({ basePath = "" }: LoginAnimatedProps) {
       </div>
 
       {/* Google */}
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      >
       <Button
         type="button"
         variant="outline"
@@ -324,6 +336,7 @@ export default function LoginAnimated({ basePath = "" }: LoginAnimatedProps) {
         )}
         <span>{t("auth.login.googleButton")}</span>
       </Button>
+      </motion.div>
 
       {/* Link de cadastro */}
       <div className="text-center text-sm text-muted-foreground">
