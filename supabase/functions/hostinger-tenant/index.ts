@@ -25,6 +25,7 @@
 //   subdomain_delete  (subdomains) → exclui subdomínio
 //   wp_connect_start  (wp_manage)  → inicia authorize-application (retorna URL)
 //   wp_status / wp_disconnect (wp_manage) → estado / remove conexão WP
+//   wp_plugin_search  (wp_manage)  → busca no diretório wordpress.org (1-click install)
 //   wp_plugins_list / wp_plugin_set_status / wp_plugin_install / wp_plugin_delete (wp_manage)
 //   wp_themes_list    (wp_manage)  → lista temas (somente leitura)
 
@@ -260,6 +261,54 @@ Deno.serve(async (req) => {
         requireCap("wp_manage");
         await admin.from("wp_connections").delete().eq("assignment_id", assignment.id);
         return json({ ok: true });
+      }
+      case "wp_plugin_search": {
+        // Busca no diretório público do wordpress.org (não toca no site — não exige conexão).
+        requireCap("wp_manage");
+        const search = String(body.search ?? "").trim();
+        if (!search) return json({ error: "search obrigatório", code: "missing_required_field" }, 400);
+        const perPage = Math.min(Math.max(Number(body.per_page) || 12, 1), 24);
+        const page = Math.max(Number(body.page) || 1, 1);
+        const qs = new URLSearchParams({
+          action: "query_plugins",
+          "request[search]": search,
+          "request[page]": String(page),
+          "request[per_page]": String(perPage),
+          "request[fields][short_description]": "1",
+          "request[fields][icons]": "1",
+          "request[fields][rating]": "1",
+          "request[fields][active_installs]": "1",
+          "request[fields][description]": "0",
+          "request[fields][sections]": "0",
+        });
+        const stripTags = (s: unknown) =>
+          typeof s === "string" ? s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() : "";
+        const wpres = await fetch(`https://api.wordpress.org/plugins/info/1.2/?${qs.toString()}`);
+        if (!wpres.ok) return json({ ok: false, status: wpres.status, data: null, raw: "wordpress.org indisponível" });
+        const info = await wpres.json().catch(() => null) as
+          | { plugins?: Record<string, unknown>[]; info?: { results?: number; pages?: number } }
+          | null;
+        const results = (info?.plugins ?? []).map((p) => {
+          const icons = (p.icons ?? {}) as Record<string, string>;
+          return {
+            slug: String(p.slug ?? ""),
+            name: stripTags(p.name),
+            author: stripTags(p.author),
+            version: (p.version as string | undefined) ?? null,
+            rating: Number(p.rating) || 0, // 0–100
+            num_ratings: Number(p.num_ratings) || 0,
+            active_installs: Number(p.active_installs) || 0,
+            short_description: stripTags(p.short_description),
+            icon: icons["2x"] || icons["1x"] || icons.svg || icons.default || null,
+          };
+        });
+        return json({
+          ok: true,
+          status: 200,
+          data: results,
+          total: info?.info?.results ?? results.length,
+          pages: info?.info?.pages ?? 1,
+        });
       }
       case "wp_plugins_list":
       case "wp_plugin_set_status":
