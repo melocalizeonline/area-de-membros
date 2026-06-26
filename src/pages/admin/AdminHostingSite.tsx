@@ -223,6 +223,8 @@ function WordPressTab({ domain, canManage, onDone }: { domain: string; canManage
 /* ─── Gerenciar WordPress via REST (plugins + temas) ─── */
 interface WpPlugin { plugin: string; slug?: string; name?: string; status?: string; version?: string; latest_version?: string | null; update_available?: boolean }
 interface WpTheme { stylesheet?: string; name?: { rendered?: string } | string; status?: string; version?: string }
+/** Resultado da busca no diretório público do wordpress.org. */
+interface WpDirPlugin { slug: string; name: string; author: string; version: string | null; rating: number; num_ratings: number; active_installs: number; short_description: string; icon: string | null }
 
 function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | null }) {
   const qc = useQueryClient();
@@ -230,6 +232,9 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
   const [busy, setBusy] = useState<string | null>(null);
   const [slug, setSlug] = useState("");
   const [search, setSearch] = useState("");
+  const [dirQuery, setDirQuery] = useState("");
+  const [dirResults, setDirResults] = useState<WpDirPlugin[] | null>(null);
+  const [dirLoading, setDirLoading] = useState(false);
 
   // Toast de retorno do fluxo authorize-application (?wp=connected|error)
   useEffect(() => {
@@ -329,19 +334,48 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
     finally { setBusy(null); }
   };
 
-  const install = async () => {
-    const s = slug.trim().toLowerCase();
-    if (!s) { toast.error("Informe o slug do plugin (wordpress.org)."); return; }
-    setBusy("install");
+  const installSlug = async (raw: string): Promise<boolean> => {
+    const s = raw.trim().toLowerCase();
+    if (!s) { toast.error("Informe o slug do plugin (wordpress.org)."); return false; }
+    setBusy(`install:${s}`);
     try {
       const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_plugin_install", domain, slug: s, activate: true } });
       const r = data as { ok: boolean; raw: unknown };
-      if (!r?.ok) { toast.error("Falha: " + JSON.stringify(r?.raw).slice(0, 160)); return; }
-      setSlug("");
+      if (!r?.ok) { toast.error("Falha: " + JSON.stringify(r?.raw).slice(0, 160)); return false; }
       toast.success("Plugin instalado e ativado.");
       await qc.invalidateQueries({ queryKey: ["wp-plugins", domain] });
-    } catch { toast.error("Falha ao instalar plugin."); }
+      return true;
+    } catch { toast.error("Falha ao instalar plugin."); return false; }
     finally { setBusy(null); }
+  };
+
+  // Instalação manual por slug (campo avançado).
+  const install = async () => { if (await installSlug(slug)) setSlug(""); };
+
+  // Busca no diretório público do wordpress.org.
+  const searchDir = async () => {
+    const q = dirQuery.trim();
+    if (!q) return;
+    setDirLoading(true);
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_plugin_search", domain, search: q, per_page: 12 } });
+      const r = data as { ok: boolean; data: WpDirPlugin[] | null };
+      if (!r?.ok) { toast.error("Falha na busca."); setDirResults([]); return; }
+      setDirResults(r.data ?? []);
+    } catch { toast.error("Falha na busca."); setDirResults([]); }
+    finally { setDirLoading(false); }
+  };
+
+  const installedSlugs = useMemo(
+    () => new Set(plugins.map((p) => p.slug).filter(Boolean) as string[]),
+    [plugins],
+  );
+  const updateCount = useMemo(() => plugins.filter((p) => p.update_available).length, [plugins]);
+  const fmtInstalls = (n: number) => {
+    if (!n) return "";
+    if (n >= 1_000_000) return `${Math.floor(n / 1_000_000)}M+`;
+    if (n >= 1_000) return `${Math.floor(n / 1_000)}k+`;
+    return `${n}+`;
   };
 
   const visiblePlugins = useMemo(() => {
@@ -389,19 +423,106 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
         <Button variant="ghost" size="sm" disabled={busy === "disconnect"} onClick={disconnect}>Desconectar</Button>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Instalar por slug */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Input className="flex-1" placeholder="Instalar plugin por slug (ex.: classic-editor)" value={slug} onChange={(e) => setSlug(e.target.value)} />
-          <Button disabled={busy === "install"} onClick={install} className="shrink-0">
-            {busy === "install" ? <Loader2 className="size-4 animate-spin" /> : <><Plus className="size-4 mr-1.5" /> Instalar</>}
-          </Button>
+        {/* Adicionar plugin — busca no diretório wordpress.org com instalação 1-clique */}
+        <div className="rounded-lg border border-border p-3 space-y-3">
+          <p className="text-sm font-medium">Adicionar plugin</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar no diretório (ex.: SEO, cache, formulário)"
+                value={dirQuery}
+                onChange={(e) => setDirQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") searchDir(); }}
+              />
+            </div>
+            <Button disabled={dirLoading || !dirQuery.trim()} onClick={searchDir} className="shrink-0">
+              {dirLoading ? <Loader2 className="size-4 animate-spin" /> : <><Search className="size-4 mr-1.5" /> Buscar</>}
+            </Button>
+          </div>
+
+          {/* Resultados do diretório */}
+          {dirResults !== null && (
+            dirResults.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum plugin encontrado para "{dirQuery}".</p>
+            ) : (
+              <div className="space-y-2">
+                {dirResults.map((d) => {
+                  const already = installedSlugs.has(d.slug);
+                  const installing = busy === `install:${d.slug}`;
+                  return (
+                    <div key={d.slug} className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
+                      {d.icon ? (
+                        <img src={d.icon} alt="" className="size-10 shrink-0 rounded" loading="lazy" />
+                      ) : (
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded bg-muted text-sm font-semibold uppercase text-muted-foreground">
+                          {d.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{d.name}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{d.short_description}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          {d.author && <span>por {d.author}</span>}
+                          {d.active_installs > 0 && <span> · {fmtInstalls(d.active_installs)} instalações</span>}
+                          {d.num_ratings > 0 && <span> · ★ {(d.rating / 20).toFixed(1)}</span>}
+                        </p>
+                      </div>
+                      <Button
+                        variant={already ? "outline" : "default"}
+                        size="sm"
+                        className="shrink-0"
+                        disabled={already || installing}
+                        onClick={() => installSlug(d.slug)}
+                      >
+                        {installing ? <Loader2 className="size-4 animate-spin" /> : already ? "Instalado" : <><Plus className="size-4 mr-1.5" /> Instalar</>}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          )}
+
+          {/* Instalação avançada por slug exato */}
+          <details className="text-xs">
+            <summary className="cursor-pointer text-muted-foreground">Instalar por slug exato</summary>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                className="flex-1"
+                placeholder="ex.: classic-editor"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") install(); }}
+              />
+              <Button variant="outline" disabled={busy === `install:${slug.trim().toLowerCase()}`} onClick={install} className="shrink-0">
+                {busy === `install:${slug.trim().toLowerCase()}` ? <Loader2 className="size-4 animate-spin" /> : <><Plus className="size-4 mr-1.5" /> Instalar</>}
+              </Button>
+            </div>
+          </details>
         </div>
 
-        {/* Busca */}
+        {/* Resumo de atualizações — WP core REST não atualiza plugin; levamos ao wp-admin */}
+        {updateCount > 0 && wpAdminUrl && (
+          <div className="flex flex-col gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+              <RotateCcw className="size-4 shrink-0" />
+              {updateCount === 1 ? "1 atualização disponível" : `${updateCount} atualizações disponíveis`}
+            </p>
+            <Button asChild size="sm" variant="outline" className="shrink-0">
+              <a href={`${wpAdminUrl}/update-core.php`} target="_blank" rel="noreferrer">
+                Atualizar tudo <ExternalLink className="size-4 ml-1.5" />
+              </a>
+            </Button>
+          </div>
+        )}
+
+        {/* Busca nos instalados */}
         {plugins.length > 5 && (
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Buscar plugin..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input className="pl-9" placeholder="Buscar plugin instalado..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         )}
 
