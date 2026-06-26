@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft, Server, Plus, Trash2, Loader2, RotateCcw, ExternalLink, Search, Globe, LayoutDashboard,
-  Network, History, Plug,
+  Network, History, Plug, Upload,
 } from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edge-function-utils";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -425,7 +425,16 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
       <CardContent className="space-y-3">
         {/* Adicionar plugin — busca no diretório wordpress.org com instalação 1-clique */}
         <div className="rounded-lg border border-border p-3 space-y-3">
-          <p className="text-sm font-medium">Adicionar plugin</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium">Adicionar plugin</p>
+            {wpAdminUrl && (
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <a href={`${wpAdminUrl}/plugin-install.php?tab=upload`} target="_blank" rel="noreferrer" title="Plugins pagos/personalizados fora do diretório são enviados no wp-admin">
+                  <Upload className="size-4 mr-1.5" /> Enviar .zip
+                </a>
+              </Button>
+            )}
+          </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

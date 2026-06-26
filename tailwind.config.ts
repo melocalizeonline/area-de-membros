@@ -135,6 +135,11 @@ export default {
           from: { opacity: "1", transform: "scale(1)" },
           to: { opacity: "0", transform: "scale(0.98)" },
         },
+        // Bolhas decorativas do login — flutuar + cintilar
+        "bubble-float": {
+          "0%, 100%": { transform: "translateY(0)", opacity: "0.45" },
+          "50%": { transform: "translateY(-14px)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -145,6 +150,7 @@ export default {
         "fs-overlay-out": "fs-overlay-out 150ms ease-in",
         "fs-content-in": "fs-content-in 200ms ease-out",
         "fs-content-out": "fs-content-out 150ms ease-in",
+        "bubble-float": "bubble-float 4s ease-in-out infinite",
       },
     },
   },
