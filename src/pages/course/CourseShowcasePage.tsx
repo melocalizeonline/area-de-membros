@@ -212,7 +212,9 @@ export default function CourseShowcasePage() {
   const backToPortalLabel = t("courseShowcase.backToPortal", "Voltar ao portal");
 
   /* ─── Skin "netflix" (curso estilo Netflix) ─── */
-  if (skin === "netflix") {
+  const isNetflix =
+    skin === "netflix" || tenant.tenant_settings?.portal_products_template === "netflix";
+  if (isNetflix) {
     const mmss = (s: number) =>
       `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
     const completedCount = allLessonIds.filter((id) => progressMap[id]?.completed).length;

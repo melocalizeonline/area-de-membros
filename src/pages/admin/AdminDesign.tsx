@@ -61,7 +61,7 @@ function isDesignTab(value: string | null): value is Tab {
 function normalizePortalProductsTemplate(
   value: string | null | undefined,
 ): PortalProductsTemplate {
-  return value === DEFAULT_PORTAL_PRODUCTS_TEMPLATE
+  return value === "gallery_01" || value === "netflix"
     ? value
     : DEFAULT_PORTAL_PRODUCTS_TEMPLATE;
 }

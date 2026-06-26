@@ -51,6 +51,7 @@ export interface CourseShowcaseData {
       icon_color: string | null;
       primary_color: string | null;
       portal_button_style: string | null;
+      portal_products_template: string | null;
       social_links: Record<string, string> | null;
       video_settings: VideoSettings | null;
       video_protection_enabled: boolean | null;
@@ -75,7 +76,7 @@ export function useCourseByTenantAndSlug(
           id, title, slug, description,
           cover_horizontal_url, updated_at,
           tenant_id,
-          tenants!inner(id, name, slug, tenant_settings(plan, icon_url, icon_name, icon_color, primary_color, portal_button_style, social_links, video_settings, video_protection_enabled, video_progress_tracking_enabled)),
+          tenants!inner(id, name, slug, tenant_settings(plan, icon_url, icon_name, icon_color, primary_color, portal_button_style, portal_products_template, social_links, video_settings, video_protection_enabled, video_progress_tracking_enabled)),
           modules(
             id, public_id, title, sort_order,
             lessons(
