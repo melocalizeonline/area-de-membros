@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { WorkspaceAvatar } from "@/components/admin/WorkspaceAvatar";
+import { BRAND_NAME } from "@/lib/brand";
 
 const PREVIEW_COVER = "/images/portal-backgrounds/creatopy-BrDJ-OauGxQ-unsplash.webp";
 
@@ -142,7 +143,7 @@ export default function DesignPreview({
         style={{ borderTop: `1px solid ${border}` }}
       >
         <span className="text-[8px]" style={{ color: textTertiary }}>
-          {tenantName || t("designPage.preview.yourCompany")} · Hubfy
+          {tenantName || t("designPage.preview.yourCompany")} · {BRAND_NAME}
         </span>
       </div>
     </div>

@@ -1,7 +1,7 @@
 /**
  * Product Resolver
  *
- * Resolve produto Hubfy a partir do ID externo do gateway
+ * Resolve produto Nory Members a partir do ID externo do gateway
  * via tabela gateway_product_mappings.
  */
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { LanguageSwitcher } from "@/components/auth/LanguageSwitcher";
 import { Menu, X } from "lucide-react";
+import { BRAND_LOGO_DARK, BRAND_LOGO_LIGHT, BRAND_NAME } from "@/lib/brand";
 
 export function LandingHeader({ showLanguageSwitcher = true }: { showLanguageSwitcher?: boolean } = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -14,13 +15,13 @@ export function LandingHeader({ showLanguageSwitcher = true }: { showLanguageSwi
         {/* Logo */}
         <Link to="/" className="shrink-0">
           <img
-            src="/brand/logo-hubfy-dark.svg"
-            alt="Hubfy"
+            src={BRAND_LOGO_DARK}
+            alt={BRAND_NAME}
             className="h-6 dark:hidden"
           />
           <img
-            src="/brand/logo-hubfy-light.svg"
-            alt="Hubfy"
+            src={BRAND_LOGO_LIGHT}
+            alt={BRAND_NAME}
             className="hidden h-6 dark:block"
           />
         </Link>

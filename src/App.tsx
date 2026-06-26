@@ -10,7 +10,7 @@ import { PageTitleProvider } from "@/contexts/PageTitleContext";
 import { usePageTitleContext } from "@/hooks/usePageTitleContext";
 import { PageLoader } from "@/components/ui/page-loader";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { withAppBrand } from "@/lib/page-title";
+import { withAppBrand, APP_BRAND_NAME } from "@/lib/page-title";
 
 /* ─── TitleManager — lightweight, only strings ─── */
 const TitleManager = () => {
@@ -81,7 +81,7 @@ const TitleManager = () => {
         if (!reserved.has(slug)) return t("portal.meta.home", "Portal do cliente");
       }
 
-      return "Hubfy";
+      return APP_BRAND_NAME;
     };
     document.title = titleOverride ?? withAppBrand(getTitle(location.pathname));
   }, [location.pathname, i18n.language, t, titleOverride]);

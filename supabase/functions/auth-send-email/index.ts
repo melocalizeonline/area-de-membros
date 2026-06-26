@@ -2,7 +2,7 @@
 //
 // Intercepts ALL auth emails (signup confirmation, password reset,
 // email change, magic link, invite) and sends them via Resend
-// with i18n support and consistent Hubfy branding.
+// with i18n support and consistent Nory Members branding.
 //
 // Configured in Supabase Dashboard:
 //   Authentication → Hooks → Send Email → HTTP

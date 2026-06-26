@@ -76,7 +76,7 @@ function buildInviteEmailHtml(params: {
         <hr style="border: none; border-top: 1px solid #eeeeee; margin: 0 0 24px 0;">
 
         <p style="font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 0;">
-          ${tenantName} <span style="font-weight: 400; color: #999999; font-size: 14px;">via</span> <a href="${resolvePublicSiteUrl(null)}" style="text-decoration: none; color: #1a1a1a;">Hubfy</a>
+          ${tenantName} <span style="font-weight: 400; color: #999999; font-size: 14px;">via</span> <a href="${resolvePublicSiteUrl(null)}" style="text-decoration: none; color: #1a1a1a;">Nory Members</a>
         </p>
       </td>
     </tr>
@@ -131,7 +131,7 @@ function buildAccessGrantedEmailHtml(params: {
         <hr style="border: none; border-top: 1px solid #eeeeee; margin: 0 0 24px 0;">
 
         <p style="font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 0;">
-          ${tenantName} <span style="font-weight: 400; color: #999999; font-size: 14px;">via</span> <a href="${resolvePublicSiteUrl(null)}" style="text-decoration: none; color: #1a1a1a;">Hubfy</a>
+          ${tenantName} <span style="font-weight: 400; color: #999999; font-size: 14px;">via</span> <a href="${resolvePublicSiteUrl(null)}" style="text-decoration: none; color: #1a1a1a;">Nory Members</a>
         </p>
       </td>
     </tr>

@@ -1,5 +1,5 @@
 // Shared email HTML template builders
-// Maintains consistent visual identity across all Hubfy emails.
+// Maintains consistent visual identity across all Nory Members emails.
 //
 // Design system:
 //   - White background, max-width 600px
@@ -72,7 +72,7 @@ function divider(): string {
 function hubfyFooter(): string {
   const siteUrl = resolvePublicSiteUrl(null);
   return `        <p style="font-size: 16px; font-weight: 700; color: ${COLOR_TEXT}; margin: 0;">
-          <a href="${siteUrl}" style="text-decoration: none; color: ${COLOR_TEXT};">Hubfy</a>
+          <a href="${siteUrl}" style="text-decoration: none; color: ${COLOR_TEXT};">Nory Members</a>
         </p>`;
 }
 
@@ -82,14 +82,14 @@ function tenantFooter(
 ): string {
   const siteUrl = resolvePublicSiteUrl(null);
   return `        <p style="font-size: 16px; font-weight: 700; color: ${COLOR_TEXT}; margin: 0;">
-          ${tenantName} <span style="font-weight: 400; color: ${COLOR_MUTED}; font-size: 14px;">${viaLabel}</span> <a href="${siteUrl}" style="text-decoration: none; color: ${COLOR_TEXT};">Hubfy</a>
+          ${tenantName} <span style="font-weight: 400; color: ${COLOR_MUTED}; font-size: 14px;">${viaLabel}</span> <a href="${siteUrl}" style="text-decoration: none; color: ${COLOR_TEXT};">Nory Members</a>
         </p>`;
 }
 
 function poweredByFooter(label: string): string {
   const siteUrl = resolvePublicSiteUrl(null);
   return `        <p style="font-size: 13px; font-weight: 400; color: #b0b0b0; margin: 0;">
-          ${label} <a href="${siteUrl}" style="text-decoration: none; color: #b0b0b0; font-weight: 700;">Hubfy</a>
+          ${label} <a href="${siteUrl}" style="text-decoration: none; color: #b0b0b0; font-weight: 700;">Nory Members</a>
         </p>`;
 }
 
@@ -104,7 +104,7 @@ export function logoBlock(
 }
 
 /* ═══════════════════════════════════════════
-   AUTH EMAILS (Hubfy branding)
+   AUTH EMAILS (Nory Members branding)
    ═══════════════════════════════════════════ */
 
 export function buildSignupConfirmationEmail(
@@ -180,7 +180,7 @@ export function buildMagicLinkEmail(
 }
 
 /* ═══════════════════════════════════════════
-   TEAM EMAILS (Hubfy branding — no tenant logo)
+   TEAM EMAILS (Nory Members branding — no tenant logo)
    ═══════════════════════════════════════════ */
 
 export function buildTeamInviteEmail(
@@ -224,7 +224,7 @@ export function buildTeamAccessEmail(
 }
 
 /* ═══════════════════════════════════════════
-   CREATOR UPGRADE EMAIL (Hubfy branding)
+   CREATOR UPGRADE EMAIL (Nory Members branding)
    ═══════════════════════════════════════════ */
 
 export function buildCreatorWelcomeEmail(

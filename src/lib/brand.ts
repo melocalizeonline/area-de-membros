@@ -1,18 +1,15 @@
 /**
  * ─── Configuração de Branding ────────────────────────────────────────────────
  *
- * Para substituir o branding da Hubfy pelo seu:
+ * Para substituir o branding da plataforma pelo seu:
  *
  * 1. Substitua os arquivos em /public/brand/:
- *      - logo-hubfy-dark.svg   → logo para fundo escuro  (tema dark)
- *      - logo-hubfy-light.svg  → logo para fundo claro   (tema light)
- *      - icon-hubfy-dark.svg   → ícone quadrado dark
- *      - icon-hubfy-light.svg  → ícone quadrado light
- *      - avatar-hubfy-dark.webp → avatar/foto do superadmin dark
- *      - avatar-hubfy-light.webp → avatar/foto do superadmin light
+ *      - logo-nory-dark.png    → logo para fundo claro   (tema light)
+ *      - logo-nory-light.png   → logo para fundo escuro  (tema dark)
+ *      - icon-nory.webp        → ícone quadrado da marca
+ *      - avatar-nory.webp      → avatar/foto do superadmin
  *      - default-tenant-icon.png → ícone fallback de workspace
- *      - favicon-dark.svg      → favicon para tema dark
- *      - favicon-light.svg     → favicon para tema light
+ *      - favicon-nory.webp     → favicon
  *
  *    Mantenha os mesmos nomes de arquivo OU atualize os caminhos abaixo.
  *
@@ -33,16 +30,16 @@ export const BRAND_LOGO_DARK = "/brand/logo-nory-dark.png";
 export const BRAND_LOGO_LIGHT = "/brand/logo-nory-light.png";
 
 /** Ícone quadrado — versão para fundo escuro. */
-export const BRAND_ICON_DARK = "/brand/icon-hubfy-dark.svg";
+export const BRAND_ICON_DARK = "/brand/icon-nory.webp";
 
 /** Ícone quadrado — versão para fundo claro. */
-export const BRAND_ICON_LIGHT = "/brand/icon-hubfy-light.svg";
+export const BRAND_ICON_LIGHT = "/brand/icon-nory.webp";
 
 /** Avatar do superadmin — versão para fundo escuro. */
-export const BRAND_AVATAR_DARK = "/brand/avatar-hubfy-dark.webp";
+export const BRAND_AVATAR_DARK = "/brand/avatar-nory.webp";
 
 /** Avatar do superadmin — versão para fundo claro. */
-export const BRAND_AVATAR_LIGHT = "/brand/avatar-hubfy-light.webp";
+export const BRAND_AVATAR_LIGHT = "/brand/avatar-nory.webp";
 
 /** Ícone fallback exibido quando um workspace não tem ícone configurado. */
 export const BRAND_DEFAULT_TENANT_ICON = "/brand/default-tenant-icon.png";

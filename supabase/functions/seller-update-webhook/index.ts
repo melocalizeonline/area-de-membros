@@ -13,7 +13,7 @@ function respond(status: number, body: unknown) {
   });
 }
 
-// Chargefy org status → Hubfy seller status
+// Chargefy org status → Nory Members seller status
 // "created" is deliberately excluded: when we submit, our status is already
 // "pending" and receiving a "created" event would incorrectly regress it to "draft".
 const STATUS_MAP: Record<string, string> = {
@@ -269,7 +269,7 @@ Deno.serve(async (req) => {
       return respond(200, { received: true, status: "ignored", reason: "no_status_in_update" });
     }
 
-    // 7. Map Chargefy status → Hubfy status
+    // 7. Map Chargefy status → Nory Members status
     const internalStatus = STATUS_MAP[orgStatus];
     if (!internalStatus) {
       await admin.from("seller_events").insert({

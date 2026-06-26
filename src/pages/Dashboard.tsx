@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, BookOpen, Users, Settings } from "lucide-react";
+import { BRAND_NAME } from "@/lib/brand";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -13,7 +14,7 @@ export default function Dashboard() {
       <header className="bg-sidebar">
         <div className="container flex h-16 items-center justify-between">
           <h1 className="text-xl font-semibold">
-            <span className="font-semibold">Hubfy</span>
+            <span className="font-semibold">{BRAND_NAME}</span>
           </h1>
 
           <div className="flex items-center gap-4">

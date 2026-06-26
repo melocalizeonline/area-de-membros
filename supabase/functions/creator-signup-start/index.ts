@@ -254,7 +254,7 @@ Deno.serve(async (req) => {
     const result = await sendAndLogEmail({
       resendApiKey,
       supabaseAdmin: admin,
-      senderName: "Hubfy",
+      senderName: "Nory Members",
       to: email,
       subject: t.creatorWelcome.subject,
       html,
