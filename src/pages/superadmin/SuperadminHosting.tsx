@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface RawItem { domain?: string; name?: string; status?: string; id?: string | number; username?: string; type?: string; vhostType?: string; isEnabled?: boolean }
 interface CatalogEntry { label: string; kind: "site" | "domain"; externalId: string | null; username: string | null; vhostType: string | null; status?: string }
-interface Capabilities { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean; subdomains?: boolean }
+interface Capabilities { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean; subdomains?: boolean; wp_manage?: boolean }
 interface Assignment { id: string; domain: string; tenant_id: string; hosting_username: string | null; vhost_type: string | null; capabilities: Capabilities | null; status: string; tenants?: { name: string; slug: string } | null }
 interface HostingRequest { id: string; tenant_id: string; note: string | null; created_at: string; tenants?: { name: string; slug: string } | null }
 
@@ -23,6 +23,7 @@ const CAPS: { key: keyof Capabilities; label: string }[] = [
   { key: "wordpress", label: "WordPress" },
   { key: "dns_reset", label: "Resetar DNS" },
   { key: "subdomains", label: "Subdomínios" },
+  { key: "wp_manage", label: "Gerenciar plugins" },
 ];
 
 /** Campo de busca reaproveitável (ícone à esquerda). */
