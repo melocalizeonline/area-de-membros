@@ -25,6 +25,7 @@ export type ProviderKey =
   | "openai"
 
   | "hotmart"
+  | "nory"
 
   | "chatbase"
   | "hubspot"
@@ -123,6 +124,15 @@ export const PROVIDERS: Record<ProviderKey, ProviderDefinition> = {
     logo: "/brand/integrations/hotmart.png",
     icon: "/brand/hotmart-icon.svg",
     available: true,
+  },
+  nory: {
+    key: "nory",
+    displayName: "Nory",
+    category: "payments",
+    descriptionKey: "integrations.providers.nory.description",
+    logo: "/brand/integrations/nory.webp",
+    available: true,
+    placeholders: { api_key: "nory_sk_..." },
   },
   // CRM
   chatbase: {

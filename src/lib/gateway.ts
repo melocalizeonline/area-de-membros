@@ -5,10 +5,11 @@
  * Para adicionar um novo gateway, basta adicionar aqui + adapter no backend.
  */
 
-export type GatewayProvider = "hotmart";
+export type GatewayProvider = "hotmart" | "nory";
 
 export const GATEWAY_PROVIDERS: GatewayProvider[] = [
   "hotmart",
+  "nory",
 ];
 
 export function isGatewayProvider(provider: string): provider is GatewayProvider {
@@ -27,6 +28,17 @@ export interface CredentialField {
 }
 
 export const GATEWAY_CREDENTIALS_CONFIG: Record<GatewayProvider, CredentialField[]> = {
+  nory: [
+    {
+      key: "api_key",
+      label: "Chave de API",
+      required: true,
+      type: "password",
+      helpText:
+        "Cole a Chave de API gerada na Nory em Configurações > App e Integrações > API & Webhooks. Ao conectar, registramos o webhook automaticamente.",
+      placeholder: "nory_sk_...",
+    },
+  ],
   hotmart: [
     {
       key: "hottok",

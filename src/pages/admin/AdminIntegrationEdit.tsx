@@ -32,6 +32,7 @@ import {
   GATEWAY_PROVIDERS,
   GATEWAY_CREDENTIALS_CONFIG,
   isGatewayProvider,
+  providerSupportsSyncApi,
   type GatewayProvider,
 } from "@/lib/gateway";
 
@@ -101,7 +102,7 @@ function IntegrationPage({ provider }: { provider: GatewayProvider }) {
         .select("provider")
         .eq("tenant_id", tenantId)
         .eq("status", "active")
-        .in("provider", ["hotmart"])
+        .in("provider", ["hotmart", "nory"])
         .maybeSingle();
       return data as { provider: string } | null;
     },
@@ -177,7 +178,9 @@ function IntegrationPage({ provider }: { provider: GatewayProvider }) {
   const tabs: { id: ActiveTab; label: string }[] = [
     { id: "general", label: "Geral" },
     { id: "mapping", label: "Mapear Produtos" },
-    { id: "sync", label: "Smart Sync" },
+    ...(providerSupportsSyncApi(provider)
+      ? [{ id: "sync" as ActiveTab, label: "Smart Sync" }]
+      : []),
     { id: "logs", label: "Eventos" },
   ];
 

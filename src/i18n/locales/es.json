@@ -2744,6 +2744,9 @@
       "hotmart": {
         "description": "Recibe compras vía webhook y otorga acceso automáticamente."
       },
+      "nory": {
+        "description": "Usa Nory como checkout y otorga acceso automáticamente al recibir las ventas."
+      },
       "smartplayer": {
         "description": "Integración con Smart Player."
       },
