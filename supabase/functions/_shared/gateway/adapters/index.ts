@@ -7,9 +7,11 @@
 
 import type { ProviderAdapter } from "../types.ts";
 import { hotmartAdapter } from "./hotmart.ts";
+import { noryAdapter } from "./nory.ts";
 
 const ADAPTERS: Record<string, ProviderAdapter> = {
   hotmart: hotmartAdapter,
+  nory: noryAdapter,
 };
 
 export function getAdapter(provider: string): ProviderAdapter | null {

@@ -237,7 +237,7 @@ export interface HotmartSale {
   };
 }
 
-/** Mapeamento de status da API de vendas → order_status Hubfy */
+/** Mapeamento de status da API de vendas → order_status Nory Members */
 const SALE_STATUS_MAP: Record<string, string> = {
   APPROVED: "approved",
   COMPLETE: "completed",

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSeller } from "@/hooks/useSeller";
 import { useTenant } from "@/hooks/useTenant";
+import { BRAND_NAME } from "@/lib/brand";
 import {
   SellerWizard,
   getWizardSteps,
@@ -57,9 +58,9 @@ function SellerWizardPage() {
   } = useSeller();
   const { tenant } = useTenant();
 
-  // Set page title: "Ativar sua conta | TenantName | Hubfy"
+  // Set page title: "Ativar sua conta | TenantName | Nory Members"
   useEffect(() => {
-    const segments = [t("seller.activateTitle"), tenant?.name, "Hubfy"].filter(Boolean);
+    const segments = [t("seller.activateTitle"), tenant?.name, BRAND_NAME].filter(Boolean);
     document.title = segments.join(" | ");
   }, [t, tenant?.name]);
 

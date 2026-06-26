@@ -43,7 +43,7 @@ export function buildCourseBasicsPrompt(
     ? `\nThe user has already drafted a title: "${input.current_title.trim()}". Preserve it unless it is clearly unsuitable; focus on producing a fitting description.`
     : "";
 
-  const system = `You are a course content assistant for Hubfy, an online course platform.
+  const system = `You are a course content assistant for Nory Members, an online course platform.
 
 Your ONLY task: given a brief description of a course idea, produce a compelling TITLE and DESCRIPTION for that course.
 

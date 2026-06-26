@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { WORKSPACE_ICON_MAP } from "@/lib/workspace-icons";
-import { BRAND_DEFAULT_TENANT_ICON } from "@/lib/brand";
+import { BRAND_DEFAULT_TENANT_ICON, BRAND_NAME } from "@/lib/brand";
 
 const DEFAULT_TENANT_ICON = BRAND_DEFAULT_TENANT_ICON;
 
@@ -78,7 +78,7 @@ export function WorkspaceAvatar({
     }
   }
 
-  // Fallback: default Hubfy icon
+  // Fallback: default brand icon
   return (
     <div
       className={cn(
@@ -87,7 +87,7 @@ export function WorkspaceAvatar({
         className,
       )}
     >
-      <img src={DEFAULT_TENANT_ICON} alt="Hubfy" className={s.fallback} />
+      <img src={DEFAULT_TENANT_ICON} alt={BRAND_NAME} className={s.fallback} />
     </div>
   );
 }

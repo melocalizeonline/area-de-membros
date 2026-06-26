@@ -27,7 +27,7 @@ describe("LessonCourseSidebar", () => {
       tenant_id: "tenant-1",
       tenants: {
         id: "tenant-1",
-        name: "Hubfy",
+        name: "Nory Members",
         slug: "tenant",
         tenant_settings: null,
       },

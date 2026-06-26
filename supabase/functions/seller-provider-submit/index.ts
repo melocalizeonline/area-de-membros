@@ -134,7 +134,7 @@ function buildChargefyPayload(
   return payload;
 }
 
-/** Map Hubfy doc category to Chargefy KYC type */
+/** Map Nory Members doc category to Chargefy KYC type */
 function mapDocToChargefyType(category: string): string | null {
   const categoryMap: Record<string, string> = {
     selfie: "SELFIE",

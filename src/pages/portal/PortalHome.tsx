@@ -252,6 +252,11 @@ export default function PortalHome() {
       <NoryFlowGallery
         userName={(customer?.name ?? profile?.name) ?? undefined}
         tenantName={tenant.name}
+        iconUrl={tenantFooter?.tenant_settings?.icon_url ?? tenant.icon_url}
+        iconName={tenantFooter?.tenant_settings?.icon_name}
+        iconColor={tenantFooter?.tenant_settings?.icon_color}
+        accent={tenant.primary_color}
+        loading={isLoading}
         featured={netflix.featured}
         rows={netflix.rows}
         onSignOut={handleSignOut}

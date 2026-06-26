@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavUser } from "@/components/admin/NavUser";
 import { useTheme } from "@/contexts/ThemeContext";
-import { BRAND_AVATAR_DARK, BRAND_AVATAR_LIGHT } from "@/lib/brand";
+import { BRAND_AVATAR_DARK, BRAND_AVATAR_LIGHT, BRAND_NAME } from "@/lib/brand";
 
 const navItems = [
   { to: "/superadmin/dashboard", icon: LayoutDashboard, labelKey: "superadmin.nav.dashboard", end: true },
@@ -63,12 +63,12 @@ export function SuperadminSidebar(props: React.ComponentProps<typeof Sidebar>) {
               <NavLink to="/superadmin/dashboard">
                 <img
                   src={avatarSrc}
-                  alt="Hubfy"
+                  alt={BRAND_NAME}
                   className="size-8 rounded-lg shrink-0"
                 />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium text-sidebar-foreground">
-                    Hubfy
+                    {BRAND_NAME}
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
                     {t("superadmin.title")}
@@ -101,7 +101,7 @@ export function SuperadminSidebar(props: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Hubfy</SidebarGroupLabel>
+          <SidebarGroupLabel>{BRAND_NAME}</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={t("superadmin.nav.backToConsole")}>

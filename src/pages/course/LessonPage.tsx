@@ -279,6 +279,10 @@ export default function LessonPage() {
     return (
       <NoryFlowLesson
         tenantName={tenant!.name}
+        iconUrl={tenant?.tenant_settings?.icon_url}
+        iconName={tenant?.tenant_settings?.icon_name}
+        iconColor={tenant?.tenant_settings?.icon_color}
+        accent={tenant?.tenant_settings?.primary_color}
         courseTitle={course.title}
         lessonTitle={lesson.title}
         lessonMeta={lessonMeta}

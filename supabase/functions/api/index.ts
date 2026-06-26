@@ -1,4 +1,4 @@
-// Public REST API for Hubfy Lite.
+// Public REST API for Nory Members.
 //
 // Base URL: https://<seu-project-ref>.supabase.co/functions/v1/api/v1/...
 // Auth:     Authorization: Bearer sk_live_<hex>  (API keys)  OR
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     // Health probe (no auth)
     if (pathname === "/v1" || pathname === "/v1/") {
       return jsonResponse(
-        { name: "Hubfy API", version: "v1" },
+        { name: "Nory Members API", version: "v1" },
         200,
         corsHeaders,
       );

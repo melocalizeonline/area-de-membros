@@ -45,7 +45,7 @@ export function useAIProviders() {
       const options: AIProviderOption[] = [
         {
           key: "hubfy",
-          label: "Hubfy AI",
+          label: "Nory AI",
           logo: null,
           isDefault: !hasOpenAI,
         },

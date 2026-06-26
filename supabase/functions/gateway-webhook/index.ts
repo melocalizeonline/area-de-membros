@@ -138,7 +138,7 @@ Deno.serve(async (req: Request) => {
       },
       rawPayload: body,
     });
-    await updateEventLog(admin, logId, "ignored", `Evento não processado pelo Hubfy.`);
+    await updateEventLog(admin, logId, "ignored", `Evento não processado pela Nory Members.`);
     return respond(200, { received: true, status: "ignored" });
   }
 

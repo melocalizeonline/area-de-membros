@@ -13,7 +13,7 @@ export interface NormalizedGatewayProduct {
   external_id: string;
   /** Nome do produto */
   name: string;
-  /** Status normalizado DO GATEWAY (não do Hubfy) */
+  /** Status normalizado DO GATEWAY (não da Nory Members) */
   status: "active" | "inactive" | "draft";
   /** Se é produto de assinatura/recorrente */
   is_subscription: boolean;
@@ -27,7 +27,7 @@ export interface NormalizedGatewayProduct {
   created_at: string | null;
   /** Já existe mapping com product_id != null? */
   already_imported: boolean;
-  /** Se já importado, qual product_id Hubfy está vinculado */
+  /** Se já importado, qual product_id Nory Members está vinculado */
   existing_product_id?: string;
 }
 
@@ -94,7 +94,7 @@ export interface NormalizedGatewaySale {
   already_imported: boolean;
   /** Produto tem mapping com product_id != null */
   product_mapped: boolean;
-  /** ID do produto Hubfy se mapeado */
+  /** ID do produto Nory Members se mapeado (campo legado mantém nome) */
   hubfy_product_id?: string;
 }
 

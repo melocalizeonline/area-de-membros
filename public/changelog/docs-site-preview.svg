@@ -13,8 +13,8 @@
   <rect x="0" y="0" width="272" height="720" rx="12 0 0 12" fill="#fafafa"/>
   <line x1="272" y1="0" x2="272" y2="720" stroke="#e4e4e7" stroke-width="1"/>
 
-  <!-- Sidebar header: Hubfy logo + docs -->
-  <text x="24" y="40" font-size="17" font-weight="700" fill="#09090b">Hubfy</text>
+  <!-- Sidebar header: Nory Members logo + docs -->
+  <text x="24" y="40" font-size="17" font-weight="700" fill="#09090b">Nory Members</text>
   <text x="76" y="40" font-size="13" font-weight="500" fill="#a1a1aa">docs</text>
 
   <!-- Sidebar search -->
@@ -107,7 +107,7 @@
   <text x="304" y="118" font-size="32" font-weight="600" fill="#09090b">Introduction</text>
 
   <!-- Page description -->
-  <text x="304" y="148" font-size="15" fill="#71717a">Welcome to the Hubfy documentation. Learn how to set up</text>
+  <text x="304" y="148" font-size="15" fill="#71717a">Welcome to the Nory Members documentation. Learn how to set up</text>
   <text x="304" y="168" font-size="15" fill="#71717a">your workspace, publish content, and start selling.</text>
 
   <!-- ── Featured cards grid ── -->
@@ -137,8 +137,8 @@
   <line x1="304" y1="358" x2="1240" y2="358" stroke="#f4f4f5" stroke-width="1"/>
 
   <!-- ── Section: What you can build ── -->
-  <text x="304" y="396" font-size="22" font-weight="600" fill="#09090b">What you can build on Hubfy</text>
-  <text x="304" y="420" font-size="13" fill="#71717a">A single Hubfy workspace can cover the main parts of a modern digital business.</text>
+  <text x="304" y="396" font-size="22" font-weight="600" fill="#09090b">What you can build on Nory Members</text>
+  <text x="304" y="420" font-size="13" fill="#71717a">A single Nory Members workspace can cover the main parts of a modern digital business.</text>
 
   <!-- Build list cards (2-column grid) -->
   <rect x="304" y="440" width="456" height="48" rx="10" fill="#fafafa" stroke="#f4f4f5" stroke-width="1"/>
@@ -159,9 +159,9 @@
   <rect x="776" y="556" width="456" height="48" rx="10" fill="#fafafa" stroke="#f4f4f5" stroke-width="1"/>
   <text x="796" y="585" font-size="13" fill="#3f3f46">Email campaigns with audience segmentation</text>
 
-  <!-- ── Section: How Hubfy works ── -->
+  <!-- ── Section: How Nory Members works ── -->
   <line x1="304" y1="630" x2="1240" y2="630" stroke="#f4f4f5" stroke-width="1"/>
-  <text x="304" y="668" font-size="22" font-weight="600" fill="#09090b">How Hubfy works</text>
+  <text x="304" y="668" font-size="22" font-weight="600" fill="#09090b">How Nory Members works</text>
   <text x="304" y="692" font-size="13" fill="#71717a">The platform flow is straightforward: set up your workspace, publish your content, connect monetization, and deliver access.</text>
 
   <!-- ── Right sidebar: On this page ── -->
@@ -170,5 +170,5 @@
   <rect x="1248" y="94" width="2" height="16" rx="1" fill="#09090b"/>
   <text x="1258" y="106" font-size="11" font-weight="500" fill="#09090b">Introduction</text>
   <text x="1258" y="130" font-size="11" fill="#a1a1aa">What you can build</text>
-  <text x="1258" y="154" font-size="11" fill="#a1a1aa">How Hubfy works</text>
+  <text x="1258" y="154" font-size="11" fill="#a1a1aa">How Nory Members works</text>
 </svg>

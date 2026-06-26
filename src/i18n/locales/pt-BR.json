@@ -2727,6 +2727,9 @@
       "hotmart": {
         "description": "Libere acessos automaticamente ao receber compras da Hotmart."
       },
+      "nory": {
+        "description": "Use a Nory como checkout e libere acessos automaticamente ao receber as vendas."
+      },
       "smartplayer": {
         "description": "Proteja seus vídeos com DRM e controle de acesso avançado."
       },

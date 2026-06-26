@@ -1,7 +1,7 @@
 /**
  * Gateway Sync V2
  *
- * Importa produtos ou vendas do gateway para a Hubfy em 2 passos:
+ * Importa produtos ou vendas do gateway para a Nory Members em 2 passos:
  *
  * action: "fetch"  → Busca do gateway, normaliza, retorna lista/resumo (zero writes)
  * action: "import" → Re-busca do gateway, cria registros no banco

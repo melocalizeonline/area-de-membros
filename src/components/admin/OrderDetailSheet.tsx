@@ -77,7 +77,7 @@ function truncate(str: string, max: number): string {
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  hubfy: "Hubfy",
+  hubfy: "Nory Members",
   external_gateway: "Gateway externo",
   manual: "Manual",
   csv_import: "Importação CSV",
