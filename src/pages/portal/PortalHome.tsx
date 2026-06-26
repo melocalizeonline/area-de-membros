@@ -3,11 +3,17 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Lock, Check } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  NoryFlowGallery,
+  type GalleryCourse,
+  type GalleryRow,
+} from "@/components/portal/NoryFlowGallery";
 import { usePortal } from "@/contexts/PortalContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortalProducts } from "@/hooks/usePortalProducts";
+import { usePortalCoursesProgress } from "@/hooks/usePortalCoursesProgress";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { ProductGallery01 } from "@/components/ProductGallery01";
 import { getCoversOptimizedUrl } from "@/lib/storage-urls";
@@ -22,7 +28,8 @@ const PORTAL_PRODUCT_FALLBACK = "/images/placeholders/product-portal-fallback.sv
 export default function PortalHome() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signOut, profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { signOut, profile, user } = useAuth();
   const { tenant, slug, accessRole, customer } = usePortal();
   usePageTitle(joinTitleSegments(t("portal.meta.home", "Portal do cliente"), tenant.name));
   const { data: products = [], isLoading } = usePortalProducts({
@@ -145,6 +152,86 @@ export default function PortalHome() {
     navigate(`/${slug}/login`, { replace: true });
   }, [signOut, navigate, slug]);
 
+  // ── Skin "netflix" (galeria estilo Netflix) ──
+  // Seleção: ?skin=netflix (preview) ou tenant.portal_products_template.
+  const skin =
+    searchParams.get("skin") ||
+    (tenant as { portal_products_template?: string }).portal_products_template;
+  const isNetflix = skin === "netflix";
+
+  // Progresso por curso (só busca na skin netflix)
+  const ownedCourseSlugs = useMemo(
+    () =>
+      isNetflix
+        ? ownedProducts
+            .filter((p) => p.benefit === "courses" && p.courseSlug)
+            .map((p) => p.courseSlug as string)
+        : [],
+    [isNetflix, ownedProducts],
+  );
+  const { data: progressMap = {} } = usePortalCoursesProgress(
+    tenant.id,
+    ownedCourseSlugs,
+    user?.id,
+  );
+
+  const netflix = useMemo(() => {
+    const coverOf = (p: (typeof products)[number]) =>
+      p.coverUrl ? getCoversOptimizedUrl(p.coverUrl, "product-card", p.updatedAt) : null;
+    const openOf = (p: (typeof products)[number]) => () => {
+      if (p.benefit === "courses" && p.courseSlug) navigate(`/${slug}/${p.courseSlug}`);
+      else navigate(`/${slug}/products/${p.public_id}`);
+    };
+    const progressOf = (p: (typeof products)[number]) =>
+      p.courseSlug ? progressMap[p.courseSlug] : undefined;
+    const toCard = (p: (typeof products)[number]): GalleryCourse => {
+      const pr = progressOf(p);
+      return {
+        id: p.id,
+        title: p.name,
+        description: p.description,
+        coverUrl: coverOf(p),
+        onClick: openOf(p),
+        progress: pr ? pr.percent : undefined,
+        lessonsLabel: pr && pr.total > 0 ? `${pr.completed}/${pr.total} aulas` : undefined,
+        completed: pr ? pr.total > 0 && pr.percent >= 100 : false,
+      };
+    };
+    const toLocked = (p: (typeof products)[number]): GalleryCourse => ({
+      id: p.id,
+      title: p.name,
+      description: p.description,
+      coverUrl: coverOf(p),
+      locked: true,
+      requested: requestedIds.includes(p.id) || justRequested.includes(p.id),
+      onRequestAccess: () => requestAccess(p.id),
+    });
+
+    // "Continue assistindo": cursos em andamento (0 < % < 100), por última atividade
+    const inProgress = ownedProducts
+      .filter((p) => {
+        const pr = progressOf(p);
+        return pr && pr.total > 0 && pr.percent > 0 && pr.percent < 100;
+      })
+      .sort((a, b) =>
+        (progressOf(b)?.lastActivity ?? "").localeCompare(progressOf(a)?.lastActivity ?? ""),
+      );
+
+    const featuredProduct = inProgress[0] ?? ownedProducts[0];
+    const featured = featuredProduct ? toCard(featuredProduct) : null;
+
+    const rows: GalleryRow[] = [
+      ...(inProgress.length
+        ? [{ key: "continue", label: "Continue assistindo", items: inProgress.map(toCard) }]
+        : []),
+      { key: "owned", label: "Seus cursos", items: ownedProducts.map(toCard) },
+      ...(lockedProducts.length
+        ? [{ key: "locked", label: "Disponíveis", items: lockedProducts.map(toLocked) }]
+        : []),
+    ];
+    return { featured, rows };
+  }, [ownedProducts, lockedProducts, navigate, slug, requestedIds, justRequested, requestAccess, progressMap]);
+
   const { theme: globalTheme } = useTheme();
   const portalTheme = globalTheme;
   const isDark = portalTheme === "dark";
@@ -161,6 +248,18 @@ export default function PortalHome() {
       : tenant.portal_button_style === "pill"
         ? "rounded-[20px]"
         : "rounded-[8px]";
+
+  if (skin === "netflix") {
+    return (
+      <NoryFlowGallery
+        userName={(customer?.name ?? profile?.name) ?? undefined}
+        tenantName={tenant.name}
+        featured={netflix.featured}
+        rows={netflix.rows}
+        onSignOut={handleSignOut}
+      />
+    );
+  }
 
   return (
     <main

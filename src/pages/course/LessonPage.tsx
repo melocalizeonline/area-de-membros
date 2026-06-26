@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, ShieldX, BookOpen, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CustomerPortalHeader } from "@/components/portal/CustomerPortalHeader";
 import { TenantPublicFooter } from "@/components/tenant/TenantPublicFooter";
+import DOMPurify from "dompurify";
+import { LessonFilesTab } from "@/components/lesson/LessonFilesTab";
+import { LessonLinksTab } from "@/components/lesson/LessonLinksTab";
+import { NoryFlowLesson, type SidebarModule } from "@/components/portal/NoryFlowLesson";
 
 export default function LessonPage() {
   const { tenantSlug, courseSlug, lessonId } = useParams<{
@@ -28,6 +32,8 @@ export default function LessonPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const skin = searchParams.get("skin"); // ?skin=netflix (preview)
 
   // Course data (for sidebar navigation + access check)
   const { data: course, isLoading: courseLoading } = useCourseByTenantAndSlug(
@@ -213,6 +219,101 @@ export default function LessonPage() {
           </Link>
         </Button>
       </div>
+    );
+  }
+
+  /* ─── Skin "netflix" (player estilo Netflix) ─── */
+  if (skin === "netflix") {
+    const mmss = (s: number) =>
+      `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+    const byOrder = (a: { sort_order: number | null }, b: { sort_order: number | null }) =>
+      (a.sort_order ?? 999) - (b.sort_order ?? 999);
+    const sortedModules = [...(course.modules || [])].sort(byOrder).map((m) => ({
+      ...m,
+      lessons: [...(m.lessons || [])].filter((l) => l.is_active).sort(byOrder),
+    }));
+    const flat = sortedModules.flatMap((m, mi) =>
+      m.lessons.map((l, li) => ({ id: l.id, public_id: l.public_id, moduleNum: mi + 1, moduleTitle: m.title, lessonNum: li + 1 })),
+    );
+    const curIdx = flat.findIndex((f) => f.public_id === lessonId);
+    const cur = curIdx >= 0 ? flat[curIdx] : undefined;
+    const prevPid = curIdx > 0 ? flat[curIdx - 1].public_id : null;
+    const nextPid = curIdx >= 0 && curIdx < flat.length - 1 ? flat[curIdx + 1].public_id : null;
+    const goLesson = (pid: string) => () => navigate(`/${tenantSlug}/${courseSlug}/${pid}`);
+
+    const total = flat.length;
+    const completedCount = flat.filter((f) => progressMap[f.id]?.completed).length;
+    const coursePercent = total ? Math.round((completedCount / total) * 100) : 0;
+
+    const durStr = lesson.duration_seconds ? mmss(lesson.duration_seconds) : "";
+    const lessonMeta = [
+      cur ? `Aula ${cur.lessonNum}` : null,
+      cur ? `Módulo ${cur.moduleNum} · ${cur.moduleTitle}` : null,
+      durStr || null,
+    ].filter(Boolean).join(" · ");
+
+    const modules: SidebarModule[] = sortedModules.map((m, mi) => ({
+      id: m.id,
+      num: mi + 1,
+      title: m.title,
+      done: m.lessons.filter((l) => progressMap[l.id]?.completed).length,
+      count: m.lessons.length,
+      lessons: m.lessons.map((l) => ({
+        id: l.id,
+        title: l.title,
+        dur: l.duration_seconds ? mmss(l.duration_seconds) : "—",
+        status: (progressMap[l.id]?.completed ? "done" : l.public_id === lessonId ? "current" : "todo") as
+          | "done"
+          | "current"
+          | "todo",
+        onClick: goLesson(l.public_id),
+      })),
+    }));
+
+    const rawDesc = lesson.contentMode === "html" ? lesson.customHtml : lesson.content;
+    const descriptionHtml = rawDesc ? DOMPurify.sanitize(rawDesc) : null;
+    const completedNow = !!progressMap[lesson.id]?.completed;
+
+    return (
+      <NoryFlowLesson
+        tenantName={tenant!.name}
+        courseTitle={course.title}
+        lessonTitle={lesson.title}
+        lessonMeta={lessonMeta}
+        player={
+          lesson.video ? (
+            <LessonVideoPlayer
+              key={lessonId}
+              embedUrl={embedUrl}
+              title={lesson.title}
+              isLoading={videoLoading || lessonFetching}
+              lessonId={lesson.id}
+              userId={user?.id}
+              trackingEnabled={progressTrackingEnabled}
+              startTimeSeconds={
+                progressMap[lesson.id]?.completed ? 0 : progressMap[lesson.id]?.progress_seconds ?? 0
+              }
+            />
+          ) : (
+            <div style={{ display: "grid", placeItems: "center", width: "100%", height: "100%", color: "#8A93A5" }}>
+              Sem vídeo nesta aula
+            </div>
+          )
+        }
+        descriptionHtml={descriptionHtml}
+        filesNode={<LessonFilesTab files={lesson.files} />}
+        hasFiles={lesson.files.length > 0}
+        linksNode={<LessonLinksTab links={lesson.links} />}
+        hasLinks={lesson.links.length > 0}
+        coursePercent={coursePercent}
+        modules={modules}
+        completed={completedNow}
+        onToggleComplete={() => handleToggleComplete(lesson.id, !completedNow)}
+        onPrev={prevPid ? goLesson(prevPid) : undefined}
+        onNext={nextPid ? goLesson(nextPid) : undefined}
+        onBack={() => navigate(`/${tenantSlug}/${courseSlug}`)}
+        onSignOut={handleSignOut}
+      />
     );
   }
 
