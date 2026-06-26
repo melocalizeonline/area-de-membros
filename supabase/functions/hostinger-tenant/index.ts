@@ -41,6 +41,18 @@ function json(body: Record<string, unknown>, status = 200) {
 
 const HOSTINGER_API = "https://developers.hostinger.com/api";
 
+/** Compara versões "1.2.10" vs "1.3" → 1 se a>b, -1 se a<b, 0 igual. */
+function cmpVer(a: string, b: string): number {
+  const pa = String(a).split("."), pb = String(b).split(".");
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = parseInt(pa[i] ?? "0", 10) || 0;
+    const y = parseInt(pb[i] ?? "0", 10) || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
 type Capabilities = { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean; subdomains?: boolean; wp_manage?: boolean };
 
 Deno.serve(async (req) => {
@@ -272,7 +284,31 @@ Deno.serve(async (req) => {
         };
 
         if (action === "wp_plugins_list") {
-          return passthrough(await wpFetch("/wp/v2/plugins?context=edit"));
+          const r = await wpFetch("/wp/v2/plugins?context=edit");
+          if (!r.ok) return passthrough(r);
+          const list = (Array.isArray(r.data) ? r.data : []) as Record<string, unknown>[];
+          // Enriquecemos com a última versão pública (wordpress.org) para detectar atualização.
+          const enriched = await Promise.all(list.map(async (p) => {
+            const pluginId = String(p.plugin ?? "");
+            const slug = pluginId.split("/")[0];
+            const name = typeof p.name === "string" ? p.name : ((p.name as { rendered?: string } | null)?.rendered ?? pluginId);
+            const version = (p.version as string | undefined) ?? null;
+            let latest: string | null = null;
+            try {
+              const wpres = await fetch(`https://api.wordpress.org/plugins/info/1.0/${encodeURIComponent(slug)}.json`);
+              if (wpres.ok) { const info = await wpres.json(); latest = (info?.version as string) ?? null; }
+            } catch { /* plugin fora do diretório / sem rede: ignora */ }
+            return {
+              plugin: pluginId,
+              slug,
+              name,
+              status: p.status ?? null,
+              version,
+              latest_version: latest,
+              update_available: !!(latest && version && cmpVer(latest, version) > 0),
+            };
+          }));
+          return json({ ok: true, status: r.status, data: enriched, raw: null });
         }
         if (action === "wp_themes_list") {
           return passthrough(await wpFetch("/wp/v2/themes?context=edit"));

@@ -221,7 +221,7 @@ function WordPressTab({ domain, canManage, onDone }: { domain: string; canManage
 }
 
 /* ─── Gerenciar WordPress via REST (plugins + temas) ─── */
-interface WpPlugin { plugin: string; name?: string; status?: string; version?: string }
+interface WpPlugin { plugin: string; slug?: string; name?: string; status?: string; version?: string; latest_version?: string | null; update_available?: boolean }
 interface WpTheme { stylesheet?: string; name?: { rendered?: string } | string; status?: string; version?: string }
 
 function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | null }) {
@@ -252,6 +252,7 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
     },
   });
   const connected = !!statusData?.connected;
+  const wpAdminUrl = statusData?.wpUrl ? `${statusData.wpUrl.replace(/\/$/, "")}/wp-admin` : null;
 
   const { data: plugins = [], isLoading: loadingPlugins, error: pluginsError } = useQuery({
     queryKey: ["wp-plugins", domain],
@@ -421,10 +422,21 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
                     <p className="text-sm font-medium truncate">
                       {p.name || p.plugin}
                       <Badge variant={active ? "success" : "outline"} className="ml-2">{active ? "ativo" : "inativo"}</Badge>
+                      {p.update_available && (
+                        <Badge variant="warning" className="ml-1.5">↑ {p.latest_version} disponível</Badge>
+                      )}
                     </p>
-                    {p.version && <p className="text-xs text-muted-foreground">v{p.version}</p>}
+                    <p className="text-xs text-muted-foreground">
+                      {p.version ? `v${p.version}` : "versão desconhecida"}
+                      {p.update_available && p.latest_version ? ` → v${p.latest_version}` : ""}
+                    </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
+                    {p.update_available && wpAdminUrl && (
+                      <Button asChild variant="outline" size="sm">
+                        <a href={`${wpAdminUrl}/plugins.php`} target="_blank" rel="noreferrer">Atualizar</a>
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" disabled={busy === p.plugin} onClick={() => setStatus(p.plugin, active ? "inactive" : "active")}>
                       {busy === p.plugin ? <Loader2 className="size-4 animate-spin" /> : active ? "Desativar" : "Ativar"}
                     </Button>
@@ -449,6 +461,11 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
             })}
           </div>
         )}
+
+        <p className="text-xs text-muted-foreground">
+          A versão e a verificação de atualização vêm do wordpress.org. O WordPress não permite
+          <strong> aplicar </strong> a atualização pela API — o botão "Atualizar" abre o wp-admin do site para concluir com 1 clique.
+        </p>
 
         {/* Temas (somente leitura) */}
         {themes.length > 0 && (
