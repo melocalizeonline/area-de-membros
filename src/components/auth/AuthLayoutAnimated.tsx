@@ -280,9 +280,9 @@ export function AuthLayoutAnimated({
   return (
     <div translate="no" className="min-h-screen grid lg:grid-cols-2 notranslate">
       {/* ═══ Painel esquerdo — personagens ═══ */}
-      <div className="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-foreground/90 via-foreground to-foreground/80 p-12 text-background">
+      <div className="relative hidden lg:flex flex-col items-center justify-center bg-gradient-to-br from-foreground/90 via-foreground to-foreground/80 p-12 text-background">
         {/* Logo */}
-        <div className="relative z-20">
+        <div className="absolute top-12 left-12 z-20">
           <div className="flex items-center gap-2">
             <img
               src={BRAND_LOGO_DARK}
@@ -302,7 +302,7 @@ export function AuthLayoutAnimated({
         </div>
 
         {/* Jornada do aluno (Framer Motion) */}
-        <div className="relative z-20 flex items-center justify-center h-[500px]">
+        <div className="relative z-20 flex items-center justify-center">
           <StudentJourneyScene />
         </div>
 
