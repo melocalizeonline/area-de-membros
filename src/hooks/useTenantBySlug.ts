@@ -16,6 +16,7 @@ export interface PublicTenant {
   portal_bg_image_url: string | null;
   portal_button_color: string | null;
   portal_button_style: string;
+  portal_products_template: string;
 }
 
 export function useTenantBySlug(slug: string | undefined) {

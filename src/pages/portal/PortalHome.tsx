@@ -154,9 +154,7 @@ export default function PortalHome() {
 
   // ── Skin "netflix" (galeria estilo Netflix) ──
   // Seleção: ?skin=netflix (preview) ou tenant.portal_products_template.
-  const skin =
-    searchParams.get("skin") ||
-    (tenant as { portal_products_template?: string }).portal_products_template;
+  const skin = searchParams.get("skin") || tenant.portal_products_template;
   const isNetflix = skin === "netflix";
 
   // Progresso por curso (só busca na skin netflix)

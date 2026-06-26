@@ -223,7 +223,9 @@ export default function LessonPage() {
   }
 
   /* ─── Skin "netflix" (player estilo Netflix) ─── */
-  if (skin === "netflix") {
+  const isNetflix =
+    skin === "netflix" || tenant?.tenant_settings?.portal_products_template === "netflix";
+  if (isNetflix) {
     const mmss = (s: number) =>
       `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
     const byOrder = (a: { sort_order: number | null }, b: { sort_order: number | null }) =>

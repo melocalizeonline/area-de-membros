@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export type PortalProductsTemplate = "gallery_01";
+export type PortalProductsTemplate = "gallery_01" | "netflix";
 
 export interface DesignPortalFormData {
   portal_products_template: PortalProductsTemplate;
@@ -81,11 +81,11 @@ export default function DesignPortalTab({
                 <SelectItem value="gallery_01">
                   {t("designPage.portal.templateOptionCarousel")}
                 </SelectItem>
+                <SelectItem value="netflix">
+                  Netflix — galeria, curso e aula (estilo streaming)
+                </SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              {t("designPage.portal.templateComingSoon")}
-            </p>
           </div>
         </CardContent>
       </Card>
