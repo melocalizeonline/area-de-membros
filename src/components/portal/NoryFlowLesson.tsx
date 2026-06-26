@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { WorkspaceAvatar } from "@/components/admin/WorkspaceAvatar";
 
 /* ─────────────────────────────────────────────
    NoryFlowLesson — página de aula (skin "netflix"):
@@ -9,7 +10,8 @@ import { useState, type ReactNode } from "react";
    arquivos/links são passados prontos (dados reais).
    ───────────────────────────────────────────── */
 
-const ACCENT = "linear-gradient(105deg,#1f6fe0,#3b8bff)";
+const ACCENT = "var(--nf-accent)";
+const DEFAULT_ACCENT = "linear-gradient(105deg,#1f6fe0,#3b8bff)";
 const BRAND = "linear-gradient(105deg,#1668FF,#34DE7E)";
 
 export interface SidebarLesson {
@@ -30,6 +32,10 @@ export interface SidebarModule {
 
 interface Props {
   tenantName: string;
+  iconUrl?: string | null;
+  iconName?: string | null;
+  iconColor?: string | null;
+  accent?: string | null;
   courseTitle: string;
   lessonTitle: string;
   lessonMeta: string; // "Aula 3 · Módulo 2 · Composição · 08:24"
@@ -90,10 +96,11 @@ function SidebarRow({ ls }: { ls: SidebarLesson }) {
 }
 
 export function NoryFlowLesson({
-  tenantName, courseTitle, lessonTitle, lessonMeta, player,
+  tenantName, iconUrl, iconName, iconColor, accent, courseTitle, lessonTitle, lessonMeta, player,
   descriptionHtml, filesNode, hasFiles, linksNode, hasLinks,
   coursePercent, modules, completed, onToggleComplete, onPrev, onNext, onBack, onSignOut,
 }: Props) {
+  const accentVal = accent || DEFAULT_ACCENT;
   const hasDesc = !!descriptionHtml;
   const firstTab: "desc" | "files" | "links" = hasDesc ? "desc" : hasFiles ? "files" : "links";
   const [tab, setTab] = useState<"desc" | "files" | "links">(firstTab);
@@ -102,7 +109,7 @@ export function NoryFlowLesson({
   const underline = (active: boolean): React.CSSProperties => ({ position: "absolute", left: 0, right: 0, bottom: -1, height: 2, borderRadius: 2, background: ACCENT, display: active ? "block" : "none" });
 
   return (
-    <div className="nf-app" style={{ minHeight: "100vh", background: "#07090E", color: "#fff", fontFamily: "'Manrope',system-ui,sans-serif" }}>
+    <div className="nf-app" style={{ minHeight: "100vh", background: "#07090E", color: "#fff", fontFamily: "'Manrope',system-ui,sans-serif", ["--nf-accent" as string]: accentVal } as React.CSSProperties}>
       <style>{CSS}</style>
 
       {/* TOP BAR */}
@@ -110,11 +117,11 @@ export function NoryFlowLesson({
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
           <button type="button" className="nav-btn" onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 9, color: "#fff", background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 100, padding: "9px 16px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'Manrope'" }}>← Voltar ao curso</button>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: BRAND, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 800, fontSize: 14, color: "#fff" }}>N</div>
+            <WorkspaceAvatar iconUrl={iconUrl} iconName={iconName} iconColor={iconColor} size="sm" />
             <span style={{ fontFamily: "'Sora'", fontWeight: 600, fontSize: 15, color: "#8A93A5" }}>{courseTitle}</span>
           </div>
         </div>
-        <button type="button" onClick={onSignOut} title="Sair" style={{ width: 36, height: 36, borderRadius: "50%", background: BRAND, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 700, fontSize: 14, color: "#fff", boxShadow: "0 4px 14px rgba(31,111,224,.42)" }}>
+        <button type="button" onClick={onSignOut} title="Sair" style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--nf-accent)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 700, fontSize: 14, color: "#fff", boxShadow: "0 4px 14px rgba(31,111,224,.42)" }}>
           {tenantName.charAt(0).toUpperCase()}
         </button>
       </header>

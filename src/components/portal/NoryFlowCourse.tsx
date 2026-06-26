@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { WorkspaceAvatar } from "@/components/admin/WorkspaceAvatar";
 
 /* ─────────────────────────────────────────────
    NoryFlowCourse — página do curso (skin "netflix"):
@@ -9,7 +10,8 @@ import { useState } from "react";
    "PAGINA MODULOS".
    ───────────────────────────────────────────── */
 
-const ACCENT = "linear-gradient(105deg,#1f6fe0,#3b8bff)";
+const ACCENT = "var(--nf-accent)";
+const DEFAULT_ACCENT = "linear-gradient(105deg,#1f6fe0,#3b8bff)";
 const BRAND = "linear-gradient(105deg,#1668FF,#34DE7E)";
 const COVERS = [
   "linear-gradient(135deg,#1668FF,#34DE7E)",
@@ -42,6 +44,10 @@ export interface CourseModuleItem {
 
 interface Props {
   tenantName: string;
+  iconUrl?: string | null;
+  iconName?: string | null;
+  iconColor?: string | null;
+  accent?: string | null;
   courseTitle: string;
   courseDescription?: string | null;
   coverUrl?: string | null;
@@ -108,7 +114,6 @@ function ModuleCard({ mod, index, active, onToggle }: { mod: CourseModuleItem; i
       <div className="module-cover" style={{ position: "relative", height: 132, overflow: "hidden", background: COVERS[index % COVERS.length] }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 130% at 12% 8%,rgba(255,255,255,.22),transparent 52%)" }} />
         <div className="cover-num" style={{ position: "absolute", right: -6, bottom: -26, fontFamily: "'Sora'", fontWeight: 800, fontSize: 120, lineHeight: 1, color: "rgba(255,255,255,.16)" }}>{mod.num}</div>
-        <div style={{ position: "absolute", top: 12, left: 12, width: 26, height: 26, borderRadius: 8, background: "rgba(7,9,14,.42)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 800, fontSize: 13, color: "#fff" }}>N</div>
         <span style={{ position: "absolute", top: 12, right: 12, ...b.style }}>{b.label}</span>
         <div style={{ position: "absolute", left: 14, bottom: 12, fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".18em", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.85)", textShadow: "0 1px 6px rgba(0,0,0,.4)" }}>Módulo {mod.num}</div>
         <div className="cover-play" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 46, height: 46, borderRadius: "50%", background: ACCENT, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(31,111,224,.42)" }}>
@@ -169,9 +174,10 @@ function LessonRow({ ls }: { ls: CourseLessonItem }) {
 }
 
 export function NoryFlowCourse({
-  tenantName, courseTitle, courseDescription, coverUrl, coursePercent, metaLine,
+  tenantName, iconUrl, iconName, iconColor, accent, courseTitle, courseDescription, coverUrl, coursePercent, metaLine,
   modules, defaultOpen = 0, onContinue, onStartFromBeginning, onBack, onSignOut,
 }: Props) {
+  const accentVal = accent || DEFAULT_ACCENT;
   const [open, setOpen] = useState(defaultOpen);
   const active = open >= 0 ? modules[open] : undefined;
 
@@ -180,14 +186,14 @@ export function NoryFlowCourse({
     : { background: "linear-gradient(120deg,#07090E 0%,#0B1733 44%,#103A66 72%,#0E5560 100%)" };
 
   return (
-    <div className="nf-app" style={{ minHeight: "100vh", background: "#07090E", color: "#fff", fontFamily: "'Manrope',system-ui,sans-serif", overflowX: "hidden" }}>
+    <div className="nf-app" style={{ minHeight: "100vh", background: "#07090E", color: "#fff", fontFamily: "'Manrope',system-ui,sans-serif", overflowX: "hidden", ["--nf-accent" as string]: accentVal } as React.CSSProperties}>
       <style>{CSS}</style>
 
       {/* TOP BAR */}
       <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 44px", background: "rgba(7,9,14,.72)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 38 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: BRAND, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 800, fontSize: 17, color: "#fff", boxShadow: "0 4px 14px rgba(31,111,224,.42)" }}>N</div>
+            <WorkspaceAvatar iconUrl={iconUrl} iconName={iconName} iconColor={iconColor} size="md" />
             <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 17 }}>{tenantName}</span>
           </div>
           <nav style={{ display: "flex", alignItems: "center", gap: 26, fontSize: 14, fontWeight: 600 }}>
@@ -196,7 +202,7 @@ export function NoryFlowCourse({
             <span className="nav-item" style={{ color: "#8A93A5" }}>Perfil</span>
           </nav>
         </div>
-        <button type="button" onClick={onSignOut} title="Sair" style={{ width: 38, height: 38, borderRadius: "50%", background: BRAND, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: "#fff", boxShadow: "0 4px 14px rgba(31,111,224,.42)" }}>
+        <button type="button" onClick={onSignOut} title="Sair" style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--nf-accent)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: "#fff", boxShadow: "0 4px 14px rgba(31,111,224,.42)" }}>
           {tenantName.charAt(0).toUpperCase()}
         </button>
       </header>

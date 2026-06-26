@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Lock, Check } from "lucide-react";
+import { Lock, Check, Loader2 } from "lucide-react";
+import { WorkspaceAvatar } from "@/components/admin/WorkspaceAvatar";
 
 /* ─────────────────────────────────────────────
    NoryFlowGallery — galeria da área de membros
@@ -35,11 +36,20 @@ export interface GalleryRow {
 interface Props {
   userName?: string;
   tenantName: string;
+  /** marca do tenant (logo) */
+  iconUrl?: string | null;
+  iconName?: string | null;
+  iconColor?: string | null;
+  /** cor de acento do tenant (botões/progresso); fallback azul Nory */
+  accent?: string | null;
+  loading?: boolean;
   featured?: GalleryCourse | null;
   rows: GalleryRow[];
   onSignOut: () => void;
   onProfile?: () => void;
 }
+
+const DEFAULT_ACCENT = "linear-gradient(105deg,#1f6fe0,#3b8bff)";
 
 const GRADS = [
   "linear-gradient(135deg,#1668FF,#34DE7E)",
@@ -50,7 +60,7 @@ const GRADS = [
   "linear-gradient(135deg,#0E2A6B,#00C2CB)",
 ];
 const gradOf = (i: number) => GRADS[i % GRADS.length];
-const ACCENT = "linear-gradient(105deg,#1f6fe0,#3b8bff)";
+const ACCENT = "var(--nf-accent)";
 const BRAND = "linear-gradient(105deg,#1668FF,#34DE7E)";
 
 const CSS = `
@@ -90,7 +100,6 @@ function CourseCard({ course, index }: { course: GalleryCourse; index: number })
       }}
     >
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 120% at 18% 12%,rgba(255,255,255,.18),transparent 55%)" }} />
-      <div style={{ position: "absolute", top: 10, left: 12, width: 24, height: 24, borderRadius: 7, background: "rgba(10,19,38,.4)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 800, fontSize: 12, color: "#fff" }}>N</div>
 
       {course.completed && (
         <span style={{ position: "absolute", top: 10, right: 10, fontSize: 11, fontWeight: 700, color: "#0A1326", background: "#fff", padding: "4px 10px", borderRadius: 100 }}>✓ Concluído</span>
@@ -218,20 +227,22 @@ function Row({ row }: { row: GalleryRow }) {
   );
 }
 
-export function NoryFlowGallery({ userName, tenantName, featured, rows, onSignOut, onProfile }: Props) {
+export function NoryFlowGallery({ userName, tenantName, iconUrl, iconName, iconColor, accent, loading, featured, rows, onSignOut, onProfile }: Props) {
+  const accentVal = accent || DEFAULT_ACCENT;
+  const isEmpty = !featured && rows.every((r) => r.items.length === 0);
   const heroCover = featured?.coverUrl
     ? { backgroundImage: `linear-gradient(120deg,rgba(7,9,14,.85),rgba(7,9,14,.2)),url(${featured.coverUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
     : { background: "linear-gradient(120deg,#07090E 0%,#0B1733 44%,#103A66 72%,#0E5560 100%)" };
 
   return (
-    <div className="nf-app" style={{ minHeight: "100vh", background: "#07090E", color: "#fff", fontFamily: "'Manrope',system-ui,sans-serif", overflowX: "hidden" }}>
+    <div className="nf-app" style={{ minHeight: "100vh", background: "#07090E", color: "#fff", fontFamily: "'Manrope',system-ui,sans-serif", overflowX: "hidden", ["--nf-accent" as string]: accentVal } as React.CSSProperties}>
       <style>{CSS}</style>
 
       {/* TOP BAR */}
       <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 44px", background: "linear-gradient(180deg,rgba(10,19,38,.92),rgba(10,19,38,0))" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 38 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: BRAND, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 800, fontSize: 17, color: "#fff", boxShadow: "0 4px 14px rgba(31,111,224,.42)" }}>N</div>
+            <WorkspaceAvatar iconUrl={iconUrl} iconName={iconName} iconColor={iconColor} size="md" />
             <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 17 }}>{tenantName}</span>
           </div>
           <nav style={{ display: "flex", alignItems: "center", gap: 26, fontSize: 14, fontWeight: 600 }}>
@@ -242,12 +253,25 @@ export function NoryFlowGallery({ userName, tenantName, featured, rows, onSignOu
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,.16)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, color: "#8A93A5" }}>⌕</div>
-          <button type="button" onClick={onSignOut} title="Sair" style={{ width: 38, height: 38, borderRadius: "50%", background: BRAND, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: "#fff", boxShadow: "0 4px 14px rgba(31,111,224,.42)" }}>
+          <button type="button" onClick={onSignOut} title="Sair" style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--nf-accent)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: "#fff", boxShadow: "0 4px 14px rgba(31,111,224,.42)" }}>
             {(userName ?? tenantName).charAt(0).toUpperCase()}
           </button>
         </div>
       </header>
 
+      {loading ? (
+        <div style={{ display: "grid", placeItems: "center", minHeight: "70vh" }}>
+          <Loader2 className="size-8 animate-spin" style={{ color: "#8A93A5" }} />
+        </div>
+      ) : isEmpty ? (
+        <div style={{ display: "grid", placeItems: "center", minHeight: "70vh", textAlign: "center", padding: "0 24px" }}>
+          <div>
+            <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 22, marginBottom: 8 }}>Nenhum curso por aqui ainda</div>
+            <div style={{ color: "#8A93A5", fontSize: 14 }}>Quando você tiver acesso a cursos, eles aparecem aqui.</div>
+          </div>
+        </div>
+      ) : (
+        <>
       {/* HERO */}
       <section style={{ position: "relative", height: 560, overflow: "hidden", ...heroCover }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 110% at 82% 18%,rgba(52,222,126,.4),transparent 55%)" }} />
@@ -283,6 +307,8 @@ export function NoryFlowGallery({ userName, tenantName, featured, rows, onSignOu
           <Row key={row.key} row={row} />
         ))}
       </div>
+        </>
+      )}
     </div>
   );
 }
