@@ -16,6 +16,13 @@
 //   dns_get       (dns)       → registros DNS do domínio
 //   dns_update    (dns)       → grava registros DNS (overwrite=true)
 //   dns_reset     (dns_reset) → restaura DNS original
+//   dns_validate  (dns)       → valida a zona antes de salvar
+//   dns_snapshots (dns)       → lista snapshots (histórico) do DNS
+//   dns_snapshot_get     (dns)       → detalhe de um snapshot
+//   dns_snapshot_restore (dns_reset) → restaura um snapshot
+//   subdomains_list   (subdomains) → lista subdomínios do site
+//   subdomain_create  (subdomains) → cria subdomínio
+//   subdomain_delete  (subdomains) → exclui subdomínio
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { authenticateRequest, AuthError, toErrorResponse } from "../_shared/auth.ts";
@@ -30,7 +37,7 @@ function json(body: Record<string, unknown>, status = 200) {
 
 const HOSTINGER_API = "https://developers.hostinger.com/api";
 
-type Capabilities = { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean };
+type Capabilities = { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean; subdomains?: boolean };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -149,6 +156,57 @@ Deno.serve(async (req) => {
       case "dns_reset": {
         requireCap("dns_reset");
         const r = await hostinger(`/dns/v1/zones/${encodeURIComponent(domain)}/reset`, "POST", { sync: true });
+        return passthrough(r);
+      }
+      case "dns_validate": {
+        requireCap("dns");
+        const zone = body.zone;
+        if (!Array.isArray(zone)) return json({ error: "zone array required", code: "missing_required_field" }, 400);
+        const r = await hostinger(`/dns/v1/zones/${encodeURIComponent(domain)}/validate`, "POST", { overwrite: true, zone });
+        return passthrough(r);
+      }
+      case "dns_snapshots": {
+        requireCap("dns"); // ver histórico exige acesso a DNS
+        const r = await hostinger(`/dns/v1/snapshots/${encodeURIComponent(domain)}`);
+        return passthrough(r);
+      }
+      case "dns_snapshot_get": {
+        requireCap("dns");
+        const id = String(body.snapshotId ?? "").trim();
+        if (!id) return json({ error: "snapshotId required", code: "missing_required_field" }, 400);
+        const r = await hostinger(`/dns/v1/snapshots/${encodeURIComponent(domain)}/${encodeURIComponent(id)}`);
+        return passthrough(r);
+      }
+      case "dns_snapshot_restore": {
+        requireCap("dns_reset"); // restaurar sobrescreve a zona → mesma gate do reset
+        const id = String(body.snapshotId ?? "").trim();
+        if (!id) return json({ error: "snapshotId required", code: "missing_required_field" }, 400);
+        const r = await hostinger(`/dns/v1/snapshots/${encodeURIComponent(domain)}/${encodeURIComponent(id)}/restore`, "POST", {});
+        return passthrough(r);
+      }
+      case "subdomains_list": {
+        requireCap("subdomains");
+        if (!username) return json({ error: "Site sem conta de hospedagem (username) vinculada", code: "no_username" }, 400);
+        const r = await hostinger(`/hosting/v1/accounts/${encodeURIComponent(username)}/websites/${encodeURIComponent(domain)}/subdomains`);
+        return passthrough(r);
+      }
+      case "subdomain_create": {
+        requireCap("subdomains");
+        if (!username) return json({ error: "Site sem conta de hospedagem (username) vinculada", code: "no_username" }, 400);
+        const sub = String(body.subdomain ?? "").trim().toLowerCase();
+        if (!sub) return json({ error: "subdomain required", code: "missing_required_field" }, 400);
+        const payload: Record<string, unknown> = { subdomain: sub };
+        if (body.directory) payload.directory = String(body.directory).trim();
+        if (typeof body.isUsingPublicDirectory === "boolean") payload.is_using_public_directory = body.isUsingPublicDirectory;
+        const r = await hostinger(`/hosting/v1/accounts/${encodeURIComponent(username)}/websites/${encodeURIComponent(domain)}/subdomains`, "POST", payload);
+        return passthrough(r);
+      }
+      case "subdomain_delete": {
+        requireCap("subdomains");
+        if (!username) return json({ error: "Site sem conta de hospedagem (username) vinculada", code: "no_username" }, 400);
+        const sub = String(body.subdomain ?? "").trim().toLowerCase();
+        if (!sub) return json({ error: "subdomain required", code: "missing_required_field" }, 400);
+        const r = await hostinger(`/hosting/v1/accounts/${encodeURIComponent(username)}/websites/${encodeURIComponent(domain)}/subdomains/${encodeURIComponent(sub)}`, "DELETE");
         return passthrough(r);
       }
       default:

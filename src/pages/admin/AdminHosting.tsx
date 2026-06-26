@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Globe, Mail, Server, Clock, Settings2 } from "lucide-react";
+import { ArrowLeft, Globe, Mail, Server, Clock, Settings2, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +22,7 @@ export default function AdminHosting() {
   const { tenant } = useTenant();
   const { user } = useAuth();
   const [requesting, setRequesting] = useState(false);
+  const [search, setSearch] = useState("");
   const tenantId = tenant?.id;
 
   const { data: assignments = [], isLoading: loadingAssignments } = useQuery({
@@ -70,6 +72,10 @@ export default function AdminHosting() {
   };
 
   const hasHosting = assignments.length > 0;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? assignments.filter((a) => a.domain.toLowerCase().includes(q)) : assignments;
+  }, [assignments, search]);
 
   return (
     <div className="p-6 lg:p-10">
@@ -95,7 +101,16 @@ export default function AdminHosting() {
             {loadingAssignments ? (
               <p className="text-sm text-muted-foreground">Carregando...</p>
             ) : hasHosting ? (
-              assignments.map((a) => {
+              <>
+              {assignments.length > 3 && (
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input className="pl-9" placeholder="Buscar domínio..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                </div>
+              )}
+              {filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum domínio encontrado.</p>
+              ) : filtered.map((a) => {
                 const hasTools = a.capabilities && Object.values(a.capabilities).some(Boolean);
                 return (
                   <div key={a.id} className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -112,7 +127,8 @@ export default function AdminHosting() {
                     )}
                   </div>
                 );
-              })
+              })}
+              </>
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">

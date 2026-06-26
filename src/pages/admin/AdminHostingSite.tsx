@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Server, Plus, Trash2, Loader2, RotateCcw, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft, Server, Plus, Trash2, Loader2, RotateCcw, ExternalLink, Search, Globe, LayoutDashboard,
+  Network, History,
+} from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edge-function-utils";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,14 +18,30 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface Capabilities { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean }
+interface Capabilities { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean; subdomains?: boolean }
 interface SiteInfo { domain: string; username: string | null; vhostType: string | null; status: string; capabilities: Capabilities }
-interface WpInstall { id?: string; domain?: string; url?: string; siteTitle?: string; login?: string; directory?: string; isValid?: boolean }
+/** A API da Hostinger devolve snake_case; normalizamos para uso interno. */
+interface WpInstall { id?: string; domain?: string; url?: string; siteTitle?: string; login?: string; email?: string; directory?: string; language?: string; isValid?: boolean }
 interface DnsRecord { uid: string; name: string; type: string; ttl: number; content: string }
 
 const DNS_TYPES = ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV", "CAA"];
 
 function uid() { return crypto.randomUUID(); }
+
+function normalizeInstall(raw: Record<string, unknown>): WpInstall {
+  const g = (a: string, b: string) => (raw[a] ?? raw[b]) as string | undefined;
+  return {
+    id: g("id", "id"),
+    domain: g("domain", "domain"),
+    url: g("url", "url"),
+    siteTitle: g("site_title", "siteTitle"),
+    login: g("login", "login"),
+    email: g("email", "email"),
+    directory: g("directory", "directory"),
+    language: g("language", "language"),
+    isValid: (raw["is_valid"] ?? raw["isValid"]) as boolean | undefined,
+  };
+}
 
 export default function AdminHostingSite() {
   const { domain = "" } = useParams();
@@ -42,7 +61,7 @@ export default function AdminHostingSite() {
 
   return (
     <div className="p-6 lg:p-10">
-      <div className="mx-auto w-full max-w-3xl space-y-6">
+      <div className="mx-auto w-full max-w-4xl space-y-6">
         <button
           onClick={() => navigate("/admin/hosting")}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -68,16 +87,18 @@ export default function AdminHostingSite() {
         ) : infoError || !info ? (
           <p className="text-sm text-destructive">Não foi possível carregar este site ou você não tem acesso a ele.</p>
         ) : (
-          <Tabs defaultValue={caps.wordpress ? "wordpress" : caps.dns ? "dns" : "status"}>
+          <Tabs defaultValue={caps.status ? "overview" : caps.wordpress ? "wordpress" : "dns"}>
             <TabsList>
-              {caps.status && <TabsTrigger value="status">Status</TabsTrigger>}
-              {caps.wordpress && <TabsTrigger value="wordpress">WordPress</TabsTrigger>}
-              {(caps.dns || caps.dns_reset) && <TabsTrigger value="dns">DNS</TabsTrigger>}
+              {caps.status && <TabsTrigger value="overview"><LayoutDashboard className="size-4 mr-1.5" /> Visão geral</TabsTrigger>}
+              {caps.wordpress && <TabsTrigger value="wordpress"><Globe className="size-4 mr-1.5" /> WordPress</TabsTrigger>}
+              {(caps.dns || caps.dns_reset) && <TabsTrigger value="dns"><Server className="size-4 mr-1.5" /> DNS</TabsTrigger>}
+              {caps.subdomains && <TabsTrigger value="subdomains"><Network className="size-4 mr-1.5" /> Subdomínios</TabsTrigger>}
             </TabsList>
 
-            {caps.status && <TabsContent value="status"><StatusTab domain={dom} /></TabsContent>}
+            {caps.status && <TabsContent value="overview"><OverviewTab domain={dom} /></TabsContent>}
             {caps.wordpress && <TabsContent value="wordpress"><WordPressTab domain={dom} onDone={() => qc.invalidateQueries({ queryKey: ["wp-list", dom] })} /></TabsContent>}
             {(caps.dns || caps.dns_reset) && <TabsContent value="dns"><DnsTab domain={dom} canEdit={!!caps.dns} canReset={!!caps.dns_reset} /></TabsContent>}
+            {caps.subdomains && <TabsContent value="subdomains"><SubdomainsTab domain={dom} /></TabsContent>}
           </Tabs>
         )}
       </div>
@@ -85,16 +106,21 @@ export default function AdminHostingSite() {
   );
 }
 
-/* ─── Status ─── */
-function StatusTab({ domain }: { domain: string }) {
-  const { data: installs = [], isLoading } = useQuery({
+/* ─── Hook compartilhado: lista de instalações WordPress ─── */
+function useWpInstalls(domain: string) {
+  return useQuery({
     queryKey: ["wp-list", domain],
     queryFn: async () => {
       const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_list", domain } });
-      const r = data as { ok: boolean; data: WpInstall[] | null };
-      return r?.data ?? [];
+      const r = data as { ok: boolean; data: Record<string, unknown>[] | null };
+      return (r?.data ?? []).map(normalizeInstall);
     },
   });
+}
+
+/* ─── Visão geral ─── */
+function OverviewTab({ domain }: { domain: string }) {
+  const { data: installs = [], isLoading } = useWpInstalls(domain);
 
   return (
     <Card variant="bordered" className="mt-4">
@@ -107,8 +133,11 @@ function StatusTab({ domain }: { domain: string }) {
         ) : installs.map((w, i) => (
           <div key={w.id ?? i} className="flex items-center justify-between rounded-lg border border-border p-3">
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{w.siteTitle || w.url || domain}</p>
-              <p className="text-xs text-muted-foreground truncate">{w.url}{w.directory ? ` · ${w.directory}` : ""}</p>
+              <p className="text-sm font-medium truncate">
+                {w.siteTitle || w.url || domain}
+                {w.isValid === false && <Badge variant="outline" className="ml-2">inválida</Badge>}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">{w.url}{w.directory ? ` · ${w.directory}` : ""}{w.login ? ` · admin: ${w.login}` : ""}</p>
             </div>
             {w.url && (
               <a href={w.url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
@@ -122,8 +151,83 @@ function StatusTab({ domain }: { domain: string }) {
   );
 }
 
-/* ─── WordPress ─── */
+/* ─── WordPress: seleção de instalação + instalar/reinstalar ─── */
 function WordPressTab({ domain, onDone }: { domain: string; onDone: () => void }) {
+  const { data: installs = [], isLoading } = useWpInstalls(domain);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selected = useMemo(
+    () => installs.find((w) => (w.id ?? w.url) === selectedId) ?? installs[0],
+    [installs, selectedId],
+  );
+
+  return (
+    <div className="mt-4 space-y-4">
+      {/* Seletor de instalação (quando há mais de uma) */}
+      {installs.length > 1 && (
+        <Card variant="bordered">
+          <CardHeader><CardTitle>Instalação</CardTitle></CardHeader>
+          <CardContent>
+            <Select value={(selected?.id ?? selected?.url) ?? ""} onValueChange={setSelectedId}>
+              <SelectTrigger className="w-full sm:w-96"><SelectValue placeholder="Selecione uma instalação" /></SelectTrigger>
+              <SelectContent>
+                {installs.map((w, i) => (
+                  <SelectItem key={w.id ?? i} value={(w.id ?? w.url) ?? String(i)}>
+                    {(w.siteTitle || w.url || domain)}{w.directory ? ` · ${w.directory}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Detalhes da instalação selecionada */}
+      {!isLoading && selected && (
+        <Card variant="bordered">
+          <CardHeader className="flex-row items-center justify-between gap-2">
+            <CardTitle className="truncate">{selected.siteTitle || selected.url || domain}</CardTitle>
+            <div className="flex shrink-0 gap-2">
+              {selected.url && (
+                <Button asChild variant="outline" size="sm">
+                  <a href={selected.url} target="_blank" rel="noreferrer"><ExternalLink className="size-4 mr-1.5" /> Abrir site</a>
+                </Button>
+              )}
+              {selected.url && (
+                <Button asChild variant="outline" size="sm">
+                  <a href={`${selected.url.replace(/\/$/, "")}/wp-admin`} target="_blank" rel="noreferrer">wp-admin</a>
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+            <Detail label="URL" value={selected.url} />
+            <Detail label="Admin (login)" value={selected.login} />
+            <Detail label="E-mail" value={selected.email} />
+            <Detail label="Diretório" value={selected.directory || "/"} />
+            <Detail label="Idioma" value={selected.language} />
+            <Detail label="Status" value={selected.isValid === false ? "Inválida" : "OK"} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Instalar / Reinstalar */}
+      <InstallForm domain={domain} hasInstall={installs.length > 0} onDone={onDone} />
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-baseline justify-between gap-2 border-b border-border/50 py-1">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="truncate text-right font-medium">{value}</span>
+    </div>
+  );
+}
+
+function InstallForm({ domain, hasInstall, onDone }: { domain: string; hasInstall: boolean; onDone: () => void }) {
   const [siteTitle, setSiteTitle] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [adminLogin, setAdminLogin] = useState("");
@@ -153,8 +257,8 @@ function WordPressTab({ domain, onDone }: { domain: string; onDone: () => void }
   };
 
   return (
-    <Card variant="bordered" className="mt-4">
-      <CardHeader><CardTitle>Instalar / Reinstalar WordPress</CardTitle></CardHeader>
+    <Card variant="bordered">
+      <CardHeader><CardTitle>{hasInstall ? "Instalar outra / Reinstalar" : "Instalar WordPress"}</CardTitle></CardHeader>
       <CardContent className="space-y-3">
         {err && <p className="text-sm text-destructive break-words">Erro: {err}</p>}
         <div className="grid gap-3 sm:grid-cols-2">
@@ -184,20 +288,141 @@ function WordPressTab({ domain, onDone }: { domain: string; onDone: () => void }
           </AlertDialog>
         </div>
         <p className="text-xs text-muted-foreground">
-          O site precisa já existir na hospedagem. A instalação é assíncrona — acompanhe em "Status" após ~1-2 min.
+          O site precisa já existir na hospedagem. A instalação é assíncrona — acompanhe em "Visão geral" após ~1-2 min.
         </p>
       </CardContent>
     </Card>
   );
 }
 
-/* ─── DNS ─── */
+/* ─── Subdomínios ─── */
+interface Subdomain { subdomain?: string; domain?: string; directory?: string }
+function SubdomainsTab({ domain }: { domain: string }) {
+  const qc = useQueryClient();
+  const [novo, setNovo] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const { data: subs = [], isLoading } = useQuery({
+    queryKey: ["subdomains", domain],
+    queryFn: async () => {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "subdomains_list", domain } });
+      const r = data as { ok: boolean; data: unknown; raw: unknown };
+      if (!r?.ok) { setErr(JSON.stringify(r?.raw).slice(0, 300)); return []; }
+      setErr(null);
+      const arr = (Array.isArray(r.data) ? r.data : (r.data as { data?: unknown[] })?.data ?? []) as Subdomain[];
+      return arr;
+    },
+  });
+
+  const labelOf = (s: Subdomain) => s.subdomain || s.domain || "";
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? subs.filter((s) => labelOf(s).toLowerCase().includes(q)) : subs;
+  }, [subs, search]);
+
+  const create = async () => {
+    const sub = novo.trim().toLowerCase().replace(/\.?$/, "");
+    if (!sub) { toast.error("Informe o subdomínio."); return; }
+    setBusy(true); setErr(null);
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "subdomain_create", domain, subdomain: sub } });
+      const r = data as { ok: boolean; raw: unknown };
+      if (!r?.ok) { setErr(JSON.stringify(r?.raw).slice(0, 400)); return; }
+      setNovo("");
+      toast.success("Subdomínio criado.");
+      await qc.invalidateQueries({ queryKey: ["subdomains", domain] });
+    } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
+    finally { setBusy(false); }
+  };
+
+  const remove = async (sub: string) => {
+    setBusy(true); setErr(null);
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "subdomain_delete", domain, subdomain: sub } });
+      const r = data as { ok: boolean; raw: unknown };
+      if (!r?.ok) { setErr(JSON.stringify(r?.raw).slice(0, 400)); return; }
+      toast.success("Subdomínio excluído.");
+      await qc.invalidateQueries({ queryKey: ["subdomains", domain] });
+    } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <Card variant="bordered" className="mt-4">
+      <CardHeader><CardTitle>Subdomínios</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        {err && <p className="text-sm text-destructive break-words">Erro: {err}</p>}
+
+        {/* Criar */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-1 items-center rounded-lg border border-border">
+            <Input className="border-0 focus-visible:ring-0" placeholder="blog" value={novo} onChange={(e) => setNovo(e.target.value)} />
+            <span className="px-3 text-sm text-muted-foreground">.{domain}</span>
+          </div>
+          <Button disabled={busy} onClick={create} className="shrink-0">
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <><Plus className="size-4 mr-1.5" /> Criar</>}
+          </Button>
+        </div>
+
+        {/* Busca */}
+        {subs.length > 3 && (
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Buscar subdomínio..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+        )}
+
+        {/* Lista */}
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : visible.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{subs.length === 0 ? "Nenhum subdomínio." : "Nenhum resultado."}</p>
+        ) : (
+          <div className="space-y-2">
+            {visible.map((s, i) => {
+              const label = labelOf(s);
+              return (
+                <div key={label || i} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{label}</p>
+                    {s.directory && <p className="text-xs text-muted-foreground truncate">{s.directory}</p>}
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon-sm" disabled={busy}><Trash2 className="size-4" /></Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir subdomínio?</AlertDialogTitle>
+                        <AlertDialogDescription>O subdomínio {label} será removido. Esta ação não pode ser desfeita.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => remove(s.subdomain || label)}>Excluir</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ─── DNS (layout estilo Hostinger: busca em cima + tabela) ─── */
 function DnsTab({ domain, canEdit, canReset }: { domain: string; canEdit: boolean; canReset: boolean }) {
   const qc = useQueryClient();
   const [rows, setRows] = useState<DnsRecord[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("ALL");
 
   useQuery({
     queryKey: ["dns", domain],
@@ -222,7 +447,10 @@ function DnsTab({ domain, canEdit, canReset }: { domain: string; canEdit: boolea
   const update = (id: string, patch: Partial<DnsRecord>) =>
     setRows((prev) => prev?.map((r) => (r.uid === id ? { ...r, ...patch } : r)) ?? null);
   const remove = (id: string) => setRows((prev) => prev?.filter((r) => r.uid !== id) ?? null);
-  const add = () => setRows((prev) => [...(prev ?? []), { uid: uid(), name: "@", type: "A", ttl: 14400, content: "" }]);
+  const add = () => {
+    const novo: DnsRecord = { uid: uid(), name: "@", type: "A", ttl: 14400, content: "" };
+    setRows((prev) => [novo, ...(prev ?? [])]);
+  };
 
   const save = async () => {
     if (!rows) return;
@@ -257,9 +485,52 @@ function DnsTab({ domain, canEdit, canReset }: { domain: string; canEdit: boolea
     finally { setResetting(false); }
   };
 
+  // ── Snapshots (histórico) ──
+  interface Snapshot { id?: string | number; snapshot_id?: string | number; reason?: string; created_at?: string }
+  const [snaps, setSnaps] = useState<Snapshot[] | null>(null);
+  const [loadingSnaps, setLoadingSnaps] = useState(false);
+  const [restoring, setRestoring] = useState<string | null>(null);
+
+  const loadSnapshots = async () => {
+    setLoadingSnaps(true); setErr(null);
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "dns_snapshots", domain } });
+      const r = data as { ok: boolean; data: unknown; raw: unknown };
+      if (!r?.ok) { setErr(JSON.stringify(r?.raw).slice(0, 300)); setSnaps([]); return; }
+      const arr = (Array.isArray(r.data) ? r.data : (r.data as { data?: unknown[] })?.data ?? []) as Snapshot[];
+      setSnaps(arr);
+    } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
+    finally { setLoadingSnaps(false); }
+  };
+
+  const restoreSnapshot = async (id: string) => {
+    setRestoring(id); setErr(null);
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "dns_snapshot_restore", domain, snapshotId: id } });
+      const r = data as { ok: boolean; raw: unknown };
+      if (!r?.ok) { setErr(JSON.stringify(r?.raw).slice(0, 400)); return; }
+      toast.success("Snapshot restaurado.");
+      await qc.invalidateQueries({ queryKey: ["dns", domain] });
+    } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
+    finally { setRestoring(null); }
+  };
+
+  const presentTypes = useMemo(
+    () => Array.from(new Set((rows ?? []).map((r) => r.type))).sort(),
+    [rows],
+  );
+  const visible = useMemo(() => {
+    if (!rows) return [];
+    const q = search.trim().toLowerCase();
+    return rows.filter((r) =>
+      (typeFilter === "ALL" || r.type === typeFilter) &&
+      (!q || r.name.toLowerCase().includes(q) || r.content.toLowerCase().includes(q) || r.type.toLowerCase().includes(q)),
+    );
+  }, [rows, search, typeFilter]);
+
   return (
     <Card variant="bordered" className="mt-4">
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader className="flex-row items-center justify-between gap-2">
         <CardTitle>Registros DNS</CardTitle>
         {canReset && (
           <AlertDialog>
@@ -289,30 +560,112 @@ function DnsTab({ domain, canEdit, canReset }: { domain: string; canEdit: boolea
           <p className="text-sm text-muted-foreground">Carregando...</p>
         ) : (
           <>
+            {/* Toolbar: busca + filtro de tipo + adicionar */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input className="pl-9" placeholder="Buscar por nome, tipo ou conteúdo..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos os tipos</SelectItem>
+                  {presentTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {canEdit && (
+                <Button variant="outline" size="sm" onClick={add} className="shrink-0"><Plus className="size-4 mr-1.5" /> Adicionar</Button>
+              )}
+            </div>
+
+            {/* Cabeçalho da tabela */}
+            <div className="hidden grid-cols-[7rem_1fr_5.5rem_2.25rem] gap-2 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
+              <span>Tipo</span><span>Nome / Conteúdo</span><span>TTL</span><span />
+            </div>
+
+            {/* Linhas */}
             <div className="space-y-2">
-              {rows.map((r) => (
-                <div key={r.uid} className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-2">
-                  <Input className="w-28" placeholder="Nome" value={r.name} disabled={!canEdit} onChange={(e) => update(r.uid, { name: e.target.value })} />
+              {visible.map((r) => (
+                <div key={r.uid} className="grid grid-cols-1 gap-2 rounded-lg border border-border p-2 sm:grid-cols-[7rem_1fr_5.5rem_2.25rem] sm:items-center">
                   <Select value={r.type} disabled={!canEdit} onValueChange={(v) => update(r.uid, { type: v })}>
-                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{DNS_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
-                  <Input className="min-w-[10rem] flex-1" placeholder="Conteúdo" value={r.content} disabled={!canEdit} onChange={(e) => update(r.uid, { content: e.target.value })} />
-                  <Input className="w-20" type="number" placeholder="TTL" value={r.ttl} disabled={!canEdit} onChange={(e) => update(r.uid, { ttl: Number(e.target.value) })} />
-                  {canEdit && (
+                  <div className="grid gap-2 sm:grid-cols-[10rem_1fr]">
+                    <Input placeholder="Nome (@ p/ raiz)" value={r.name} disabled={!canEdit} onChange={(e) => update(r.uid, { name: e.target.value })} />
+                    <Input placeholder="Conteúdo / aponta para" value={r.content} disabled={!canEdit} onChange={(e) => update(r.uid, { content: e.target.value })} />
+                  </div>
+                  <Input type="number" placeholder="TTL" value={r.ttl} disabled={!canEdit} onChange={(e) => update(r.uid, { ttl: Number(e.target.value) })} />
+                  {canEdit ? (
                     <Button variant="ghost" size="icon-sm" onClick={() => remove(r.uid)}><Trash2 className="size-4" /></Button>
-                  )}
+                  ) : <span />}
                 </div>
               ))}
-              {rows.length === 0 && <p className="text-sm text-muted-foreground">Nenhum registro.</p>}
+              {visible.length === 0 && (
+                <p className="py-4 text-center text-sm text-muted-foreground">
+                  {rows.length === 0 ? "Nenhum registro." : "Nenhum registro corresponde à busca."}
+                </p>
+              )}
             </div>
-            {canEdit && (
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={add}><Plus className="size-4 mr-1.5" /> Adicionar registro</Button>
+
+            {canEdit ? (
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <span className="text-xs text-muted-foreground">{visible.length} de {rows.length} registros</span>
                 <Button size="sm" disabled={saving} onClick={save}>{saving ? <Loader2 className="size-4 animate-spin" /> : "Salvar DNS"}</Button>
               </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Visualização apenas — edição de DNS não liberada para este site.</p>
             )}
-            {!canEdit && <p className="text-xs text-muted-foreground">Visualização apenas — edição de DNS não liberada para este site.</p>}
+
+            {/* Histórico (snapshots) */}
+            <div className="border-t border-border pt-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium"><History className="size-4" /> Histórico (snapshots)</span>
+                <Button variant="ghost" size="sm" disabled={loadingSnaps} onClick={loadSnapshots}>
+                  {loadingSnaps ? <Loader2 className="size-4 animate-spin" /> : snaps === null ? "Carregar" : "Atualizar"}
+                </Button>
+              </div>
+              {snaps !== null && (
+                snaps.length === 0 ? (
+                  <p className="mt-2 text-sm text-muted-foreground">Nenhum snapshot disponível.</p>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    {snaps.map((s, i) => {
+                      const id = String(s.id ?? s.snapshot_id ?? i);
+                      return (
+                        <div key={id} className="flex items-center justify-between rounded-lg border border-border p-2.5">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{s.reason || `Snapshot ${id}`}</p>
+                            {s.created_at && <p className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleString()}</p>}
+                          </div>
+                          {canReset && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" disabled={restoring === id}>
+                                  {restoring === id ? <Loader2 className="size-4 animate-spin" /> : <><RotateCcw className="size-3.5 mr-1.5" /> Restaurar</>}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Restaurar este snapshot?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    A zona DNS de {domain} será substituída pelo estado deste snapshot. Os registros atuais serão perdidos.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => restoreSnapshot(id)}>Restaurar</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+            </div>
           </>
         )}
       </CardContent>
