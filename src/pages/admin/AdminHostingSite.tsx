@@ -274,13 +274,20 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
     },
   });
 
+  // URL de conexão editável — sempre normalizada para https (exigência do WordPress).
+  const toHttps = (u: string) => `https://${u.trim().replace(/^https?:\/\//i, "").replace(/\/$/, "")}`;
+  const [connectUrl, setConnectUrl] = useState("");
+  useEffect(() => {
+    if (wpUrl && !connectUrl) setConnectUrl(toHttps(wpUrl));
+  }, [wpUrl, connectUrl]);
+
   const connect = async () => {
-    if (!wpUrl) { toast.error("Sem URL de instalação para conectar."); return; }
-    if (!/^https:\/\//i.test(wpUrl)) { toast.error("O site precisa estar em HTTPS para conectar."); return; }
+    const target = toHttps(connectUrl || wpUrl || domain);
+    if (target === "https://") { toast.error("Informe a URL do site."); return; }
     setConnecting(true);
     try {
       const { data } = await invokeEdgeFunction("hostinger-tenant", {
-        body: { action: "wp_connect_start", domain, wpUrl, returnUrl: window.location.href },
+        body: { action: "wp_connect_start", domain, wpUrl: target, returnUrl: window.location.href },
       });
       const r = data as { authorizeUrl?: string };
       if (r?.authorizeUrl) window.location.href = r.authorizeUrl;
@@ -350,10 +357,25 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
             Conecte este WordPress para gerenciar plugins (ativar, desativar, instalar, excluir) direto daqui.
             Você será levado ao seu wp-admin para aprovar com 1 clique — nenhuma senha é digitada aqui.
           </p>
-          <Button onClick={connect} disabled={connecting || !wpUrl}>
-            {connecting ? <Loader2 className="size-4 animate-spin" /> : <><Plug className="size-4 mr-1.5" /> Conectar WordPress</>}
-          </Button>
-          {!wpUrl && <p className="text-xs text-muted-foreground">Nenhuma instalação detectada para conectar.</p>}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">URL do WordPress</label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                className="flex-1"
+                placeholder={`https://${domain}`}
+                value={connectUrl}
+                onChange={(e) => setConnectUrl(e.target.value)}
+                onBlur={() => connectUrl && setConnectUrl(toHttps(connectUrl))}
+              />
+              <Button onClick={connect} disabled={connecting} className="shrink-0">
+                {connecting ? <Loader2 className="size-4 animate-spin" /> : <><Plug className="size-4 mr-1.5" /> Conectar</>}
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            O WordPress exige <strong>HTTPS</strong> para conectar (usamos sempre <code>https://</code>). Se a conexão falhar,
+            ative o SSL grátis do site no hPanel da Hostinger e tente de novo.
+          </p>
         </CardContent>
       </Card>
     );

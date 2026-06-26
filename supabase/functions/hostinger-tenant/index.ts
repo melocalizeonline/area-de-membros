@@ -217,10 +217,10 @@ Deno.serve(async (req) => {
       /* ─── WordPress (REST do próprio site, via Application Password) ─── */
       case "wp_connect_start": {
         requireCap("wp_manage");
-        const wpUrl = String(body.wpUrl ?? "").trim().replace(/\/$/, "");
-        if (!/^https:\/\//i.test(wpUrl)) {
-          return json({ error: "O site precisa estar em HTTPS para conectar.", code: "https_required" }, 400);
-        }
+        // Normaliza para https (exigência do WordPress p/ Application Passwords).
+        const rawUrl = String(body.wpUrl ?? "").trim().replace(/^https?:\/\//i, "").replace(/\/$/, "");
+        if (!rawUrl) return json({ error: "URL do site obrigatória", code: "missing_required_field" }, 400);
+        const wpUrl = `https://${rawUrl}`;
         const returnUrl = String(body.returnUrl ?? "").trim() || null;
         // token de uso único (15 min)
         const token = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
