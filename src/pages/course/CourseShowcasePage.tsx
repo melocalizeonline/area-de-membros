@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Loader2,
@@ -23,6 +23,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CustomerPortalHeader } from "@/components/portal/CustomerPortalHeader";
 import { TenantPublicFooter } from "@/components/tenant/TenantPublicFooter";
+import {
+  NoryFlowCourse,
+  type CourseModuleItem,
+  type CourseLessonItem,
+  type ModuleStatus,
+} from "@/components/portal/NoryFlowCourse";
 
 /* ─── Helpers ─── */
 
@@ -65,6 +71,8 @@ export default function CourseShowcasePage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const skin = searchParams.get("skin"); // ?skin=netflix (preview)
 
   const { data: course, isLoading: courseLoading } = useCourseByTenantAndSlug(
     tenantSlug,
@@ -202,6 +210,76 @@ export default function CourseShowcasePage() {
     BUTTON_RADIUS_CLASS[tenant?.tenant_settings?.portal_button_style || "rounded"] ||
     BUTTON_RADIUS_CLASS.rounded;
   const backToPortalLabel = t("courseShowcase.backToPortal", "Voltar ao portal");
+
+  /* ─── Skin "netflix" (curso estilo Netflix) ─── */
+  if (skin === "netflix") {
+    const mmss = (s: number) =>
+      `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+    const completedCount = allLessonIds.filter((id) => progressMap[id]?.completed).length;
+    const coursePercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+    // primeira aula não concluída (na ordem) = "atual"
+    let currentLessonPublicId: string | null = null;
+    for (const m of sortedModules) {
+      for (const l of m.lessons) {
+        if (!progressMap[l.id]?.completed) {
+          currentLessonPublicId = l.public_id;
+          break;
+        }
+      }
+      if (currentLessonPublicId) break;
+    }
+    const firstLessonPublicId = sortedModules[0]?.lessons[0]?.public_id ?? null;
+    const continueId = currentLessonPublicId ?? firstLessonPublicId;
+    const goLesson = (pid: string | null) => () => {
+      if (pid) navigate(`/${tenantSlug}/${courseSlug}/${pid}`);
+    };
+
+    let firstProgressIdx = -1;
+    const modules: CourseModuleItem[] = sortedModules.map((m, mi) => {
+      const done = m.lessons.filter((l) => progressMap[l.id]?.completed).length;
+      const status: ModuleStatus =
+        m.lessons.length > 0 && done === m.lessons.length ? "done" : done > 0 ? "progress" : "locked";
+      if (status === "progress" && firstProgressIdx === -1) firstProgressIdx = mi;
+      return {
+        id: m.id,
+        num: mi + 1,
+        title: m.title,
+        count: m.lessons.length,
+        progress: m.lessons.length ? Math.round((done / m.lessons.length) * 100) : 0,
+        status,
+        lessons: m.lessons.map((l, li): CourseLessonItem => ({
+          id: l.id,
+          n: li + 1,
+          title: l.title,
+          dur: l.duration_seconds ? mmss(l.duration_seconds) : "—",
+          status: progressMap[l.id]?.completed
+            ? "done"
+            : l.public_id === currentLessonPublicId
+              ? "current"
+              : "todo",
+          onClick: goLesson(l.public_id),
+        })),
+      };
+    });
+
+    return (
+      <NoryFlowCourse
+        tenantName={tenant.name}
+        courseTitle={course.title}
+        courseDescription={course.description}
+        coverUrl={coverUrl}
+        coursePercent={coursePercent}
+        metaLine={`${totalLessons} aulas${totalDuration > 0 ? ` · ${formatDuration(totalDuration)}` : ""}`}
+        modules={modules}
+        defaultOpen={firstProgressIdx >= 0 ? firstProgressIdx : 0}
+        onContinue={goLesson(continueId)}
+        onStartFromBeginning={goLesson(firstLessonPublicId)}
+        onBack={() => navigate(`/${tenantSlug}`)}
+        onSignOut={handleSignOut}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
