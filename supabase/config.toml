@@ -119,3 +119,7 @@ verify_jwt = false
 
 [functions.api]
 verify_jwt = false
+
+# Callback público do fluxo authorize-application do WordPress (recebe redirect do navegador).
+[functions.hostinger-wp-callback]
+verify_jwt = false
