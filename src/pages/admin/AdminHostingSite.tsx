@@ -370,6 +370,7 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
     () => new Set(plugins.map((p) => p.slug).filter(Boolean) as string[]),
     [plugins],
   );
+  const updateCount = useMemo(() => plugins.filter((p) => p.update_available).length, [plugins]);
   const fmtInstalls = (n: number) => {
     if (!n) return "";
     if (n >= 1_000_000) return `${Math.floor(n / 1_000_000)}M+`;
@@ -501,6 +502,21 @@ function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | nu
             </div>
           </details>
         </div>
+
+        {/* Resumo de atualizações — WP core REST não atualiza plugin; levamos ao wp-admin */}
+        {updateCount > 0 && wpAdminUrl && (
+          <div className="flex flex-col gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+              <RotateCcw className="size-4 shrink-0" />
+              {updateCount === 1 ? "1 atualização disponível" : `${updateCount} atualizações disponíveis`}
+            </p>
+            <Button asChild size="sm" variant="outline" className="shrink-0">
+              <a href={`${wpAdminUrl}/update-core.php`} target="_blank" rel="noreferrer">
+                Atualizar tudo <ExternalLink className="size-4 ml-1.5" />
+              </a>
+            </Button>
+          </div>
+        )}
 
         {/* Busca nos instalados */}
         {plugins.length > 5 && (
