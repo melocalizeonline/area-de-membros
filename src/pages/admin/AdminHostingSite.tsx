@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft, Server, Plus, Trash2, Loader2, RotateCcw, ExternalLink, Search, Globe, LayoutDashboard,
-  Network, History,
+  Network, History, Plug,
 } from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edge-function-utils";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface Capabilities { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean; subdomains?: boolean }
+interface Capabilities { dns?: boolean; wordpress?: boolean; status?: boolean; dns_reset?: boolean; subdomains?: boolean; wp_manage?: boolean }
 interface SiteInfo { domain: string; username: string | null; vhostType: string | null; status: string; capabilities: Capabilities }
 /** A API da Hostinger devolve snake_case; normalizamos para uso interno. */
 interface WpInstall { id?: string; domain?: string; url?: string; siteTitle?: string; login?: string; email?: string; directory?: string; language?: string; isValid?: boolean }
@@ -96,7 +96,7 @@ export default function AdminHostingSite() {
             </TabsList>
 
             {caps.status && <TabsContent value="overview"><OverviewTab domain={dom} /></TabsContent>}
-            {caps.wordpress && <TabsContent value="wordpress"><WordPressTab domain={dom} onDone={() => qc.invalidateQueries({ queryKey: ["wp-list", dom] })} /></TabsContent>}
+            {caps.wordpress && <TabsContent value="wordpress"><WordPressTab domain={dom} canManage={!!caps.wp_manage} onDone={() => qc.invalidateQueries({ queryKey: ["wp-list", dom] })} /></TabsContent>}
             {(caps.dns || caps.dns_reset) && <TabsContent value="dns"><DnsTab domain={dom} canEdit={!!caps.dns} canReset={!!caps.dns_reset} /></TabsContent>}
             {caps.subdomains && <TabsContent value="subdomains"><SubdomainsTab domain={dom} /></TabsContent>}
           </Tabs>
@@ -151,8 +151,8 @@ function OverviewTab({ domain }: { domain: string }) {
   );
 }
 
-/* ─── WordPress: seleção de instalação + instalar/reinstalar ─── */
-function WordPressTab({ domain, onDone }: { domain: string; onDone: () => void }) {
+/* ─── WordPress: seleção de instalação + instalar/reinstalar + gerenciar ─── */
+function WordPressTab({ domain, canManage, onDone }: { domain: string; canManage: boolean; onDone: () => void }) {
   const { data: installs = [], isLoading } = useWpInstalls(domain);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -211,9 +211,242 @@ function WordPressTab({ domain, onDone }: { domain: string; onDone: () => void }
         </Card>
       )}
 
+      {/* Gerenciar plugins (WP REST) */}
+      {canManage && <WpManageSection domain={domain} wpUrl={selected?.url ?? null} />}
+
       {/* Instalar / Reinstalar */}
       <InstallForm domain={domain} hasInstall={installs.length > 0} onDone={onDone} />
     </div>
+  );
+}
+
+/* ─── Gerenciar WordPress via REST (plugins + temas) ─── */
+interface WpPlugin { plugin: string; name?: string; status?: string; version?: string }
+interface WpTheme { stylesheet?: string; name?: { rendered?: string } | string; status?: string; version?: string }
+
+function WpManageSection({ domain, wpUrl }: { domain: string; wpUrl: string | null }) {
+  const qc = useQueryClient();
+  const [connecting, setConnecting] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [slug, setSlug] = useState("");
+  const [search, setSearch] = useState("");
+
+  // Toast de retorno do fluxo authorize-application (?wp=connected|error)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wp = params.get("wp");
+    if (wp === "connected") { toast.success("WordPress conectado!"); qc.invalidateQueries({ queryKey: ["wp-status", domain] }); }
+    else if (wp === "error") { toast.error("Não foi possível conectar o WordPress."); }
+    if (wp) {
+      params.delete("wp");
+      const qs = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+  }, [domain, qc]);
+
+  const { data: statusData } = useQuery({
+    queryKey: ["wp-status", domain],
+    queryFn: async () => {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_status", domain } });
+      return data as { connected: boolean; wpUrl: string | null; wpUser: string | null };
+    },
+  });
+  const connected = !!statusData?.connected;
+
+  const { data: plugins = [], isLoading: loadingPlugins, error: pluginsError } = useQuery({
+    queryKey: ["wp-plugins", domain],
+    enabled: connected,
+    queryFn: async () => {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_plugins_list", domain } });
+      const r = data as { ok: boolean; data: WpPlugin[] | null; raw: unknown };
+      if (!r?.ok) throw new Error(JSON.stringify(r?.raw).slice(0, 200));
+      return (r.data ?? []) as WpPlugin[];
+    },
+  });
+
+  const { data: themes = [] } = useQuery({
+    queryKey: ["wp-themes", domain],
+    enabled: connected,
+    queryFn: async () => {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_themes_list", domain } });
+      const r = data as { ok: boolean; data: WpTheme[] | null };
+      return (r?.data ?? []) as WpTheme[];
+    },
+  });
+
+  const connect = async () => {
+    if (!wpUrl) { toast.error("Sem URL de instalação para conectar."); return; }
+    if (!/^https:\/\//i.test(wpUrl)) { toast.error("O site precisa estar em HTTPS para conectar."); return; }
+    setConnecting(true);
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", {
+        body: { action: "wp_connect_start", domain, wpUrl, returnUrl: window.location.href },
+      });
+      const r = data as { authorizeUrl?: string };
+      if (r?.authorizeUrl) window.location.href = r.authorizeUrl;
+      else toast.error("Falha ao iniciar conexão.");
+    } catch { toast.error("Falha ao iniciar conexão."); setConnecting(false); }
+  };
+
+  const disconnect = async () => {
+    setBusy("disconnect");
+    try {
+      await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_disconnect", domain } });
+      await qc.invalidateQueries({ queryKey: ["wp-status", domain] });
+      toast.success("WordPress desconectado.");
+    } catch { toast.error("Falha ao desconectar."); }
+    finally { setBusy(null); }
+  };
+
+  const setStatus = async (plugin: string, status: "active" | "inactive") => {
+    setBusy(plugin);
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_plugin_set_status", domain, plugin, status } });
+      const r = data as { ok: boolean; raw: unknown };
+      if (!r?.ok) { toast.error("Falha: " + JSON.stringify(r?.raw).slice(0, 120)); return; }
+      await qc.invalidateQueries({ queryKey: ["wp-plugins", domain] });
+    } catch { toast.error("Falha ao atualizar plugin."); }
+    finally { setBusy(null); }
+  };
+
+  const del = async (plugin: string) => {
+    setBusy(plugin);
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_plugin_delete", domain, plugin } });
+      const r = data as { ok: boolean; raw: unknown };
+      if (!r?.ok) { toast.error("Falha: " + JSON.stringify(r?.raw).slice(0, 120)); return; }
+      toast.success("Plugin excluído.");
+      await qc.invalidateQueries({ queryKey: ["wp-plugins", domain] });
+    } catch { toast.error("Falha ao excluir plugin."); }
+    finally { setBusy(null); }
+  };
+
+  const install = async () => {
+    const s = slug.trim().toLowerCase();
+    if (!s) { toast.error("Informe o slug do plugin (wordpress.org)."); return; }
+    setBusy("install");
+    try {
+      const { data } = await invokeEdgeFunction("hostinger-tenant", { body: { action: "wp_plugin_install", domain, slug: s, activate: true } });
+      const r = data as { ok: boolean; raw: unknown };
+      if (!r?.ok) { toast.error("Falha: " + JSON.stringify(r?.raw).slice(0, 160)); return; }
+      setSlug("");
+      toast.success("Plugin instalado e ativado.");
+      await qc.invalidateQueries({ queryKey: ["wp-plugins", domain] });
+    } catch { toast.error("Falha ao instalar plugin."); }
+    finally { setBusy(null); }
+  };
+
+  const visiblePlugins = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? plugins.filter((p) => (p.name ?? p.plugin).toLowerCase().includes(q)) : plugins;
+  }, [plugins, search]);
+
+  if (!connected) {
+    return (
+      <Card variant="bordered">
+        <CardHeader><CardTitle>Gerenciar plugins</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Conecte este WordPress para gerenciar plugins (ativar, desativar, instalar, excluir) direto daqui.
+            Você será levado ao seu wp-admin para aprovar com 1 clique — nenhuma senha é digitada aqui.
+          </p>
+          <Button onClick={connect} disabled={connecting || !wpUrl}>
+            {connecting ? <Loader2 className="size-4 animate-spin" /> : <><Plug className="size-4 mr-1.5" /> Conectar WordPress</>}
+          </Button>
+          {!wpUrl && <p className="text-xs text-muted-foreground">Nenhuma instalação detectada para conectar.</p>}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card variant="bordered">
+      <CardHeader className="flex-row items-center justify-between gap-2">
+        <CardTitle>Plugins</CardTitle>
+        <Button variant="ghost" size="sm" disabled={busy === "disconnect"} onClick={disconnect}>Desconectar</Button>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Instalar por slug */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input className="flex-1" placeholder="Instalar plugin por slug (ex.: classic-editor)" value={slug} onChange={(e) => setSlug(e.target.value)} />
+          <Button disabled={busy === "install"} onClick={install} className="shrink-0">
+            {busy === "install" ? <Loader2 className="size-4 animate-spin" /> : <><Plus className="size-4 mr-1.5" /> Instalar</>}
+          </Button>
+        </div>
+
+        {/* Busca */}
+        {plugins.length > 5 && (
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Buscar plugin..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+        )}
+
+        {/* Lista de plugins */}
+        {pluginsError ? (
+          <p className="text-sm text-destructive break-words">Erro ao listar plugins: {(pluginsError as Error).message}</p>
+        ) : loadingPlugins ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : visiblePlugins.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{plugins.length === 0 ? "Nenhum plugin." : "Nenhum resultado."}</p>
+        ) : (
+          <div className="space-y-2">
+            {visiblePlugins.map((p) => {
+              const active = p.status === "active";
+              return (
+                <div key={p.plugin} className="flex items-center justify-between gap-2 rounded-lg border border-border p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {p.name || p.plugin}
+                      <Badge variant={active ? "success" : "outline"} className="ml-2">{active ? "ativo" : "inativo"}</Badge>
+                    </p>
+                    {p.version && <p className="text-xs text-muted-foreground">v{p.version}</p>}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button variant="outline" size="sm" disabled={busy === p.plugin} onClick={() => setStatus(p.plugin, active ? "inactive" : "active")}>
+                      {busy === p.plugin ? <Loader2 className="size-4 animate-spin" /> : active ? "Desativar" : "Ativar"}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon-sm" disabled={busy === p.plugin}><Trash2 className="size-4" /></Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir plugin?</AlertDialogTitle>
+                          <AlertDialogDescription>{p.name || p.plugin} será removido do site {domain}. Esta ação não pode ser desfeita.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => del(p.plugin)}>Excluir</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Temas (somente leitura) */}
+        {themes.length > 0 && (
+          <div className="border-t border-border pt-3">
+            <p className="mb-2 text-sm font-medium">Temas instalados</p>
+            <div className="flex flex-wrap gap-2">
+              {themes.map((t, i) => {
+                const name = typeof t.name === "string" ? t.name : t.name?.rendered;
+                return (
+                  <Badge key={t.stylesheet ?? i} variant={t.status === "active" ? "success" : "outline"}>
+                    {name || t.stylesheet}{t.status === "active" ? " (ativo)" : ""}
+                  </Badge>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">A API do WordPress permite apenas listar temas — ativar/excluir não é suportado.</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
