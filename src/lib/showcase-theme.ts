@@ -11,45 +11,45 @@
  */
 
 export const LIGHT_VARS: React.CSSProperties = {
-  "--background": "223.8136 0.0005% 98.6829%",
-  "--foreground": "223.8136 0.0000% 1.2920%",
-  "--card": "223.8136 -172.5242% 100.0000%",
-  "--card-foreground": "223.8136 0.0000% 1.2920%",
-  "--popover": "223.8136 -172.5242% 100.0000%",
-  "--popover-foreground": "0 0% 0%",
-  "--primary": "223.8136 0.0000% 8.6104%",
-  "--primary-foreground": "223.8136 0.0003% 97.3691%",
-  "--secondary": "223.8136 0.0001% 92.1478%",
-  "--secondary-foreground": "223.8136 0.0000% 17.9236%",
-  "--muted": "223.8136 0.0002% 96.0587%",
-  "--muted-foreground": "223.8136 0.0000% 32.3067%",
-  "--accent": "248 98% 61%",
-  "--accent-foreground": "0 0% 100%",
-  "--destructive": "358.8683 74.6580% 50.3424%",
-  "--destructive-foreground": "213.7504 96.4852% 96.7906%",
-  "--border": "223.8136 0.0001% 89.5577%",
-  "--input": "223.8136 0.0001% 92.1478%",
-  "--ring": "223.8136 0.0000% 32.3067%",
+  "--background": "213 50% 98%",         /* #F5F8FC */
+  "--foreground": "224 41% 7%",          /* #0B0F1A */
+  "--card": "0 0% 100%",
+  "--card-foreground": "224 41% 7%",
+  "--popover": "0 0% 100%",
+  "--popover-foreground": "224 41% 7%",
+  "--primary": "215 82% 47%",            /* #1668D9 */
+  "--primary-foreground": "0 0% 100%",
+  "--secondary": "214 40% 94%",
+  "--secondary-foreground": "216 21% 29%",
+  "--muted": "214 45% 96%",
+  "--muted-foreground": "216 21% 29%",   /* #3A4658 */
+  "--accent": "214 45% 94%",
+  "--accent-foreground": "224 41% 7%",
+  "--destructive": "353 75% 55%",        /* #E2384B */
+  "--destructive-foreground": "0 0% 100%",
+  "--border": "216 35% 92%",             /* #E2E8F1 */
+  "--input": "216 35% 90%",
+  "--ring": "215 82% 47%",
 } as React.CSSProperties;
 
 export const DARK_VARS: React.CSSProperties = {
-  "--background": "223.8136 0.0000% 1.2920%",
-  "--foreground": "223.8136 0.0005% 98.6829%",
-  "--card": "223.8136 0.0000% 4.3484%",
-  "--card-foreground": "223.8136 0.0001% 92.1478%",
-  "--popover": "223.8136 0.0000% 3.9225%",
-  "--popover-foreground": "223.8136 -172.5242% 100.0000%",
-  "--primary": "223.8136 0.0001% 92.1478%",
-  "--primary-foreground": "223.8136 0.0000% 1.2920%",
-  "--secondary": "223.8136 0.0000% 13.1499%",
-  "--secondary-foreground": "223.8136 0.0001% 92.1478%",
-  "--muted": "223.8136 0.0000% 11.3040%",
-  "--muted-foreground": "223.8136 0.0000% 64.4710%",
-  "--accent": "248 98% 61%",
-  "--accent-foreground": "0 0% 100%",
-  "--destructive": "358.7594 101.8439% 69.8357%",
-  "--destructive-foreground": "213.7504 96.4852% 96.7906%",
-  "--border": "223.8136 0.0000% 14.0871%",
-  "--input": "223.8136 0.0000% 19.8916%",
-  "--ring": "223.8136 0.0000% 50.2111%",
+  "--background": "224 41% 7%",          /* #0B0F1A */
+  "--foreground": "216 42% 95%",         /* #EEF2F8 */
+  "--card": "223 34% 12%",               /* #141A29 */
+  "--card-foreground": "216 42% 95%",
+  "--popover": "222 42% 9%",             /* #0E1422 */
+  "--popover-foreground": "216 42% 95%",
+  "--primary": "215 82% 47%",            /* #1668D9 */
+  "--primary-foreground": "0 0% 100%",
+  "--secondary": "223 45% 16%",          /* #16203A */
+  "--secondary-foreground": "216 42% 95%",
+  "--muted": "223 38% 15%",
+  "--muted-foreground": "219 20% 67%",   /* #9AA6BC */
+  "--accent": "223 45% 16%",
+  "--accent-foreground": "216 42% 95%",
+  "--destructive": "355 100% 71%",       /* #FF6B78 */
+  "--destructive-foreground": "224 41% 7%",
+  "--border": "220 28% 19%",             /* #222B3D */
+  "--input": "223 31% 24%",              /* #2A3550 */
+  "--ring": "213 100% 56%",              /* #1E84FF */
 } as React.CSSProperties;

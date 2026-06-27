@@ -90,12 +90,13 @@ export default function PortalProducts() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center gap-3 py-12" role="status" aria-live="polite">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
+            <span className="sr-only">{t("common.loading", "Carregando…")}</span>
           </div>
         ) : !products?.length && !availableLocked.length ? (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <ShoppingBag className="size-10 text-muted-foreground" />
+            <ShoppingBag className="size-10 text-muted-foreground" aria-hidden="true" />
             <p className="text-muted-foreground">{t("portal.products.empty")}</p>
           </div>
         ) : (
@@ -105,8 +106,17 @@ export default function PortalProducts() {
                 {products.map((product) => (
                   <Card
                     key={product.product_id}
-                    className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={product.product_name}
+                    className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     onClick={() => navigate(`/${slug}/portal/products/${product.product_id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        navigate(`/${slug}/portal/products/${product.product_id}`);
+                      }
+                    }}
                   >
                     <div className="aspect-square w-full overflow-hidden bg-muted">
                       <img
@@ -153,22 +163,22 @@ export default function PortalProducts() {
                             className="h-full w-full object-cover"
                           />
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <Lock className="size-7 text-white/80" />
+                            <Lock className="size-7 text-white/80" aria-label={t("portal.products.locked", "Conteúdo bloqueado")} />
                           </div>
                         </div>
                         <CardContent className="p-4 space-y-2">
                           <h3 className="font-semibold text-foreground line-clamp-2">{product.name}</h3>
                           {requested ? (
-                            <div className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                              <Check className="size-4" /> Acesso solicitado
+                            <div className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground" aria-live="polite">
+                              <Check className="size-4" aria-hidden="true" /> Acesso solicitado
                             </div>
                           ) : (
                             <button
                               type="button"
                               onClick={() => requestAccess(product.id)}
-                              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
-                              <Lock className="size-3.5" /> Solicitar acesso
+                              <Lock className="size-3.5" aria-hidden="true" /> Solicitar acesso
                             </button>
                           )}
                         </CardContent>

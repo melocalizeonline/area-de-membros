@@ -248,11 +248,13 @@ export default function LoginAnimated({ basePath = "" }: LoginAnimatedProps) {
               size="icon-sm"
               className="absolute right-1 top-1/2 -translate-y-1/2"
               onClick={() => setShowPassword(!showPassword)}
+              aria-pressed={showPassword}
+              aria-label={showPassword ? t("auth.hidePassword", "Ocultar senha") : t("auth.showPassword", "Mostrar senha")}
             >
               {showPassword ? (
-                <EyeOff className="size-4 text-muted-foreground" />
+                <EyeOff className="size-4 text-muted-foreground" aria-hidden="true" />
               ) : (
-                <Eye className="size-4 text-muted-foreground" />
+                <Eye className="size-4 text-muted-foreground" aria-hidden="true" />
               )}
             </Button>
           </div>

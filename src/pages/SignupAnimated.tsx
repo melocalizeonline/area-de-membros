@@ -182,9 +182,9 @@ export default function SignupAnimated({ basePath = "" }: SignupAnimatedProps) {
           </p>
         </div>
 
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col items-center space-y-4" role="status" aria-live="polite">
           <div className="rounded-full bg-primary/10 p-3">
-            <Mail className="size-8 text-primary" />
+            <Mail className="size-8 text-primary" aria-hidden="true" />
           </div>
           <p className="text-center text-sm text-muted-foreground">
             {t("auth.emailConfirmation.description")}
@@ -195,19 +195,19 @@ export default function SignupAnimated({ basePath = "" }: SignupAnimatedProps) {
             disabled={isResending}
             onClick={handleResendEmail}
           >
-            {isResending && <Loader2 className="size-4 animate-spin" />}
+            {isResending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             <span>{isResending ? t("auth.emailConfirmation.resending") : t("auth.emailConfirmation.resendButton")}</span>
           </Button>
 
           <button
             type="button"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center rounded-md text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             onClick={() => {
               setEmailSent(false);
               setSentEmail("");
             }}
           >
-            <ArrowLeft className="mr-2 size-4" />
+            <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
             {t("auth.emailConfirmation.useAnotherEmailOrSignIn")}
           </button>
         </div>

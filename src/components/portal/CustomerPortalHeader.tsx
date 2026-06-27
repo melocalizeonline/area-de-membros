@@ -80,12 +80,13 @@ export function CustomerPortalHeader({
               <button
                 type="button"
                 disabled={isSigningOut}
-                className="flex size-8 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                aria-label={t("courseShowcase.userMenu", "Menu da conta")}
+                className="flex size-8 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {isSigningOut ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <User className="size-4" />
+                  <User className="size-4" aria-hidden="true" />
                 )}
               </button>
             </DropdownMenuTrigger>
@@ -97,7 +98,7 @@ export function CustomerPortalHeader({
                       to={`/${tenantSlug}`}
                       className="flex items-center gap-2"
                     >
-                      <LayoutDashboard className="size-4" />
+                      <LayoutDashboard className="size-4" aria-hidden="true" />
                       {t("courseShowcase.portal", "Portal do cliente")}
                     </Link>
                   </DropdownMenuItem>
@@ -108,7 +109,7 @@ export function CustomerPortalHeader({
                 onClick={handleSignOut}
                 className="flex items-center gap-2 text-destructive focus:text-destructive"
               >
-                <LogOut className="size-4" />
+                <LogOut className="size-4" aria-hidden="true" />
                 {t("courseShowcase.signOut", "Sair")}
               </DropdownMenuItem>
             </DropdownMenuContent>

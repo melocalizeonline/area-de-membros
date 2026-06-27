@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CustomerPortalHeader } from "@/components/portal/CustomerPortalHeader";
 import { TenantPublicFooter } from "@/components/tenant/TenantPublicFooter";
 import { LIGHT_VARS, DARK_VARS } from "@/lib/showcase-theme";
+import { getPortalThemeColors } from "@/lib/portal-theme";
 
 function formatFileSize(bytes: number | null) {
   if (!bytes) return "";
@@ -89,13 +90,7 @@ export default function PortalProductDetail() {
   // Tema (mesmo padrão do PortalHome)
   const { theme: globalTheme } = useTheme();
   const isDark = globalTheme === "dark";
-  const themeColors = useMemo(
-    () => ({
-      bg: isDark ? "#0A0A0A" : "#FFFFFF",
-      textSecondary: isDark ? "#A0A0A0" : "#666666",
-    }),
-    [isDark]
-  );
+  const themeColors = useMemo(() => getPortalThemeColors(isDark), [isDark]);
 
   const allLoading = isLoading || accessLoading || resolveLoading;
 
@@ -126,20 +121,23 @@ export default function PortalProductDetail() {
             className="gap-2"
             onClick={() => navigate(`/${slug}`)}
           >
-            <ArrowLeft className="size-4" />
+            <ArrowLeft className="size-4" aria-hidden="true" />
             {t("common.back")}
           </Button>
 
           {allLoading ? (
             <div
-              className="flex justify-center py-12"
+              className="flex flex-col items-center justify-center gap-3 py-12"
               style={{ color: themeColors.textSecondary }}
+              role="status"
+              aria-live="polite"
             >
-              <Loader2 className="size-6 animate-spin" />
+              <Loader2 className="size-6 animate-spin" aria-hidden="true" />
+              <span className="sr-only">{t("common.loading", "Carregando…")}</span>
             </div>
           ) : !hasAccess ? (
             <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-              <ShieldX className="size-10" style={{ color: themeColors.textSecondary }} />
+              <ShieldX className="size-10" style={{ color: themeColors.textSecondary }} aria-hidden="true" />
               <p style={{ color: themeColors.textSecondary }}>
                 {t("portal.accessDenied.loginNoAccess")}
               </p>
@@ -169,7 +167,7 @@ export default function PortalProductDetail() {
                             className="flex items-center justify-between rounded-lg border p-3"
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <FileIcon className="size-5 text-muted-foreground shrink-0" />
+                              <FileIcon className="size-5 text-muted-foreground shrink-0" aria-hidden="true" />
                               <div className="min-w-0">
                                 <p className="text-sm font-medium text-foreground truncate">
                                   {asset.file_name}
@@ -183,8 +181,12 @@ export default function PortalProductDetail() {
                             </div>
                             {asset.signedUrl && (
                               <Button size="sm" variant="outline" asChild>
-                                <a href={asset.signedUrl} download={asset.file_name}>
-                                  <Download className="size-4" />
+                                <a
+                                  href={asset.signedUrl}
+                                  download={asset.file_name}
+                                  aria-label={`${t("portal.productDetail.download")} — ${asset.file_name}`}
+                                >
+                                  <Download className="size-4" aria-hidden="true" />
                                   <span className="hidden sm:inline ml-2">
                                     {t("portal.productDetail.download")}
                                   </span>
@@ -221,7 +223,7 @@ export default function PortalProductDetail() {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <ExternalLink className="size-4" />
+                          <ExternalLink className="size-4" aria-hidden="true" />
                           <span className="ml-2">
                             {t("portal.productDetail.accessShowcase")}
                           </span>
@@ -251,7 +253,7 @@ export default function PortalProductDetail() {
                             className="flex items-center justify-between rounded-lg border p-3"
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <Link2 className="size-5 text-muted-foreground shrink-0" />
+                              <Link2 className="size-5 text-muted-foreground shrink-0" aria-hidden="true" />
                               <div className="min-w-0">
                                 <p className="text-sm font-medium text-foreground truncate">
                                   {link.title}
@@ -264,8 +266,13 @@ export default function PortalProductDetail() {
                               </div>
                             </div>
                             <Button size="sm" variant="outline" asChild>
-                              <a href={link.url} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="size-4" />
+                              <a
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`${t("portal.productDetail.openLink")} — ${link.title}`}
+                              >
+                                <ExternalLink className="size-4" aria-hidden="true" />
                                 <span className="hidden sm:inline ml-2">
                                   {t("portal.productDetail.openLink")}
                                 </span>
@@ -281,7 +288,14 @@ export default function PortalProductDetail() {
 
               {/* Sem conteúdo */}
               {!data?.assets.length && !data?.showcase && !data?.links.length && (
-                <div className="text-center py-12">
+                <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                  <span
+                    className="flex size-14 items-center justify-center rounded-2xl"
+                    style={{ background: themeColors.cardBg, border: `1px solid ${themeColors.cardBorder}` }}
+                    aria-hidden="true"
+                  >
+                    <FileIcon className="size-6" style={{ color: themeColors.textSecondary }} />
+                  </span>
                   <p style={{ color: themeColors.textSecondary }}>
                     {t("portal.productDetail.noContent")}
                   </p>

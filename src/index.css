@@ -32,32 +32,32 @@
 
 @layer base {
   :root {
-    /* TweakCN theme — HSL channels (H S% L%) for Tailwind v3 opacity support */
-    --background: 0 0% 100%;
-    --foreground: 223.8136 0.0000% 1.2920%;
+    /* NORY Identidade Visual — commercial light mode. HSL channels (H S% L%) for Tailwind v3 opacity support */
+    --background: 213 50% 98%;            /* #F5F8FC */
+    --foreground: 224 41% 7%;             /* #0B0F1A */
 
-    --card: 223.8136 -172.5242% 100.0000%;
-    --card-foreground: 223.8136 0.0000% 1.2920%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 41% 7%;
 
-    --popover: 223.8136 -172.5242% 100.0000%;
-    --popover-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 41% 7%;
 
-    --primary: 219 100% 54%;
+    --primary: 215 82% 47%;              /* #1668D9 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 223.8136 0.0001% 92.1478%;
-    --secondary-foreground: 223.8136 0.0000% 17.9236%;
+    --secondary: 214 40% 94%;
+    --secondary-foreground: 216 21% 29%; /* #3A4658 */
 
-    --muted: 223.8136 0.0002% 96.0587%;
-    --muted-foreground: 223.8136 0.0000% 32.3067%;
+    --muted: 214 45% 96%;
+    --muted-foreground: 216 21% 29%;     /* #3A4658 */
 
-    --accent: 219 100% 54%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 214 45% 94%;               /* subtle blue-tinted surface */
+    --accent-foreground: 224 41% 7%;
 
-    --destructive: 358.8683 74.6580% 50.3424%;
-    --destructive-foreground: 213.7504 96.4852% 96.7906%;
+    --destructive: 353 75% 55%;          /* #E2384B */
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 160 50% 45%;
+    --success: 159 70% 38%;              /* brand green, darkened for AA text on light */
     --success-foreground: 0 0% 100%;
     --success-badge-bg: 142 76% 93%;
     --success-badge-border: 142 71% 65%;
@@ -66,12 +66,12 @@
     --warning: 45 80% 55%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 223.8136 0.0001% 92%;
-    --input: 223.8136 0.0001% 92.1478%;
-    --ring: 219 100% 54%;
-    --placeholder-foreground: 223.8136 0.0000% 50%;
+    --border: 216 35% 92%;               /* #E2E8F1 */
+    --input: 216 35% 90%;
+    --ring: 215 82% 47%;                 /* brand blue */
+    --placeholder-foreground: 216 16% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.5625rem;                 /* 9px → buttons (var+4px) = 13px */
 
     --chart-1: 215.56 59.98% 83%;
     --chart-2: 222.4034 59.0500% 75.0997%;
@@ -79,14 +79,14 @@
     --chart-4: 225.7181 51.8948% 50.4104%;
     --chart-5: 236.5829 64.2250% 21.4383%;
 
-    --sidebar: 223.8136 -172.5242% 100.0000%;
-    --sidebar-foreground: 223.8136 0.0000% 12.2222%;
-    --sidebar-primary: 223.8136 0.0000% 1.2920%;
-    --sidebar-primary-foreground: 223.8136 -172.5242% 100.0000%;
-    --sidebar-accent: 223.8136 0.0002% 96.0587%;
-    --sidebar-accent-foreground: 223.8136 0.0000% 8.6104%;
-    --sidebar-border: 223.8136 0.0001% 89.5577%;
-    --sidebar-ring: 223.8136 0.0001% 89.5577%;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 224 41% 7%;
+    --sidebar-primary: 215 82% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 45% 96%;
+    --sidebar-accent-foreground: 224 41% 7%;
+    --sidebar-border: 216 35% 92%;
+    --sidebar-ring: 215 82% 47%;
 
     --shadow-2xs: 0px 0px 1px -0.5px hsl(223.8136 0.0000% 62.0499% / 0.15);
     --shadow-xs: 0px 0px 1px -0.5px hsl(223.8136 0.0000% 62.0499% / 0.15);
@@ -102,33 +102,33 @@
   }
 
   .dark {
-    /* Nory Members — navy brand theme */
-    --background: 221 58% 9%;
-    --foreground: 218 35% 92%;
+    /* NORY Identidade Visual — navy dark mode (brand default) */
+    --background: 224 41% 7%;            /* #0B0F1A */
+    --foreground: 216 42% 95%;           /* #EEF2F8 */
 
-    --card: 221 50% 13%;
-    --card-foreground: 218 35% 92%;
+    --card: 223 34% 12%;                 /* #141A29 */
+    --card-foreground: 216 42% 95%;
 
-    --popover: 221 52% 11%;
-    --popover-foreground: 218 35% 92%;
+    --popover: 222 42% 9%;               /* #0E1422 */
+    --popover-foreground: 216 42% 95%;
 
-    --primary: 219 100% 54%;
+    --primary: 215 82% 47%;             /* #1668D9 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 221 40% 18%;
-    --secondary-foreground: 218 35% 92%;
+    --secondary: 223 45% 16%;            /* #16203A */
+    --secondary-foreground: 216 42% 95%;
 
-    --muted: 221 40% 16%;
-    --muted-foreground: 217 27% 67%;
+    --muted: 223 38% 15%;
+    --muted-foreground: 219 20% 67%;     /* #9AA6BC */
 
-    --accent: 219 100% 54%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 223 45% 16%;               /* #16203A subtle surface */
+    --accent-foreground: 216 42% 95%;
 
-    --destructive: 358.7594 101.8439% 69.8357%;
-    --destructive-foreground: 213.7504 96.4852% 96.7906%;
+    --destructive: 355 100% 71%;         /* #FF6B78 — brighter for legible text/icons on navy */
+    --destructive-foreground: 224 41% 7%;
 
-    --success: 160 50% 45%;
-    --success-foreground: 0 0% 100%;
+    --success: 159 75% 52%;             /* #2BE0A1 brand green */
+    --success-foreground: 224 41% 7%;
     --success-badge-bg: 142 30% 8%;
     --success-badge-border: 142 40% 30%;
     --success-badge-text: 142 80% 70%;
@@ -136,10 +136,10 @@
     --warning: 45 80% 55%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 221 35% 20%;
-    --input: 221 35% 22%;
-    --ring: 219 100% 54%;
-    --placeholder-foreground: 217 20% 55%;
+    --border: 220 28% 19%;               /* #222B3D */
+    --input: 223 31% 24%;                /* #2A3550 */
+    --ring: 213 100% 56%;                /* #1E84FF — visible focus */
+    --placeholder-foreground: 219 15% 42%; /* #5C677C */
 
     --chart-1: 215.56 59.98% 83%;
     --chart-2: 222.4034 59.0500% 75.0997%;
@@ -147,14 +147,14 @@
     --chart-4: 225.7181 51.8948% 50.4104%;
     --chart-5: 236.5829 64.2250% 21.4383%;
 
-    --sidebar: 221 55% 10%;
-    --sidebar-foreground: 218 35% 92%;
-    --sidebar-primary: 219 100% 54%;
+    --sidebar: 222 42% 9%;               /* #0E1422 */
+    --sidebar-foreground: 216 42% 95%;
+    --sidebar-primary: 215 82% 47%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 221 40% 16%;
-    --sidebar-accent-foreground: 218 35% 92%;
-    --sidebar-border: 221 35% 18%;
-    --sidebar-ring: 219 100% 54%;
+    --sidebar-accent: 223 45% 16%;       /* #16203A */
+    --sidebar-accent-foreground: 216 42% 95%;
+    --sidebar-border: 221 32% 15%;       /* #1B2334 */
+    --sidebar-ring: 213 100% 56%;
 
     --shadow-2xs: 0px 0px 1px -0.5px hsl(223.8136 0.0000% 38.8573% / 0.15);
     --shadow-xs: 0px 0px 1px -0.5px hsl(223.8136 0.0000% 38.8573% / 0.15);
@@ -259,16 +259,22 @@
     @apply rounded-2xl bg-card p-4;
   }
 
-  /* Gradient utilities — brand blue → green */
+  /* Gradient utilities — NORY brand: azul #1668D9 → verde #2BE0A1 (do logo) */
   .gradient-primary {
-    background-image: linear-gradient(105deg, hsl(219 100% 54%), hsl(146 72% 54%));
+    background-image: linear-gradient(105deg, #1668D9, #2BE0A1);
   }
 
   .gradient-text {
-    background-image: linear-gradient(105deg, hsl(219 100% 54%), hsl(146 72% 54%));
+    background-image: linear-gradient(105deg, #1668D9, #2BE0A1);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* Brand mono — JetBrains Mono for data, valores e códigos de cupom (uso pontual) */
+  .font-data {
+    font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace !important;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Glow effects */

@@ -20,6 +20,7 @@ import { getCoversOptimizedUrl } from "@/lib/storage-urls";
 import { joinTitleSegments } from "@/lib/page-title";
 import { TenantPublicFooter } from "@/components/tenant/TenantPublicFooter";
 import { LIGHT_VARS, DARK_VARS } from "@/lib/showcase-theme";
+import { getPortalThemeColors } from "@/lib/portal-theme";
 import { CustomerPortalHeader } from "@/components/portal/CustomerPortalHeader";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -233,13 +234,7 @@ export default function PortalHome() {
   const { theme: globalTheme } = useTheme();
   const portalTheme = globalTheme;
   const isDark = portalTheme === "dark";
-  const themeColors = useMemo(
-    () => ({
-      bg: isDark ? "#0A0A0A" : "#FFFFFF",
-      textSecondary: isDark ? "#A0A0A0" : "#666666",
-    }),
-    [isDark]
-  );
+  const themeColors = useMemo(() => getPortalThemeColors(isDark), [isDark]);
   const galleryRadiusClass =
     tenant.portal_button_style === "rectangular"
       ? "rounded-none"
@@ -286,10 +281,13 @@ export default function PortalHome() {
         <div className="mx-auto w-full max-w-[1200px] 3xl:max-w-[1600px]">
           {isLoading ? (
             <div
-              className="flex min-h-[420px] w-full items-center justify-center"
+              className="flex min-h-[420px] w-full flex-col items-center justify-center gap-3"
               style={{ color: themeColors.textSecondary }}
+              role="status"
+              aria-live="polite"
             >
-              <Loader2 className="size-7 animate-spin" />
+              <Loader2 className="size-7 animate-spin" aria-hidden="true" />
+              <span className="text-sm">{t("common.loading", "Carregando…")}</span>
             </div>
           ) : (
             <ProductGallery01
@@ -301,7 +299,20 @@ export default function PortalHome() {
               description={t("portal.home.subtitle")}
               descriptionColor={themeColors.textSecondary}
               items={galleryItems}
-              emptyState={<p className="text-sm">{t("portal.home.empty")}</p>}
+              emptyState={
+                <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                  <span
+                    className="flex size-14 items-center justify-center rounded-2xl"
+                    style={{ background: themeColors.cardBg, border: `1px solid ${themeColors.cardBorder}` }}
+                    aria-hidden="true"
+                  >
+                    <Lock className="size-6" style={{ color: themeColors.textSecondary }} />
+                  </span>
+                  <p className="text-sm" style={{ color: themeColors.textSecondary }}>
+                    {t("portal.home.empty")}
+                  </p>
+                </div>
+              }
               radiusClass={galleryRadiusClass}
               themeMode={portalTheme}
             />
@@ -309,7 +320,7 @@ export default function PortalHome() {
 
           {!isLoading && lockedProducts.length > 0 && (
             <div className="mt-14">
-              <h2 className="mb-4 text-xl font-semibold" style={{ color: isDark ? "#FFFFFF" : "#111111" }}>
+              <h2 className="mb-4 text-xl font-semibold" style={{ color: themeColors.text }}>
                 Disponíveis
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -325,34 +336,35 @@ export default function PortalHome() {
                       key={product.id}
                       className={`overflow-hidden border ${galleryRadiusClass}`}
                       style={{
-                        background: isDark ? "#141414" : "#FFFFFF",
-                        borderColor: isDark ? "rgba(255,255,255,.10)" : "rgba(0,0,0,.10)",
+                        background: themeColors.cardBg,
+                        borderColor: themeColors.cardBorder,
                       }}
                     >
                       <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                         <img src={img} alt={product.name} className="size-full object-cover" />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/55">
-                          <Lock className="size-8 text-white/85" />
+                          <Lock className="size-8 text-white/85" aria-label={t("portal.products.locked", "Conteúdo bloqueado")} />
                         </div>
                       </div>
                       <div className="space-y-3 p-4">
-                        <h3 className="font-semibold" style={{ color: isDark ? "#FFFFFF" : "#111111" }}>
+                        <h3 className="font-semibold" style={{ color: themeColors.text }}>
                           {product.name}
                         </h3>
                         {requested ? (
                           <span
                             className="inline-flex items-center gap-1.5 text-sm font-medium"
                             style={{ color: themeColors.textSecondary }}
+                            aria-live="polite"
                           >
-                            <Check className="size-4" /> Solicitado
+                            <Check className="size-4" aria-hidden="true" /> Solicitado
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => requestAccess(product.id)}
-                            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                           >
-                            <Lock className="size-3.5" /> Solicitar acesso
+                            <Lock className="size-3.5" aria-hidden="true" /> Solicitar acesso
                           </button>
                         )}
                       </div>

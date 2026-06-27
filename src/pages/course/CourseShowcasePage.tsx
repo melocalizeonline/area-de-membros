@@ -460,7 +460,7 @@ export default function CourseShowcasePage() {
                         <Link
                           to={`/${tenantSlug}/${courseSlug}/${lesson.public_id}`}
                           key={lesson.id}
-                          className="group rounded-xl border border-border bg-card overflow-hidden transition-colors hover:border-foreground/20"
+                          className="group rounded-xl border border-border bg-card overflow-hidden transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                         >
                           {/* Thumbnail */}
                           <div className="relative aspect-video bg-muted overflow-hidden">
@@ -473,11 +473,11 @@ export default function CourseShowcasePage() {
                             ) : (
                               <div className="size-full flex items-center justify-center">
                                 {hasVideo ? (
-                                  <PlayCircle className="size-8 text-muted-foreground/30" />
+                                  <PlayCircle className="size-8 text-muted-foreground/30" aria-hidden="true" />
                                 ) : hasFiles ? (
-                                  <FileText className="size-8 text-muted-foreground/30" />
+                                  <FileText className="size-8 text-muted-foreground/30" aria-hidden="true" />
                                 ) : (
-                                  <BookOpen className="size-8 text-muted-foreground/30" />
+                                  <BookOpen className="size-8 text-muted-foreground/30" aria-hidden="true" />
                                 )}
                               </div>
                             )}
@@ -490,13 +490,23 @@ export default function CourseShowcasePage() {
                               )}
                             {/* Completion badge */}
                             {isCompleted && (
-                              <span className="absolute top-2 right-2 flex items-center justify-center size-5 rounded-full bg-emerald-500 shadow-sm">
-                                <Check className="size-3 text-white" strokeWidth={3} />
+                              <span
+                                className="absolute top-2 right-2 flex items-center justify-center size-5 rounded-full bg-success text-success-foreground shadow-sm"
+                                aria-label={t("course.lessonCompleted", "Aula concluída")}
+                              >
+                                <Check className="size-3" strokeWidth={3} aria-hidden="true" />
                               </span>
                             )}
                             {/* Progress bar overlay at bottom of thumbnail */}
                             {showProgressBar && (
-                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
+                              <div
+                                className="absolute bottom-0 left-0 right-0 h-1 bg-black/30"
+                                role="progressbar"
+                                aria-valuenow={Math.round(progressPct)}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-label={t("course.lessonProgress", "Progresso da aula")}
+                              >
                                 <div
                                   className="h-full transition-all duration-300"
                                   style={{
