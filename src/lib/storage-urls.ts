@@ -157,15 +157,12 @@ export function getLessonThumbnailOptimizedUrl(
   preset: "lesson-card" | "lesson-thumb" = "lesson-thumb"
 ): string {
   if (!pathOrUrl) return "";
-  const cacheBuster = extractCacheBuster(pathOrUrl);
+  // getCoversPublicUrl já preserva o cache buster (?t=) e toOptimizedUrl o mantém,
+  // então não reanexamos aqui — fazê-lo duplicava o parâmetro (?t=...&t=...).
   const full = getCoversPublicUrl(pathOrUrl);
   if (!full) return "";
   const { width, height, quality, resize } = PRESETS[preset];
-  const optimized = toOptimizedUrl(full, width, height, quality, resize);
-  if (cacheBuster && !optimized.includes("&t=")) {
-    return optimized + `&t=${cacheBuster}`;
-  }
-  return optimized;
+  return toOptimizedUrl(full, width, height, quality, resize);
 }
 
 /**

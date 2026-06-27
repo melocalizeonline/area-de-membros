@@ -17,28 +17,31 @@ vi.mock("@/integrations/supabase/client", () => ({
 import { getLessonThumbnailOptimizedUrl } from "@/lib/storage-urls";
 
 describe("getLessonThumbnailOptimizedUrl", () => {
-  it("uses contain resize for lesson sidebar thumbnails", () => {
+  // A transformação de imagem do Supabase (/render/image) é um recurso pago e
+  // não está habilitada neste projeto, então servimos a URL pública crua.
+  it("serves the raw public URL (with single cache buster) for sidebar thumbnails", () => {
     const url = getLessonThumbnailOptimizedUrl(
       "tenant/demo/lessons/lesson-1/thumbnail.jpg?t=1710000000",
       "lesson-thumb",
     );
 
-    expect(url).toContain("width=240");
-    expect(url).toContain("height=135");
-    expect(url).toContain("resize=contain");
-    expect(url).toContain("quality=75");
-    expect(url).toContain("t=1710000000");
+    expect(url).toBe(
+      "https://example.supabase.co/storage/v1/object/public/covers/tenant/demo/lessons/lesson-1/thumbnail.jpg?t=1710000000",
+    );
+    expect(url).not.toContain("/render/image/");
+    expect(url).not.toContain("resize=");
   });
 
-  it("keeps cover resize for lesson cards", () => {
+  it("serves the raw public URL for lesson cards", () => {
     const url = getLessonThumbnailOptimizedUrl(
       "tenant/demo/lessons/lesson-1/thumbnail.jpg",
       "lesson-card",
     );
 
-    expect(url).toContain("width=480");
-    expect(url).toContain("height=270");
-    expect(url).toContain("resize=cover");
-    expect(url).toContain("quality=80");
+    expect(url).toBe(
+      "https://example.supabase.co/storage/v1/object/public/covers/tenant/demo/lessons/lesson-1/thumbnail.jpg",
+    );
+    expect(url).not.toContain("/render/image/");
+    expect(url).not.toContain("resize=");
   });
 });
