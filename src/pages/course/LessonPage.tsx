@@ -371,9 +371,9 @@ export default function LessonPage() {
                 userId={user?.id}
                 trackingEnabled={progressTrackingEnabled}
                 startTimeSeconds={
-                  progressMap[lesson?.id!]?.completed
+                  progressMap[lesson.id]?.completed
                     ? 0
-                    : (progressMap[lesson?.id!]?.progress_seconds ?? 0)
+                    : (progressMap[lesson.id]?.progress_seconds ?? 0)
                 }
               />
             )}
