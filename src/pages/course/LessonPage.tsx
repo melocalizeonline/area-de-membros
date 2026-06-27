@@ -319,6 +319,8 @@ export default function LessonPage() {
         onNext={nextPid ? goLesson(nextPid) : undefined}
         onBack={() => navigate(`/${tenantSlug}/${courseSlug}`)}
         onSignOut={handleSignOut}
+        tenantSlug={tenantSlug}
+        userId={user?.id}
       />
     );
   }

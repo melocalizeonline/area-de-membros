@@ -283,6 +283,8 @@ export default function CourseShowcasePage() {
         onStartFromBeginning={goLesson(firstLessonPublicId)}
         onBack={() => navigate(`/${tenantSlug}`)}
         onSignOut={handleSignOut}
+        tenantSlug={tenantSlug}
+        userId={user?.id}
       />
     );
   }

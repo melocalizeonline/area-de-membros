@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Lock, Check, Loader2, Play, Info, Search, Plus } from "lucide-react";
+import { Lock, Check, Loader2, Play, Info, Plus } from "lucide-react";
 import { WorkspaceAvatar } from "@/components/admin/WorkspaceAvatar";
+import { useTheme } from "@/contexts/ThemeContext";
+import { NoryFlowControls, noryFlowVars } from "@/components/portal/NoryFlowControls";
 
 /* ─────────────────────────────────────────────
    NoryFlowGallery — galeria da área de membros
@@ -47,6 +49,10 @@ interface Props {
   rows: GalleryRow[];
   onSignOut: () => void;
   onProfile?: () => void;
+  /** slug do tenant (link do menu de usuário) */
+  tenantSlug?: string;
+  /** id do usuário (persistência de idioma) */
+  userId?: string | null;
 }
 
 const DEFAULT_ACCENT = "linear-gradient(105deg,#1668D9,#1E84FF)";
@@ -75,9 +81,9 @@ const CSS = `
 .nf-app .nf-row .row-arrow{opacity:0;transition:opacity .2s ease;}
 .nf-app .nf-row:hover .row-arrow{opacity:1;}
 .nf-app .nav-item{cursor:pointer;background:none;border:none;font:inherit;padding:0;}
-.nf-app .nav-item:hover{color:#fff !important;}
+.nf-app .nav-item:hover{color:var(--nf-text) !important;}
 .nf-app .nf-icon-btn:focus-visible,.nf-app .nf-cta:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(30,132,255,.7);}
-.nf-app .row-slider{height:5px;margin:12px var(--nf-gut) 0;background:rgba(255,255,255,.07);border-radius:6px;position:relative;cursor:pointer;}
+.nf-app .row-slider{height:5px;margin:12px var(--nf-gut) 0;background:var(--nf-border);border-radius:6px;position:relative;cursor:pointer;}
 .nf-app .row-slider-thumb{position:absolute;top:0;bottom:0;left:0;width:30%;border-radius:6px;background:${ACCENT};transition:left .12s linear;}
 .nf-app .row-slider:hover .row-slider-thumb{filter:brightness(1.15);}
 .nf-app .nf-top{padding:16px var(--nf-gut);}
@@ -161,7 +167,7 @@ function CourseCard({ course, index }: { course: GalleryCourse; index: number })
       {/* overlay no hover */}
       <div className="card-overlay" style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(10,19,38,.15),rgba(10,19,38,.93))", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 14 }}>
         <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 16, marginBottom: 5, color: "#fff" }}>{course.title}</div>
-        <div style={{ fontSize: 12, color: course.completed ? "#2BE0A1" : "#9AA6BC", marginBottom: 11 }}>
+        <div style={{ fontSize: 12, color: course.completed ? "#2BE0A1" : "var(--nf-muted)", marginBottom: 11 }}>
           {course.locked
             ? "Disponível para acesso"
             : course.lessonsLabel ?? (course.description ? String(course.description).slice(0, 48) : "Curso")}
@@ -174,14 +180,14 @@ function CourseCard({ course, index }: { course: GalleryCourse; index: number })
               onClick={(e) => { e.stopPropagation(); course.onRequestAccess?.(); }}
               disabled={course.requested}
               aria-live="polite"
-              style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: course.requested ? "rgba(255,255,255,.12)" : ACCENT, border: course.requested ? "1px solid rgba(255,255,255,.16)" : "none", padding: "7px 15px", borderRadius: 100, cursor: course.requested ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}
+              style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: course.requested ? "var(--nf-border)" : ACCENT, border: course.requested ? "1px solid var(--nf-border-strong)" : "none", padding: "7px 15px", borderRadius: 100, cursor: course.requested ? "default" : "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}
             >
               {course.requested ? <><Check className="size-3.5" aria-hidden="true" /> Solicitado</> : cta}
             </button>
           ) : (
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: course.completed ? "rgba(255,255,255,.12)" : ACCENT, border: course.completed ? "1px solid rgba(255,255,255,.16)" : "none", padding: "7px 15px", borderRadius: 100, display: "inline-flex", alignItems: "center", gap: 6 }}><Play className="size-3.5" aria-hidden="true" /> {cta}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: course.completed ? "var(--nf-border)" : ACCENT, border: course.completed ? "1px solid var(--nf-border-strong)" : "none", padding: "7px 15px", borderRadius: 100, display: "inline-flex", alignItems: "center", gap: 6 }}><Play className="size-3.5" aria-hidden="true" /> {cta}</span>
           )}
-          <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid rgba(255,255,255,.16)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "0 0 auto" }}><Plus className="size-4" /></span>
+          <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid var(--nf-border-strong)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "0 0 auto" }}><Plus className="size-4" /></span>
         </div>
       </div>
     </div>
@@ -239,7 +245,7 @@ function Row({ row }: { row: GalleryRow }) {
 
   return (
     <div className="nf-row" style={{ position: "relative", marginBottom: 42 }}>
-      <div className="nf-row-label" style={{ fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".22em", fontSize: 12, fontWeight: 600, color: "#9AA6BC", margin: "0 0 14px" }}>
+      <div className="nf-row-label" style={{ fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".22em", fontSize: 12, fontWeight: 600, color: "var(--nf-muted)", margin: "0 0 14px" }}>
         {row.label}
       </div>
       <button type="button" aria-label="Rolar para a esquerda" className="row-arrow" onClick={() => scroll(-1)} style={{ position: "absolute", left: 8, top: 48, bottom: 0, width: 36, zIndex: 9, border: "none", cursor: "pointer", background: "rgba(10,19,38,.6)", color: "#fff", fontSize: 20, borderRadius: 8 }}>‹</button>
@@ -267,47 +273,50 @@ function Row({ row }: { row: GalleryRow }) {
   );
 }
 
-export function NoryFlowGallery({ userName, tenantName, iconUrl, iconName, iconColor, accent, loading, featured, rows, onSignOut, onProfile }: Props) {
+export function NoryFlowGallery({ userName, tenantName, iconUrl, iconName, iconColor, accent, loading, featured, rows, onSignOut, onProfile, tenantSlug, userId }: Props) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const accentVal = accent || DEFAULT_ACCENT;
   const isEmpty = !featured && rows.every((r) => r.items.length === 0);
   const heroCover = featured?.coverUrl
     ? { backgroundImage: `linear-gradient(120deg,rgba(7,9,14,.85),rgba(7,9,14,.2)),url(${featured.coverUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
-    : { background: "linear-gradient(120deg,#0B0F1A 0%,#0B1733 44%,#103A66 72%,#0E5560 100%)" };
+    : { background: "linear-gradient(120deg,#0B1024 0%,#0B1733 44%,#103A66 72%,#0E5560 100%)" };
 
   return (
-    <div className="nf-app" style={{ minHeight: "100vh", background: "#0B0F1A", color: "#fff", fontFamily: "'Manrope',system-ui,sans-serif", overflowX: "hidden", ["--nf-accent" as string]: accentVal } as React.CSSProperties}>
+    <div className="nf-app" data-theme={isDark ? "dark" : "light"} style={{ minHeight: "100vh", background: "var(--nf-bg)", color: "var(--nf-text)", fontFamily: "'Manrope',system-ui,sans-serif", overflowX: "hidden", ["--nf-accent" as string]: accentVal, ...noryFlowVars(isDark) } as React.CSSProperties}>
       <style>{CSS}</style>
 
       {/* TOP BAR */}
-      <header className="nf-top" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "linear-gradient(180deg,rgba(10,19,38,.92),rgba(10,19,38,0))" }}>
+      <header className="nf-top" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "var(--nf-topbar)", backdropFilter: "blur(16px)", borderBottom: "1px solid var(--nf-border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 38, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
             <WorkspaceAvatar iconUrl={iconUrl} iconName={iconName} iconColor={iconColor} size="md" />
             <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 17, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tenantName}</span>
           </div>
           <nav className="nf-nav" style={{ display: "flex", alignItems: "center", gap: 26, fontSize: 14, fontWeight: 600 }}>
-            <button type="button" className="nav-item" aria-current="page" style={{ color: "#fff" }}>Início</button>
-            <button type="button" className="nav-item" style={{ color: "#9AA6BC" }}>Cursos</button>
-            <button type="button" className="nav-item" onClick={onProfile} style={{ color: "#9AA6BC" }}>Perfil</button>
+            <button type="button" className="nav-item" aria-current="page" style={{ color: "var(--nf-text)" }}>Início</button>
+            <button type="button" className="nav-item" style={{ color: "var(--nf-muted)" }}>Cursos</button>
+            <button type="button" className="nav-item" onClick={onProfile} style={{ color: "var(--nf-muted)" }}>Perfil</button>
           </nav>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <span aria-hidden="true" style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,.16)", display: "flex", alignItems: "center", justifyContent: "center", color: "#9AA6BC", flex: "0 0 auto" }}><Search className="size-4" /></span>
-          <button type="button" className="nf-icon-btn" onClick={onSignOut} aria-label="Sair" title="Sair" style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--nf-accent)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: "#fff", boxShadow: "0 4px 14px rgba(30,132,255,.42)", flex: "0 0 auto" }}>
-            {(userName ?? tenantName).charAt(0).toUpperCase()}
-          </button>
-        </div>
+        <NoryFlowControls
+          tenantSlug={tenantSlug}
+          userId={userId}
+          userLabel={userName ?? tenantName}
+          accentBg="var(--nf-accent)"
+          onSignOut={onSignOut}
+        />
       </header>
 
       {loading ? (
         <div style={{ display: "grid", placeItems: "center", minHeight: "70vh" }}>
-          <Loader2 className="size-8 animate-spin" style={{ color: "#9AA6BC" }} />
+          <Loader2 className="size-8 animate-spin" style={{ color: "var(--nf-muted)" }} />
         </div>
       ) : isEmpty ? (
         <div style={{ display: "grid", placeItems: "center", minHeight: "70vh", textAlign: "center", padding: "0 24px" }}>
           <div>
             <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 22, marginBottom: 8 }}>Nenhum curso por aqui ainda</div>
-            <div style={{ color: "#9AA6BC", fontSize: 14 }}>Quando você tiver acesso a cursos, eles aparecem aqui.</div>
+            <div style={{ color: "var(--nf-muted)", fontSize: 14 }}>Quando você tiver acesso a cursos, eles aparecem aqui.</div>
           </div>
         </div>
       ) : (
@@ -316,13 +325,13 @@ export function NoryFlowGallery({ userName, tenantName, iconUrl, iconName, iconC
       <section className="nf-hero" style={{ position: "relative", overflow: "hidden", ...heroCover }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 110% at 82% 18%,rgba(43,224,161,.4),transparent 55%)" }} />
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(70% 90% at 70% 40%,rgba(30,132,255,.35),transparent 60%)" }} />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "min(45%,240px)", background: "linear-gradient(180deg,transparent,#0B0F1A)" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "min(45%,240px)", background: "linear-gradient(180deg,transparent,var(--nf-bg))" }} />
 
         <div className="nf-hero-content" style={{ position: "absolute" }}>
           <div style={{ fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".22em", fontSize: 12, fontWeight: 600, color: "#2BE0A1", marginBottom: 16 }}>
             Curso em destaque
           </div>
-          <h1 className="nf-hero-title" style={{ fontFamily: "'Sora'", fontWeight: 800, lineHeight: 1.04, letterSpacing: "-1.5px", margin: "0 0 16px", textWrap: "balance" }}>
+          <h1 className="nf-hero-title" style={{ fontFamily: "'Sora'", fontWeight: 800, lineHeight: 1.04, letterSpacing: "-1.5px", margin: "0 0 16px", textWrap: "balance", color: "#fff" }}>
             {featured?.title ?? "Comece a aprender"}
           </h1>
           {featured?.description && (
@@ -334,7 +343,7 @@ export function NoryFlowGallery({ userName, tenantName, iconUrl, iconName, iconC
             <button type="button" className="nf-cta" onClick={featured?.onClick} style={{ border: "none", cursor: "pointer", background: ACCENT, color: "#fff", fontFamily: "'Manrope'", fontWeight: 700, fontSize: 15, padding: "14px 28px", borderRadius: 100, boxShadow: "0 10px 26px rgba(30,132,255,.42)", display: "flex", alignItems: "center", gap: 8 }}>
               <Play className="size-4" aria-hidden="true" /> {featured?.progress ? "Continuar" : "Começar"}
             </button>
-            <button type="button" className="nf-cta" onClick={featured?.onClick} style={{ cursor: "pointer", background: "rgba(255,255,255,.1)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid rgba(255,255,255,.16)", fontFamily: "'Manrope'", fontWeight: 600, fontSize: 15, padding: "14px 24px", borderRadius: 100, display: "flex", alignItems: "center", gap: 8 }}>
+            <button type="button" className="nf-cta" onClick={featured?.onClick} style={{ cursor: "pointer", background: "rgba(255,255,255,.1)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid var(--nf-border-strong)", fontFamily: "'Manrope'", fontWeight: 600, fontSize: 15, padding: "14px 24px", borderRadius: 100, display: "flex", alignItems: "center", gap: 8 }}>
               <Info className="size-4" aria-hidden="true" /> Detalhes
             </button>
           </div>

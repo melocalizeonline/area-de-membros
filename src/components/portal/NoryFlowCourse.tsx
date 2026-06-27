@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Play, ChevronDown, ChevronRight, Check } from "lucide-react";
 import { WorkspaceAvatar } from "@/components/admin/WorkspaceAvatar";
+import { useTheme } from "@/contexts/ThemeContext";
+import { NoryFlowControls, noryFlowVars } from "@/components/portal/NoryFlowControls";
 
 /* ─────────────────────────────────────────────
    NoryFlowCourse — página do curso (skin "netflix"):
@@ -60,12 +62,14 @@ interface Props {
   onStartFromBeginning: () => void;
   onBack: () => void;
   onSignOut: () => void;
+  tenantSlug?: string;
+  userId?: string | null;
 }
 
 const CSS = `
 .nf-app{--nf-gut:clamp(16px,5vw,44px);}
 .nf-app .nav-item{cursor:pointer;background:none;border:none;font:inherit;padding:0;}
-.nf-app .nav-item:hover{color:#fff!important;}
+.nf-app .nav-item:hover{color:var(--nf-text)!important;}
 .nf-app .nf-top{padding:14px var(--nf-gut);}
 .nf-app .nf-body{padding:0 var(--nf-gut) 100px;}
 .nf-app .nf-hero{height:clamp(420px,68vh,520px);}
@@ -82,7 +86,7 @@ const CSS = `
 .nf-app .module-lessons.open{grid-template-rows:1fr;opacity:1;margin-top:18px;}
 .nf-app .module-lessons>.ml-inner{min-height:0;}
 .nf-app .lesson-row{transition:background .18s;text-decoration:none;cursor:pointer;}
-.nf-app .lesson-row:hover{background:rgba(255,255,255,.05)!important;}
+.nf-app .lesson-row:hover{background:var(--nf-hover)!important;}
 .nf-app .caret{transition:transform .3s;}
 .nf-app .module-card.active .caret{transform:rotate(180deg);}
 .nf-app .cover-play{opacity:0;transform:scale(.8);transition:opacity .25s,transform .25s;}
@@ -106,7 +110,7 @@ function badge(status: ModuleStatus) {
     whiteSpace: "nowrap",
     background: "rgba(7,9,14,.55)",
     backdropFilter: "blur(6px)",
-    border: "1px solid rgba(255,255,255,.12)",
+    border: "1px solid var(--nf-border)",
   };
   if (status === "done") return { label: "Concluído", style: { ...base, color: "#2BE0A1" } };
   if (status === "progress") return { label: "Em andamento", style: { ...base, color: "#4F97F4" } };
@@ -125,11 +129,11 @@ function ModuleCard({ mod, index, active, onToggle }: { mod: CourseModuleItem; i
       aria-expanded={active}
       aria-label={`Módulo ${mod.num}: ${mod.title}`}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
-      style={{ background: "linear-gradient(160deg,#141A29,#0E1422)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column" }}
+      style={{ background: "linear-gradient(160deg,var(--nf-surface),var(--nf-surface2))", border: "1px solid var(--nf-border)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column" }}
     >
       <div className="module-cover" style={{ position: "relative", height: 132, overflow: "hidden", background: COVERS[index % COVERS.length] }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 130% at 12% 8%,rgba(255,255,255,.22),transparent 52%)" }} />
-        <div className="cover-num" style={{ position: "absolute", right: -6, bottom: -26, fontFamily: "'Sora'", fontWeight: 800, fontSize: 120, lineHeight: 1, color: "rgba(255,255,255,.16)" }}>{mod.num}</div>
+        <div className="cover-num" style={{ position: "absolute", right: -6, bottom: -26, fontFamily: "'Sora'", fontWeight: 800, fontSize: 120, lineHeight: 1, color: "var(--nf-border-strong)" }}>{mod.num}</div>
         <span style={{ position: "absolute", top: 12, right: 12, ...b.style }}>{b.label}</span>
         <div style={{ position: "absolute", left: 14, bottom: 12, fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".18em", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.85)", textShadow: "0 1px 6px rgba(0,0,0,.4)" }}>Módulo {mod.num}</div>
         <div className="cover-play" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: 46, height: 46, borderRadius: "50%", background: ACCENT, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(30,132,255,.42)" }}>
@@ -140,17 +144,17 @@ function ModuleCard({ mod, index, active, onToggle }: { mod: CourseModuleItem; i
       <div style={{ padding: "18px 20px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
           <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 20, letterSpacing: "-.3px" }}>{mod.title}</div>
-          <div style={{ fontSize: 13, color: "#9AA6BC", whiteSpace: "nowrap" }}>{mod.count} aulas</div>
+          <div style={{ fontSize: 13, color: "var(--nf-muted)", whiteSpace: "nowrap" }}>{mod.count} aulas</div>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#9AA6BC", marginBottom: 8 }}>
-          <span>Progresso</span><span style={{ color: "#fff", fontWeight: 600 }}>{mod.progress}%</span>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--nf-muted)", marginBottom: 8 }}>
+          <span>Progresso</span><span style={{ color: "var(--nf-text)", fontWeight: 600 }}>{mod.progress}%</span>
         </div>
-        <div role="progressbar" aria-valuenow={mod.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`Progresso do módulo ${mod.num}`} style={{ height: 6, borderRadius: 100, background: "rgba(255,255,255,.08)", overflow: "hidden" }}>
+        <div role="progressbar" aria-valuenow={mod.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`Progresso do módulo ${mod.num}`} style={{ height: 6, borderRadius: 100, background: "var(--nf-border)", overflow: "hidden" }}>
           <div style={{ width: `${mod.progress}%`, height: "100%", borderRadius: 100, background: mod.status === "done" ? BRAND : ACCENT }} />
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{cta}</span>
-          <ChevronDown className="caret size-4" style={{ color: "#9AA6BC" }} aria-hidden="true" />
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--nf-text)" }}>{cta}</span>
+          <ChevronDown className="caret size-4" style={{ color: "var(--nf-muted)" }} aria-hidden="true" />
         </div>
       </div>
     </div>
@@ -159,12 +163,12 @@ function ModuleCard({ mod, index, active, onToggle }: { mod: CourseModuleItem; i
 
 function LessonRow({ ls }: { ls: CourseLessonItem }) {
   const isCur = ls.status === "current";
-  const rowBase: React.CSSProperties = { display: "flex", alignItems: "center", gap: 16, padding: "15px 22px", borderBottom: "1px solid rgba(255,255,255,.07)" };
+  const rowBase: React.CSSProperties = { display: "flex", alignItems: "center", gap: 16, padding: "15px 22px", borderBottom: "1px solid var(--nf-border)" };
   let statusStyle: React.CSSProperties = { flex: "0 0 26px", width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 };
   let statusIcon: React.ReactNode = null;
-  let titleColor = "#9AA6BC";
+  let titleColor = "var(--nf-muted)";
   let titleWeight = 500;
-  let numColor = "#9AA6BC";
+  let numColor = "var(--nf-muted)";
   let numWeight = 400;
   if (ls.status === "done") {
     statusStyle = { ...statusStyle, background: "rgba(52,222,126,.16)", color: "#2BE0A1", fontWeight: 700 };
@@ -172,9 +176,9 @@ function LessonRow({ ls }: { ls: CourseLessonItem }) {
   } else if (isCur) {
     statusStyle = { flex: "0 0 30px", width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: ACCENT, color: "#fff", boxShadow: "0 4px 14px rgba(30,132,255,.42)" };
     statusIcon = <Play className="size-3" style={{ marginLeft: 1 }} aria-hidden="true" />;
-    titleColor = "#fff"; titleWeight = 700; numColor = "#fff"; numWeight = 600;
+    titleColor = "var(--nf-text)"; titleWeight = 700; numColor = "var(--nf-text)"; numWeight = 600;
   } else {
-    statusStyle = { ...statusStyle, border: "1.5px solid rgba(255,255,255,.16)", color: "#9AA6BC" };
+    statusStyle = { ...statusStyle, border: "1.5px solid var(--nf-border-strong)", color: "var(--nf-muted)" };
   }
   const rowStyle = { ...rowBase, ...(isCur ? { background: "rgba(31,111,224,.10)", boxShadow: "inset 3px 0 0 #1E84FF" } : {}) };
 
@@ -193,67 +197,74 @@ function LessonRow({ ls }: { ls: CourseLessonItem }) {
       <span style={{ flex: "0 0 26px", fontSize: 14, fontVariantNumeric: "tabular-nums", color: numColor, fontWeight: numWeight }}>{String(ls.n).padStart(2, "0")}</span>
       <span style={{ flex: 1, fontSize: 15, color: titleColor, fontWeight: titleWeight }}>{ls.title}</span>
       <span style={{ fontSize: 13, color: titleColor, fontVariantNumeric: "tabular-nums" }}>{ls.dur}</span>
-      <ChevronRight className="size-4" style={{ color: "#9AA6BC", flex: "0 0 auto" }} aria-hidden="true" />
+      <ChevronRight className="size-4" style={{ color: "var(--nf-muted)", flex: "0 0 auto" }} aria-hidden="true" />
     </div>
   );
 }
 
 export function NoryFlowCourse({
   tenantName, iconUrl, iconName, iconColor, accent, courseTitle, courseDescription, coverUrl, coursePercent, metaLine,
-  modules, defaultOpen = 0, onContinue, onStartFromBeginning, onBack, onSignOut,
+  modules, defaultOpen = 0, onContinue, onStartFromBeginning, onBack, onSignOut, tenantSlug, userId,
 }: Props) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const accentVal = accent || DEFAULT_ACCENT;
   const [open, setOpen] = useState(defaultOpen);
   const active = open >= 0 ? modules[open] : undefined;
 
   const heroCover = coverUrl
     ? { backgroundImage: `linear-gradient(120deg,rgba(7,9,14,.9),rgba(7,9,14,.25)),url(${coverUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
-    : { background: "linear-gradient(120deg,#0B0F1A 0%,#0B1733 44%,#103A66 72%,#0E5560 100%)" };
+    : { background: "linear-gradient(120deg,#0B1024 0%,#0B1733 44%,#103A66 72%,#0E5560 100%)" };
 
   return (
-    <div className="nf-app" style={{ minHeight: "100vh", background: "#0B0F1A", color: "#fff", fontFamily: "'Manrope',system-ui,sans-serif", overflowX: "hidden", ["--nf-accent" as string]: accentVal } as React.CSSProperties}>
+    <div className="nf-app" data-theme={isDark ? "dark" : "light"} style={{ minHeight: "100vh", background: "var(--nf-bg)", color: "var(--nf-text)", fontFamily: "'Manrope',system-ui,sans-serif", overflowX: "hidden", ["--nf-accent" as string]: accentVal, ...noryFlowVars(isDark) } as React.CSSProperties}>
       <style>{CSS}</style>
 
       {/* TOP BAR */}
-      <header className="nf-top" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(7,9,14,.72)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
+      <header className="nf-top" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "var(--nf-topbar)", backdropFilter: "blur(16px)", borderBottom: "1px solid var(--nf-border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 38, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
             <WorkspaceAvatar iconUrl={iconUrl} iconName={iconName} iconColor={iconColor} size="md" />
             <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 17, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tenantName}</span>
           </div>
           <nav className="nf-nav" style={{ display: "flex", alignItems: "center", gap: 26, fontSize: 14, fontWeight: 600 }}>
-            <button type="button" className="nav-item" onClick={onBack} style={{ color: "#9AA6BC" }}>Início</button>
-            <button type="button" className="nav-item" aria-current="page" style={{ color: "#fff" }}>Cursos</button>
-            <button type="button" className="nav-item" style={{ color: "#9AA6BC" }}>Perfil</button>
+            <button type="button" className="nav-item" onClick={onBack} style={{ color: "var(--nf-muted)" }}>Início</button>
+            <button type="button" className="nav-item" aria-current="page" style={{ color: "var(--nf-text)" }}>Cursos</button>
+            <button type="button" className="nav-item" style={{ color: "var(--nf-muted)" }}>Perfil</button>
           </nav>
         </div>
-        <button type="button" className="nf-icon-btn" onClick={onSignOut} aria-label="Sair" title="Sair" style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--nf-accent)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: "#fff", boxShadow: "0 4px 14px rgba(30,132,255,.42)", flex: "0 0 auto" }}>
-          {tenantName.charAt(0).toUpperCase()}
-        </button>
+        <NoryFlowControls
+          tenantSlug={tenantSlug}
+          userId={userId}
+          userLabel={tenantName}
+          accentBg="var(--nf-accent)"
+          onSignOut={onSignOut}
+          showPortalLink
+        />
       </header>
 
       {/* HERO */}
       <section className="nf-hero" style={{ position: "relative", overflow: "hidden", ...heroCover }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(80% 110% at 82% 18%,rgba(43,224,161,.4),transparent 55%)" }} />
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(70% 90% at 70% 40%,rgba(30,132,255,.35),transparent 60%)" }} />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "min(46%,240px)", background: "linear-gradient(180deg,transparent,#0B0F1A)" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "min(46%,240px)", background: "linear-gradient(180deg,transparent,var(--nf-bg))" }} />
 
         <div className="nf-hero-content" style={{ position: "absolute" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#9AA6BC", marginBottom: 18, flexWrap: "wrap" }}>
-            <button type="button" className="nav-item" style={{ color: "#9AA6BC" }} onClick={onBack}>Cursos</button><ChevronRight className="size-3.5" aria-hidden="true" /><span style={{ color: "#fff" }}>{courseTitle}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--nf-muted)", marginBottom: 18, flexWrap: "wrap" }}>
+            <button type="button" className="nav-item" style={{ color: "var(--nf-muted)" }} onClick={onBack}>Cursos</button><ChevronRight className="size-3.5" aria-hidden="true" /><span style={{ color: "#fff" }}>{courseTitle}</span>
           </div>
           <div style={{ fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".22em", fontSize: 12, fontWeight: 600, color: "#2BE0A1", marginBottom: 14 }}>Curso</div>
-          <h1 className="nf-hero-title" style={{ fontFamily: "'Sora'", fontWeight: 800, lineHeight: 1.04, letterSpacing: "-1.4px", margin: "0 0 14px", textWrap: "balance" }}>{courseTitle}</h1>
+          <h1 className="nf-hero-title" style={{ fontFamily: "'Sora'", fontWeight: 800, lineHeight: 1.04, letterSpacing: "-1.4px", margin: "0 0 14px", textWrap: "balance", color: "#fff" }}>{courseTitle}</h1>
           {courseDescription && <p style={{ fontSize: 16, lineHeight: 1.5, color: "#D6E0F0", margin: "0 0 16px", maxWidth: 510, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{courseDescription}</p>}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#9AA6BC", marginBottom: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--nf-muted)", marginBottom: 16, flexWrap: "wrap" }}>
             <span style={{ fontWeight: 700, color: "#2BE0A1" }}>{coursePercent}% concluído</span><span aria-hidden="true">·</span><span>{metaLine}</span>
           </div>
-          <div role="progressbar" aria-valuenow={coursePercent} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso do curso" style={{ maxWidth: 510, height: 6, borderRadius: 100, background: "rgba(255,255,255,.12)", overflow: "hidden", marginBottom: 24 }}>
+          <div role="progressbar" aria-valuenow={coursePercent} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso do curso" style={{ maxWidth: 510, height: 6, borderRadius: 100, background: "var(--nf-border)", overflow: "hidden", marginBottom: 24 }}>
             <div style={{ width: `${coursePercent}%`, height: "100%", borderRadius: 100, background: BRAND }} />
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button type="button" className="nf-cta" onClick={onContinue} style={{ border: "none", cursor: "pointer", background: ACCENT, color: "#fff", fontFamily: "'Manrope'", fontWeight: 700, fontSize: 15, padding: "14px 28px", borderRadius: 100, boxShadow: "0 10px 26px rgba(30,132,255,.42)", display: "flex", alignItems: "center", gap: 8 }}><Play className="size-4" aria-hidden="true" /> Continuar</button>
-            <button type="button" className="nf-cta" onClick={onStartFromBeginning} style={{ cursor: "pointer", background: "rgba(255,255,255,.1)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid rgba(255,255,255,.16)", fontFamily: "'Manrope'", fontWeight: 600, fontSize: 15, padding: "14px 24px", borderRadius: 100 }}>Começar do início</button>
+            <button type="button" className="nf-cta" onClick={onStartFromBeginning} style={{ cursor: "pointer", background: "rgba(255,255,255,.1)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid var(--nf-border-strong)", fontFamily: "'Manrope'", fontWeight: 600, fontSize: 15, padding: "14px 24px", borderRadius: 100 }}>Começar do início</button>
           </div>
         </div>
       </section>
@@ -262,12 +273,12 @@ export function NoryFlowCourse({
       <div className="nf-body" style={{ position: "relative", zIndex: 3, marginTop: "clamp(-50px,-6vw,-24px)", maxWidth: 1180, marginRight: "auto" }}>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, marginBottom: 24, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".22em", fontSize: 12, fontWeight: 600, color: "#9AA6BC", marginBottom: 8 }}>Conteúdo do curso</div>
+            <div style={{ fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".22em", fontSize: 12, fontWeight: 600, color: "var(--nf-muted)", marginBottom: 8 }}>Conteúdo do curso</div>
             <h2 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 26, letterSpacing: "-.4px", margin: 0 }}>
               {modules.length} módulos, {modules.reduce((s, m) => s + m.count, 0)} aulas
             </h2>
           </div>
-          <span style={{ fontSize: 14, color: "#9AA6BC" }}>Clique em um módulo para ver as aulas</span>
+          <span style={{ fontSize: 14, color: "var(--nf-muted)" }}>Clique em um módulo para ver as aulas</span>
         </div>
 
         <div className="modules-grid">
@@ -280,13 +291,13 @@ export function NoryFlowCourse({
         <div className={`module-lessons${active ? " open" : ""}`}>
           <div className="ml-inner">
             {active && (
-              <div style={{ marginTop: 18, background: "linear-gradient(160deg,#141A29,#0E1422)", border: "1px solid rgba(255,255,255,.16)", borderRadius: 16, overflow: "hidden", boxShadow: "0 18px 50px rgba(31,111,224,.18)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
+              <div style={{ marginTop: 18, background: "linear-gradient(160deg,var(--nf-surface),var(--nf-surface2))", border: "1px solid var(--nf-border-strong)", borderRadius: 16, overflow: "hidden", boxShadow: "0 18px 50px rgba(31,111,224,.18)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid var(--nf-border)" }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
                     <span style={{ fontFamily: "'Space Grotesk'", textTransform: "uppercase", letterSpacing: ".18em", fontSize: 11, fontWeight: 600, color: "#1E84FF" }}>Módulo {active.num}</span>
                     <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19 }}>{active.title}</span>
                   </div>
-                  <span style={{ fontSize: 13, color: "#9AA6BC" }}>{active.count} aulas · {active.progress}%</span>
+                  <span style={{ fontSize: 13, color: "var(--nf-muted)" }}>{active.count} aulas · {active.progress}%</span>
                 </div>
                 {active.lessons.map((ls) => (
                   <LessonRow key={ls.id} ls={ls} />

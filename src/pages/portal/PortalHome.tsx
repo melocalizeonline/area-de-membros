@@ -255,6 +255,8 @@ export default function PortalHome() {
         featured={netflix.featured}
         rows={netflix.rows}
         onSignOut={handleSignOut}
+        tenantSlug={slug}
+        userId={profile?.id}
       />
     );
   }
