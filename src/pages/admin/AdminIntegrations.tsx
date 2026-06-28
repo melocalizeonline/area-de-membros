@@ -6,14 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { useGatewayIntegration } from "@/hooks/useGatewayIntegration";
@@ -22,7 +14,7 @@ import { useAIIntegration, type AIProvider } from "@/hooks/useAIIntegration";
 import { useSimpleIntegration } from "@/hooks/useSimpleIntegration";
 import { AIKeyDialog } from "@/components/admin/integrations/AIKeyDialog";
 
-/* ─── Definição dos provedores (via registry centralizado) ─── */
+/* Provider definitions from centralized registry */
 
 import {
   type ProviderKey,
@@ -32,7 +24,7 @@ import {
 
 const SECTIONS = getProvidersByCategory();
 
-/* ─── Card de integração ─── */
+/* Integration card */
 
 function IntegrationCard({
   provider,
@@ -48,7 +40,9 @@ function IntegrationCard({
   return (
     <Card
       variant="bordered"
-      className="flex flex-col overflow-hidden transition-all min-w-[75vw] snap-start sm:min-w-0"
+      className={`flex flex-col overflow-hidden transition-all min-w-[75vw] snap-start sm:min-w-0 ${
+        provider.available ? "" : "opacity-70"
+      }`}
     >
       <CardContent className="flex flex-1 flex-col gap-4 p-5">
         <div className="flex items-start justify-between gap-3">
@@ -71,7 +65,12 @@ function IntegrationCard({
             pill={false}
             className="shrink-0"
             onClick={onConfigure}
-            aria-label={t("integrations.card.configure")}
+            disabled={!provider.available}
+            aria-label={
+              provider.available
+                ? t("integrations.card.configure")
+                : t("integrations.comingSoon")
+            }
           >
             <Settings className="size-4" />
           </Button>
@@ -83,7 +82,11 @@ function IntegrationCard({
             {t(provider.descriptionKey)}
           </p>
 
-          {isConnected ? (
+          {!provider.available ? (
+            <Badge variant="outline" className="mt-2 w-fit text-xs">
+              {t("integrations.comingSoon")}
+            </Badge>
+          ) : isConnected ? (
             <Badge variant="success" className="mt-2 w-fit text-xs">
               {t("integrations.card.connected")}
             </Badge>
@@ -98,7 +101,7 @@ function IntegrationCard({
   );
 }
 
-/* ─── Página ─── */
+/* Page */
 
 export default function AdminIntegrations() {
   const { t } = useTranslation();
@@ -115,7 +118,6 @@ export default function AdminIntegrations() {
     connectFnName: "wistia-connect",
     disconnectFnName: "wistia-disconnect",
   });
-  const [unavailableOpen, setUnavailableOpen] = useState(false);
   const [aiDialogProvider, setAiDialogProvider] = useState<AIProvider | null>(null);
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
@@ -130,7 +132,7 @@ export default function AdminIntegrations() {
     });
   }
 
-  // Nenhum filtro ativo = mostra tudo
+  // No active filter means show everything
   const visibleSections =
     activeFilters.size === 0
       ? SECTIONS
@@ -149,7 +151,7 @@ export default function AdminIntegrations() {
   const AI_PROVIDERS: ProviderKey[] = ["openai", "anthropic"];
   const DIALOG_PROVIDERS: Record<string, () => void> = {};
 
-  /** Conectados primeiro, depois alfabético pelo displayName */
+  /** Connected first, then alphabetical by displayName */
   function sortProviders(providers: ProviderDefinition[]): ProviderDefinition[] {
     return [...providers].sort((a, b) => {
       const aConn = getIsConnected(a.key) ? 0 : 1;
@@ -161,7 +163,6 @@ export default function AdminIntegrations() {
 
   function handleCardClick(provider: ProviderDefinition) {
     if (!provider.available) {
-      setUnavailableOpen(true);
       return;
     }
     // AI providers open a dialog instead of navigating
@@ -199,7 +200,7 @@ export default function AdminIntegrations() {
             <div className="flex-1">
               <p className="font-semibold text-sm leading-tight">Hospedagem e Emails</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Gerencie domínios e hospedagem contratados com a Nory Members.
+                Gerencie dom&iacute;nios e hospedagem contratados com a Nory Members.
               </p>
             </div>
             <ChevronRight className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -224,7 +225,7 @@ export default function AdminIntegrations() {
           ))}
         </div>
 
-        {/* Seções de integrações */}
+        {/* Integration sections */}
         {visibleSections.map((section, idx) => (
           <div key={section.titleKey}>
             {idx > 0 && <Separator className="mb-8" />}
@@ -246,7 +247,7 @@ export default function AdminIntegrations() {
         </div>
       </div>
 
-      {/* Dialog — AI provider API key */}
+      {/* AI provider API key dialog */}
       {aiDialogProvider && (
         <AIKeyDialog
           provider={aiDialogProvider}
@@ -257,23 +258,6 @@ export default function AdminIntegrations() {
         />
       )}
 
-      {/* Dialog — integração não disponível */}
-      <Dialog open={unavailableOpen} onOpenChange={setUnavailableOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Aviso</DialogTitle>
-            <DialogDescription>
-              Integração não disponível na sua região. Contate o suporte para
-              mais informações.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setUnavailableOpen(false)}>
-              Ok, entendi
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

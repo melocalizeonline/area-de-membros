@@ -252,8 +252,8 @@ Deno.serve(async (req) => {
       return jsonResponse({ embed_url: embedUrl, signed: false });
     }
 
-    // Proteção ativa: gerar URL assinada (4 horas de validade)
-    const TOKEN_TTL_SECONDS = 4 * 60 * 60; // 4h
+    // Proteção ativa: gerar URL assinada (12 horas de validade)
+    const TOKEN_TTL_SECONDS = 12 * 60 * 60; // 12h
 
     const { embedUrl, expires } = await generateGumletSignedEmbedUrl(
       gumletAssetId,

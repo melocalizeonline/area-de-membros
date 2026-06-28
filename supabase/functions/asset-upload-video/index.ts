@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateRequest, authorizeWorkspace, toErrorResponse } from "../_shared/auth.ts";
-import { ensureGumletWorkspace } from "../_shared/gumlet.ts";
+import { ensureGumletWorkspace, normalizeVideoSettings } from "../_shared/gumlet.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,11 +56,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: settings, error: settingsError } = await supabaseAdmin
+      .from("tenant_settings")
+      .select("plan, video_settings, gumlet_workspace_id")
+      .eq("tenant_id", body.tenant_id)
+      .single();
+
+    if (settingsError || !settings) {
+      console.error("Failed to fetch tenant settings:", settingsError);
+      return new Response(JSON.stringify({ error: "Failed to load tenant settings" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const isPro = ["pro", "business"].includes(settings.plan ?? "free");
+    const videoSettings = normalizeVideoSettings(settings.video_settings);
+    const shouldGenerateSubtitles = isPro && videoSettings.player.captions_generate_auto;
+
     // 5. Ensure tenant has a Gumlet workspace (create if needed)
     const workspaceId = await ensureGumletWorkspace(
       supabaseAdmin,
       gumletApiKey,
-      body.tenant_id
+      body.tenant_id,
+      { existingWorkspaceId: settings.gumlet_workspace_id }
     );
 
     if (!workspaceId) {
@@ -97,19 +116,21 @@ Deno.serve(async (req) => {
 
     const assetId = assetData.id;
 
-    // 7. Request upload URL from hosting backend with collection_id (their term for workspace)
-    // generate_subtitles enables auto-transcription on every upload. Audio is
-    // assumed pt; we generate captions in pt + en + es so creators can serve a
-    // multilingual audience without manual upload of SRT/VTT files.
+    // 7. Request upload URL from hosting backend with collection_id (their term for workspace).
+    // Subtitles are requested only when the tenant is Pro/Business and the
+    // auto-generation toggle is enabled in Design > Video Player.
     const gumletPayload: Record<string, unknown> = {
       collection_id: workspaceId,
       format: "hls",
       title: assetId,
-      generate_subtitles: {
+    };
+
+    if (shouldGenerateSubtitles) {
+      gumletPayload.generate_subtitles = {
         audio_language: "pt",
         subtitle_languages: "pt,en,es",
-      },
-    };
+      };
+    }
 
     const gumletResp = await fetch("https://api.gumlet.com/v1/video/assets/upload", {
       method: "POST",
@@ -151,10 +172,11 @@ Deno.serve(async (req) => {
       asset_id: assetId,
       gumlet_asset_id: gumletAssetId,
       thumbnail_url: thumbnailUrl,
-      subtitles_status: "generating",
+      subtitles_status: shouldGenerateSubtitles ? "generating" : null,
       processing_meta: {
         ...gumletJson,
         workspace_id: workspaceId,
+        subtitles_requested: shouldGenerateSubtitles,
       },
     });
 
@@ -177,6 +199,7 @@ Deno.serve(async (req) => {
         gumlet_asset_id: gumletAssetId,
         upload_url: uploadUrl,
         workspace_id: workspaceId,
+        subtitles_requested: shouldGenerateSubtitles,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

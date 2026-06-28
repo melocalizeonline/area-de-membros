@@ -37,7 +37,7 @@ const SUPABASE_ANON_KEY =
  * Caso contrário:
  *   → Builda a URL localmente com os query params de configuração do player
  *
- * O token tem validade de 4h, então cacheamos por 30min
+ * O token tem validade de 12h, então cacheamos por 30min
  * para evitar chamadas desnecessárias (ficamos bem dentro da janela).
  */
 export function useHostingVideoToken({
@@ -80,7 +80,7 @@ export function useHostingVideoToken({
       return result.embed_url;
     },
     enabled: !!lessonId && videoProtectionEnabled && !!hostingAssetId,
-    // Token lasts 4h — refresh cache every 30 min to stay safe
+    // Token lasts 12h; refresh cache every 30 min to stay safe
     staleTime: 30 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
