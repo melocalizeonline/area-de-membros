@@ -155,6 +155,36 @@ export async function authorizeWorkspace(
   };
 }
 
+// ── assertTenantActive ───────────────────────────────
+
+/**
+ * Enforcement de account_status (Fase 5 — defesa no backend).
+ * Bloqueia acoes de escrita quando a conta do tenant nao esta ativa.
+ * Por padrao bloqueia paused/blocked/cancelled; passe allowPaused p/ liberar paused.
+ * Throw AuthError(403) se inativo.
+ */
+export async function assertTenantActive(
+  adminClient: SupabaseClient,
+  tenantId: string,
+  options?: { allowPaused?: boolean }
+): Promise<void> {
+  const { data, error } = await adminClient
+    .from("tenant_settings")
+    .select("account_status")
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+
+  if (error) {
+    throw new AuthError(500, "status_check_failed", "Failed to verify account status");
+  }
+
+  const status = (data?.account_status as string | undefined) ?? "active";
+  if (status === "active") return;
+  if (status === "paused" && options?.allowPaused) return;
+
+  throw new AuthError(403, "tenant_inactive", `A conta deste workspace está ${status}.`);
+}
+
 // ── toErrorResponse ──────────────────────────────────
 
 /**

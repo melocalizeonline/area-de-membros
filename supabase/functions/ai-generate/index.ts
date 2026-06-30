@@ -17,7 +17,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { authenticateRequest, authorizeWorkspace, toErrorResponse } from "../_shared/auth.ts";
+import { authenticateRequest, authorizeWorkspace, assertTenantActive, toErrorResponse } from "../_shared/auth.ts";
 import {
   buildCourseBasicsPrompt,
   COURSE_BASICS_SCHEMA,
@@ -239,6 +239,7 @@ Deno.serve(async (req) => {
     }
 
     await authorizeWorkspace(identity, tenantId, supabaseAdmin, { minRole: "editor" });
+    await assertTenantActive(supabaseAdmin, tenantId);
 
     const { apiKey, errorCode } = await resolveApiKey(
       provider as Provider,

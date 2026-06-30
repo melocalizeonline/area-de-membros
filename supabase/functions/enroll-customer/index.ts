@@ -12,6 +12,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   authenticateRequest,
   authorizeWorkspace,
+  assertTenantActive,
   toErrorResponse,
   AuthError,
 } from "../_shared/auth.ts";
@@ -61,6 +62,7 @@ Deno.serve(async (req) => {
 
     // AuthZ — precisa ser membro do workspace
     await authorizeWorkspace(identity, tenantId, admin, { minRole: "editor" });
+    await assertTenantActive(admin, tenantId);
 
     // Toggle do tenant
     const { data: settings } = await admin

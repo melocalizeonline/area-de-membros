@@ -1,5 +1,6 @@
 {
   "_fallback": "Algo deu errado. Tente novamente.",
+  "tenant_inactive": "Esta conta esta suspensa. Entre em contato com o suporte para reativar.",
   "method_not_allowed": "Metodo nao permitido.",
   "missing_required_field": "Um campo obrigatorio nao foi preenchido.",
   "invalid_body": "Dados da requisicao invalidos.",

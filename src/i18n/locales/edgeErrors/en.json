@@ -1,5 +1,6 @@
 {
   "_fallback": "Something went wrong. Please try again.",
+  "tenant_inactive": "This account is suspended. Please contact support to reactivate.",
   "method_not_allowed": "Method not allowed.",
   "missing_required_field": "A required field is missing.",
   "invalid_body": "Invalid request data.",
