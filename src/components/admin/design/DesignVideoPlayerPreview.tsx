@@ -12,18 +12,24 @@ interface DesignVideoPlayerPreviewProps {
   previewMode?: "desktop" | "mobile";
   videoSettings: VideoSettings;
   fallbackColor: string | null;
+  /** Plano do tenant — legenda é recurso Pro/Business (espelha o player do aluno). */
+  plan?: string;
 }
 
 export default function DesignVideoPlayerPreview({
   previewMode = "desktop",
   videoSettings,
   fallbackColor,
+  plan = "free",
 }: DesignVideoPlayerPreviewProps) {
   const { t } = useTranslation();
   const isMobile = previewMode === "mobile";
   const resolvedAssetId = FALLBACK_PREVIEW_ASSET_ID;
+  const isPro = plan === "pro" || plan === "business";
+  // Espelha o gating do player do aluno: legenda só quando Pro/Business.
   const embedUrl = buildGumletEmbedUrl(resolvedAssetId, videoSettings, {
     fallbackColor,
+    captionsEnabled: isPro,
   });
 
   return (

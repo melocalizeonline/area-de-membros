@@ -631,6 +631,7 @@ export default function AdminDesign() {
                         previewMode={previewMode}
                         videoSettings={videoData}
                         fallbackColor={brandColor}
+                        plan={tenant?.plan ?? "free"}
                       />
                     ) : activeTab === "login-page" ? (
                       <DesignLoginPagePreview
