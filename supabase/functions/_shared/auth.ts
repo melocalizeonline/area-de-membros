@@ -199,7 +199,7 @@ export async function assertActiveSubscription(
 ): Promise<void> {
   const { data, error } = await adminClient
     .from("platform_subscriptions")
-    .select("status, trial_ends_at")
+    .select("status, trial_ends_at, current_period_end")
     .eq("tenant_id", tenantId)
     .maybeSingle();
 
@@ -208,7 +208,11 @@ export async function assertActiveSubscription(
   }
 
   const status = data?.status as string | undefined;
-  if (status === "free" || status === "active") return;
+  if (status === "free") return;
+  if (status === "active") {
+    const periodEnd = data?.current_period_end ? new Date(data.current_period_end as string).getTime() : Infinity;
+    if (periodEnd > Date.now()) return;
+  }
   if (status === "trialing") {
     const ends = data?.trial_ends_at ? new Date(data.trial_ends_at as string).getTime() : 0;
     if (ends > Date.now()) return;

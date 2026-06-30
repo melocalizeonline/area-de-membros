@@ -135,6 +135,7 @@ function PlanEditor({ plan, onClose }: { plan: PlatformPlan; onClose: () => void
   const [isActive, setIsActive] = useState(plan.is_active);
   const [planType, setPlanType] = useState<PlanType>(plan.plan_type ?? "paid");
   const [trialDays, setTrialDays] = useState(String(plan.trial_days ?? 0));
+  const [checkoutUrl, setCheckoutUrl] = useState(plan.checkout_url ?? "");
   const [features, setFeatures] = useState<PlanFeatures>({ ...plan.features });
   const [integrations, setIntegrations] = useState<Record<string, boolean>>({ ...(plan.features?.integrations ?? {}) });
   const [limits, setLimits] = useState<PlanLimits>({ ...plan.limits });
@@ -159,6 +160,7 @@ function PlanEditor({ plan, onClose }: { plan: PlatformPlan; onClose: () => void
         is_active: isActive,
         plan_type: planType,
         trial_days: Math.max(Number(trialDays) || 0, 0),
+        checkout_url: checkoutUrl.trim(),
         features: { ...features, integrations },
         limits,
       });
@@ -219,6 +221,18 @@ function PlanEditor({ plan, onClose }: { plan: PlatformPlan; onClose: () => void
                 onChange={(e) => setTrialDays(e.target.value)}
                 disabled={planType !== "trial"}
               />
+            </div>
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <Label htmlFor="p-checkout">Link de checkout (plano pago)</Label>
+              <Input
+                id="p-checkout"
+                inputMode="url"
+                placeholder="https://app.nory.com.br/checkout/..."
+                value={checkoutUrl}
+                onChange={(e) => setCheckoutUrl(e.target.value)}
+                disabled={planType !== "paid"}
+              />
+              <p className="text-xs text-muted-foreground">Para onde o tenant vai pagar. A ativação é manual no detalhe do tenant.</p>
             </div>
           </div>
 

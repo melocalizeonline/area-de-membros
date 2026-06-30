@@ -213,6 +213,7 @@ function OverviewTab({
       <BasicDetailsCard data={data} busy={busy} run={run} lang={lang} />
       <div className="flex flex-col gap-6">
         <PlanCard plan={data.plan} busy={busy} run={run} />
+        <SubscriptionCard subscription={data.subscription} busy={busy} run={run} lang={lang} />
         <StatusCard
           status={data.account_status}
           reason={data.account_status_reason}
@@ -223,6 +224,133 @@ function OverviewTab({
         />
       </div>
     </div>
+  );
+}
+
+const SUB_STATUS_BADGE: Record<string, { variant: BadgeVariant; label: string }> = {
+  free: { variant: "gray", label: "Free" },
+  trialing: { variant: "blue", label: "Em teste" },
+  active: { variant: "green", label: "Ativa" },
+  pending: { variant: "amber", label: "Aguardando ativação" },
+  past_due: { variant: "red", label: "Inadimplente" },
+  canceled: { variant: "gray", label: "Cancelada" },
+  expired: { variant: "gray", label: "Expirada" },
+};
+
+function SubscriptionCard({
+  subscription, busy, run, lang,
+}: {
+  subscription: NonNullable<ReturnType<typeof useSuperadminTenantDetail>["data"]>["subscription"];
+  busy: boolean; run: RunFn; lang: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const isPending = subscription?.status === "pending";
+
+  const { data: plans } = useQuery({
+    queryKey: ["platform_plans_paid"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_plans").select("key, name, plan_type").eq("is_active", true).order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const [planKey, setPlanKey] = useState(subscription?.plan_key ?? "");
+  const [status, setStatus] = useState(subscription?.status === "pending" ? "active" : (subscription?.status ?? "active"));
+  const [months, setMonths] = useState("1");
+
+  const apply = async () => {
+    const ok = await run(
+      { action: "set_subscription", plan_key: planKey, status, period_months: Number(months) },
+      "Assinatura atualizada.",
+    );
+    if (ok) setOpen(false);
+  };
+
+  const badge = SUB_STATUS_BADGE[subscription?.status ?? ""] ?? { variant: "gray" as BadgeVariant, label: subscription?.status ?? "—" };
+
+  return (
+    <Card variant="bordered" className={isPending ? "border-amber-500/40" : ""}>
+      <CardContent className="p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Assinatura</h3>
+          <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
+            <Pencil className="size-3.5" /> {isPending ? "Ativar" : "Gerenciar"}
+          </Button>
+        </div>
+        {!subscription ? (
+          <p className="text-sm text-muted-foreground">Sem assinatura (tenant ainda não escolheu plano).</p>
+        ) : (
+          <dl className="grid gap-2 text-sm">
+            <div className="flex items-center justify-between">
+              <dt className="text-muted-foreground">Status</dt>
+              <dd><Badge variant={badge.variant}>{badge.label}</Badge></dd>
+            </div>
+            <Field label="Plano" value={subscription.plan_key} />
+            {subscription.trial_ends_at && (
+              <Field label="Teste até" value={formatDateTime(subscription.trial_ends_at, lang)} />
+            )}
+            {subscription.current_period_end && (
+              <Field label="Válido até" value={formatDateTime(subscription.current_period_end, lang)} />
+            )}
+          </dl>
+        )}
+      </CardContent>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerenciar assinatura</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-1.5">
+              <Label>Plano</Label>
+              <Select value={planKey} onValueChange={setPlanKey}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {(plans ?? []).map((p) => (
+                    <SelectItem key={p.key} value={p.key}>
+                      {p.name}{p.plan_type === "paid" ? " (pago)" : p.plan_type === "trial" ? " (teste)" : " (free)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativa</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="past_due">Inadimplente</SelectItem>
+                  <SelectItem value="canceled">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {status === "active" && (
+              <div className="flex flex-col gap-1.5">
+                <Label>Período</Label>
+                <Select value={months} onValueChange={setMonths}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 mês</SelectItem>
+                    <SelectItem value="3">3 meses</SelectItem>
+                    <SelectItem value="12">12 meses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+            <Button onClick={apply} disabled={busy || !planKey}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
 

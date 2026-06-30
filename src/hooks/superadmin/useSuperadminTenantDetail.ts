@@ -35,6 +35,14 @@ export interface TenantDetailIntegration {
   updated_at: string | null;
 }
 
+export interface TenantSubscription {
+  plan_key: string;
+  status: string;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  updated_at: string;
+}
+
 export interface SuperadminTenantDetail {
   tenant: {
     id: string;
@@ -47,6 +55,7 @@ export interface SuperadminTenantDetail {
   account_status: AccountStatus;
   account_status_reason: string | null;
   account_status_updated_at: string | null;
+  subscription: TenantSubscription | null;
   owner: { name: string | null; email: string | null } | null;
   metrics: {
     customers: number;

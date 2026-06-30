@@ -33,6 +33,7 @@ export interface PlatformPlan {
   sort_order: number;
   plan_type: PlanType;
   trial_days: number;
+  checkout_url: string | null;
   features: PlanFeatures;
   limits: PlanLimits;
   updated_at: string;
@@ -46,6 +47,7 @@ export interface PlanConfigPatch {
   is_active?: boolean;
   plan_type?: PlanType;
   trial_days?: number;
+  checkout_url?: string;
   features?: PlanFeatures;
   limits?: PlanLimits;
   sort_order?: number;

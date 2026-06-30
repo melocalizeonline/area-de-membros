@@ -52,8 +52,16 @@ export function useSubscription() {
     !!subscription?.trial_ends_at &&
     new Date(subscription.trial_ends_at).getTime() <= Date.now();
 
-  // Assinatura valida (libera acesso ao painel): free, active, ou trial nao expirado.
-  const isValid = status === "free" || status === "active" || (isTrialing && !trialExpired);
+  // Periodo pago vencido (validade lazy, sem cron).
+  const periodEnded =
+    !!subscription?.current_period_end &&
+    new Date(subscription.current_period_end).getTime() <= Date.now();
+
+  // Assinatura valida (libera acesso ao painel): free, active no periodo, ou trial nao expirado.
+  const isValid =
+    status === "free" ||
+    (status === "active" && !periodEnded) ||
+    (isTrialing && !trialExpired);
 
   return {
     subscription: subscription ?? null,
@@ -62,6 +70,7 @@ export function useSubscription() {
     isValid,
     isTrialing,
     trialExpired,
+    isPending: status === "pending",
     isActive: status === "active",
     isPastDue: status === "past_due",
     isCanceled: status === "canceled",

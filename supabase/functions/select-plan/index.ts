@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     // Plano precisa existir e estar ativo.
     const { data: plan } = await admin
       .from("platform_plans")
-      .select("key, plan_type, trial_days, is_active")
+      .select("key, plan_type, trial_days, is_active, checkout_url")
       .eq("key", planKey)
       .maybeSingle();
     if (!plan || !plan.is_active) {
@@ -50,8 +50,20 @@ Deno.serve(async (req) => {
     const planType = (plan.plan_type as string) ?? "paid";
 
     if (planType === "paid") {
-      // Checkout da plataforma ainda nao existe — pagos sao adiados.
-      return json({ error: "Plano pago ainda nao disponivel", code: "paid_not_available" }, 403);
+      // Cobranca manual: registra 'pending' (sem acesso) e devolve o link de
+      // checkout. O Superadmin ativa a assinatura apos confirmar o pagamento.
+      const { error: pendError } = await admin.from("platform_subscriptions").upsert(
+        {
+          tenant_id: tenantId,
+          plan_key: planKey,
+          status: "pending",
+          trial_ends_at: null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "tenant_id" },
+      );
+      if (pendError) throw pendError;
+      return json({ success: true, status: "pending", plan_key: planKey, checkout_url: plan.checkout_url ?? null });
     }
 
     let status = "free";
@@ -68,6 +80,7 @@ Deno.serve(async (req) => {
         plan_key: planKey,
         status,
         trial_ends_at: trialEndsAt,
+        current_period_end: null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "tenant_id" },

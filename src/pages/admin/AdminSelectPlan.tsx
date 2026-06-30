@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, Sparkles, Clock, Lock } from "lucide-react";
+import { Check, Loader2, Sparkles, Clock, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -22,6 +22,7 @@ interface PlanRow {
   currency: string;
   plan_type: "free" | "trial" | "paid" | string;
   trial_days: number;
+  checkout_url: string | null;
 }
 
 function formatPrice(cents: number, currency = "BRL"): string {
@@ -33,7 +34,7 @@ export default function AdminSelectPlan() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { tenant } = useTenant();
-  const { trialExpired } = useSubscription();
+  const { trialExpired, isPending } = useSubscription();
   const [selecting, setSelecting] = useState<string | null>(null);
 
   const { data: plans, isLoading } = useQuery({
@@ -41,7 +42,7 @@ export default function AdminSelectPlan() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_plans")
-        .select("id, key, name, description, price_cents, currency, plan_type, trial_days")
+        .select("id, key, name, description, price_cents, currency, plan_type, trial_days, checkout_url")
         .eq("is_active", true)
         .order("sort_order");
       if (error) throw error;
@@ -50,18 +51,30 @@ export default function AdminSelectPlan() {
   });
 
   const choose = async (plan: PlanRow) => {
-    if (plan.plan_type === "paid") return;
     if (!tenant?.id) {
       toast.error("Workspace não encontrado.");
       return;
     }
     setSelecting(plan.key);
     try {
-      await invokeEdgeFunction("select-plan", { body: { tenant_id: tenant.id, plan_key: plan.key } });
+      const { data } = await invokeEdgeFunction<{ status: string; checkout_url?: string | null }>(
+        "select-plan",
+        { body: { tenant_id: tenant.id, plan_key: plan.key } },
+      );
       await qc.invalidateQueries({ queryKey: ["subscription", tenant.id] });
       await qc.invalidateQueries({ queryKey: ["tenant"] });
-      toast.success("Plano selecionado!");
-      navigate("/admin", { replace: true });
+      if (data.status === "pending") {
+        // Pago: nao libera acesso ainda — abre o checkout e fica na tela.
+        if (data.checkout_url) {
+          window.open(data.checkout_url, "_blank", "noopener,noreferrer");
+          toast.success("Abrimos o checkout. Após o pagamento, seu plano será liberado pela nossa equipe.");
+        } else {
+          toast.info("Plano registrado. Fale com o suporte para concluir o pagamento.");
+        }
+      } else {
+        toast.success("Plano selecionado!");
+        navigate("/admin", { replace: true });
+      }
     } catch (err) {
       toast.error(translateEdgeError(err));
     } finally {
@@ -82,6 +95,11 @@ export default function AdminSelectPlan() {
           {trialExpired && (
             <div className="mx-auto mt-4 max-w-md rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-700 dark:text-amber-400">
               Seu período de teste expirou. Escolha um plano para continuar.
+            </div>
+          )}
+          {isPending && (
+            <div className="mx-auto mt-4 max-w-md rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm text-blue-700 dark:text-blue-400">
+              Pagamento em análise — seu acesso será liberado após a confirmação. Você pode usar o plano Free enquanto isso.
             </div>
           )}
         </div>
@@ -132,7 +150,6 @@ function PlanOption({
       className={cn(
         "relative flex flex-col",
         isTrial && "border-primary/40 ring-1 ring-primary/20",
-        isPaid && "opacity-75",
       )}
     >
       {isTrial && (
@@ -144,7 +161,7 @@ function PlanOption({
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
-            {isPaid && <Badge variant="gray" className="gap-1 text-[10px]"><Lock className="size-3" /> Em breve</Badge>}
+            {isPaid && <Badge variant="blue" className="text-[10px]">Pago</Badge>}
           </div>
           <p className="mt-1 text-2xl font-semibold text-foreground">{formatPrice(plan.price_cents, plan.currency)}</p>
           {plan.price_cents > 0 && <p className="text-xs text-muted-foreground">/mês</p>}
@@ -157,16 +174,15 @@ function PlanOption({
 
         {plan.description && <p className="flex-1 text-sm text-muted-foreground">{plan.description}</p>}
 
-        {isPaid ? (
-          <Button variant="outline" className="w-full" disabled>
-            Falar com o suporte
-          </Button>
-        ) : (
-          <Button className="w-full gap-1.5" disabled={anyBusy} onClick={onChoose}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-            {isTrial ? "Começar teste" : "Selecionar"}
-          </Button>
-        )}
+        <Button
+          className="w-full gap-1.5"
+          variant={isPaid ? "outline" : "default"}
+          disabled={anyBusy}
+          onClick={onChoose}
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" /> : isPaid ? <CreditCard className="size-4" /> : <Check className="size-4" />}
+          {isPaid ? (plan.checkout_url ? "Assinar" : "Falar com o suporte") : isTrial ? "Começar teste" : "Selecionar"}
+        </Button>
       </CardContent>
     </Card>
   );

@@ -147,6 +147,11 @@ Deno.serve(async (req) => {
           .select("provider, status, updated_at")
           .eq("tenant_id", tenantId).order("provider");
 
+        const { data: subscription } = await admin
+          .from("platform_subscriptions")
+          .select("plan_key, status, trial_ends_at, current_period_end, updated_at")
+          .eq("tenant_id", tenantId).maybeSingle();
+
         return json({
           tenant: {
             id: tenant.id,
@@ -171,6 +176,7 @@ Deno.serve(async (req) => {
           recent_orders: recentOrders ?? [],
           recent_customers: recentCustomers ?? [],
           integrations: integrations ?? [],
+          subscription: subscription ?? null,
         });
       }
 
@@ -577,6 +583,55 @@ Deno.serve(async (req) => {
           .eq("tenant_id", tenantId).order("created_at", { ascending: false }).range(0, limit - 1);
         if (error) throw error;
         return json({ events: data ?? [] });
+      }
+
+      // ── Assinatura da plataforma (billing manual) ──────────────
+      case "set_subscription": {
+        requireTenant();
+        const planKey = (body.plan_key ?? "").trim();
+        const status = (body.status ?? "").trim();
+        const periodMonths = Math.min(Math.max(Number(body.period_months) || 1, 1), 36);
+        const ALLOWED = ["active", "canceled", "past_due", "free"];
+        if (!ALLOWED.includes(status)) return json({ error: "Status invalido", code: "invalid_status" }, 400);
+        if (!planKey) return json({ error: "plan_key is required", code: "missing_required_field" }, 400);
+        await loadTenant();
+
+        const { data: plan } = await admin.from("platform_plans").select("key").eq("key", planKey).maybeSingle();
+        if (!plan) return json({ error: "Plano desconhecido", code: "unknown_plan" }, 400);
+
+        const currentPeriodEnd =
+          status === "active"
+            ? new Date(Date.now() + periodMonths * 30 * 24 * 60 * 60 * 1000).toISOString()
+            : null;
+
+        const { data: before } = await admin
+          .from("platform_subscriptions").select("plan_key, status, current_period_end").eq("tenant_id", tenantId).maybeSingle();
+
+        const { error } = await admin.from("platform_subscriptions").upsert(
+          {
+            tenant_id: tenantId,
+            plan_key: planKey,
+            status,
+            current_period_end: currentPeriodEnd,
+            trial_ends_at: null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "tenant_id" },
+        );
+        if (error) throw error;
+
+        // Ativo/free liberam o plano nos entitlements.
+        if (status === "active" || status === "free") {
+          await admin.from("tenant_settings").update({ plan: planKey }).eq("tenant_id", tenantId);
+        }
+
+        await writeAudit(admin, {
+          actorUserId: actor, tenantId, targetType: "subscription", targetId: tenantId,
+          action: "set_subscription",
+          before: before ?? null,
+          after: { plan_key: planKey, status, current_period_end: currentPeriodEnd },
+        });
+        return json({ success: true, plan_key: planKey, status, current_period_end: currentPeriodEnd });
       }
 
       default:
