@@ -62,18 +62,6 @@ Construir uma plataforma SaaS de area de membros em que a operacao consiga:
 - Falta rotina forte de reconciliacao de webhooks/pagamentos.
 - Falta cobertura de testes para fluxos comerciais criticos.
 
-## Bloqueador Juridico/Comercial
-
-O README atual indica licenca BSL 1.1 com restricao de uso comercial, SaaS, revenda e comercializacao ate 2032-01-01.
-
-Antes de vender a plataforma, e necessario:
-
-1. Confirmar quem detem os direitos do codigo.
-2. Validar se a restricao do README se aplica ao produto atual.
-3. Ajustar a licenca caso o projeto seja proprietario.
-4. Remover ambiguidades que possam impedir venda, investimento ou parceria.
-
-Sem essa validacao, existe risco de construir uma operacao comercial sobre uma base juridicamente restrita.
 
 ## Fase 0 - Fundacao Comercial
 
