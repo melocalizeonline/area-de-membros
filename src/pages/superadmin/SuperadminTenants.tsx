@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Search, Building2, Loader2, ArrowUpDown, ExternalLink, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import SuperadminLayout from "@/components/superadmin/SuperadminLayout";
@@ -336,6 +336,7 @@ interface TableProps {
 }
 
 function TenantsTable({ tenants, totalCount, sortBy, sortDir, toggleSort, hasNextPage, isFetchingNextPage, lang, t }: TableProps) {
+  const navigate = useNavigate();
   return (
     <Card variant="bordered" className="min-w-0 overflow-hidden">
       <div className="overflow-auto">
@@ -354,7 +355,11 @@ function TenantsTable({ tenants, totalCount, sortBy, sortDir, toggleSort, hasNex
           </TableHeader>
           <TableBody>
             {tenants.map((tenant) => (
-              <TableRow key={tenant.id} className="border-border">
+              <TableRow
+                key={tenant.id}
+                className="cursor-pointer border-border hover:bg-muted/50"
+                onClick={() => navigate(`/superadmin/tenants/${tenant.id}`)}
+              >
                 <TD><TenantNameSlug name={tenant.name} slug={tenant.slug} /></TD>
                 <TD><OwnerCell name={tenant.owner_name} email={tenant.owner_email} /></TD>
                 <TD>
@@ -410,6 +415,7 @@ function TenantsTable({ tenants, totalCount, sortBy, sortDir, toggleSort, hasNex
 /* ── Engagement table ──────────────────────────────────────── */
 
 function EngagementTable({ tenants, totalCount, sortBy, sortDir, toggleSort, hasNextPage, isFetchingNextPage, lang, t }: TableProps) {
+  const navigate = useNavigate();
   return (
     <Card variant="bordered" className="min-w-0 overflow-hidden">
       <div className="overflow-auto">
@@ -427,7 +433,11 @@ function EngagementTable({ tenants, totalCount, sortBy, sortDir, toggleSort, has
           </TableHeader>
           <TableBody>
             {tenants.map((tenant) => (
-              <TableRow key={tenant.id} className="border-border">
+              <TableRow
+                key={tenant.id}
+                className="cursor-pointer border-border hover:bg-muted/50"
+                onClick={() => navigate(`/superadmin/tenants/${tenant.id}`)}
+              >
                 <TD><TenantNameSlug name={tenant.name} slug={tenant.slug} /></TD>
                 <TD>
                   <OwnerCell name={tenant.owner_name} email={tenant.owner_email} whatsapp={tenant.owner_whatsapp} />
@@ -479,6 +489,7 @@ function TenantNameSlug({ name, slug }: { name: string; slug: string }) {
         href={`/${slug}`}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
         className="inline-flex items-center gap-1 text-[10px] text-muted-foreground transition-colors hover:text-foreground"
       >
         <span className="truncate max-w-[160px]">{slug}</span>

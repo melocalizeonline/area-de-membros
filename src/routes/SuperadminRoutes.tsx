@@ -5,6 +5,7 @@ import { PageLoader } from "@/components/ui/page-loader";
 
 const SuperadminDashboard = lazy(() => import("@/pages/superadmin/SuperadminDashboard"));
 const SuperadminTenants = lazy(() => import("@/pages/superadmin/SuperadminTenants"));
+const SuperadminTenantDetail = lazy(() => import("@/pages/superadmin/SuperadminTenantDetail"));
 const SuperadminCustomers = lazy(() => import("@/pages/superadmin/SuperadminCustomers"));
 const SuperadminOrders = lazy(() => import("@/pages/superadmin/SuperadminOrders"));
 const SuperadminProducts = lazy(() => import("@/pages/superadmin/SuperadminProducts"));
@@ -29,6 +30,14 @@ export default function SuperadminRoutes() {
           element={
             <ProtectedRoute requiredRoles={["admin"]}>
               <SuperadminTenants />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenants/:tenantId"
+          element={
+            <ProtectedRoute requiredRoles={["admin"]}>
+              <SuperadminTenantDetail />
             </ProtectedRoute>
           }
         />
