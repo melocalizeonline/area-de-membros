@@ -83,12 +83,13 @@ export default function CourseShowcasePage() {
   const { data: hasAccess, isLoading: accessLoading } = useQuery({
     queryKey: ["course-showcase-access", course?.id, user?.id, course?.tenant_id],
     queryFn: async () => {
-      // Check course_customers
+      // Check course_customers (apenas acesso vivo: vitalício ou ainda não expirado)
       const { data: cc } = await supabase
         .from("course_customers")
         .select("id")
         .eq("course_id", course!.id)
         .eq("user_id", user!.id)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .maybeSingle();
       if (cc) return true;
 

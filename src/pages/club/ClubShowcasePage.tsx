@@ -50,7 +50,8 @@ export default function ClubShowcasePage() {
       const { data, error } = await supabase
         .from("course_customers")
         .select("course_id")
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
       if (error) return [];
       return data.map((r) => r.course_id);
     },

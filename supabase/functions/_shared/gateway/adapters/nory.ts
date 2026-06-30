@@ -24,6 +24,11 @@ interface NoryPayload {
   subscription_status?: "active" | "past_due" | "cancelled" | null;
   buyer?: { email?: string; name?: string; phone?: string; document?: string };
   created_at?: string;
+  // Produto digital (Nory): de-para DIRETO para o produto desta área de membros
+  // (campo "Conteúdo" escolhido no form da Nory via nory-catalog).
+  members_product_id?: string;
+  // Régua de acesso configurada na Nory.
+  access?: { type?: "vitalicio" | "meses" | "dias"; value?: number | null; trial_days?: number };
 }
 
 /* ─── Mapeamentos ──────────────────────────────────────────── */
@@ -74,10 +79,26 @@ export const noryAdapter: ProviderAdapter = {
 
     const isSub = !!p.is_subscription || (p.event ?? "").startsWith("subscription.");
 
+    // De-para DIRETO: quando a Nory envia members_product_id (campo "Conteúdo"),
+    // ele já é o products.id desta área de membros — o pipeline resolve direto,
+    // sem o mapeamento manual. Ausente → cai no fluxo gateway_product_mappings
+    // pelo product_id da Nory.
+    const directProductId = p.members_product_id ? String(p.members_product_id) : undefined;
+
+    // Régua de acesso (duração/trial). Ausente = vitalício.
+    const access = p.access
+      ? {
+        type: p.access.type ?? "vitalicio",
+        value: p.access.value ?? null,
+        trialDays: Number(p.access.trial_days ?? 0),
+      }
+      : undefined;
+
     return {
       eventType,
       externalOrderId: p.order_id ?? "",
       externalProductId: p.product_id ? String(p.product_id) : "",
+      directProductId,
       buyer: {
         email: p.buyer?.email?.trim().toLowerCase() ?? "",
         name: p.buyer?.name?.trim() || p.buyer?.email?.trim().toLowerCase() || "",
@@ -93,6 +114,7 @@ export const noryAdapter: ProviderAdapter = {
       parentExternalOrderId: undefined,
       orderCreatedAt: p.created_at || undefined,
       rawEvent: p.event ?? "",
+      access,
     };
   },
 };

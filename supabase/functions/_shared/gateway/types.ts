@@ -49,10 +49,28 @@ export interface NormalizedBuyer {
   };
 }
 
+/**
+ * Régua de duração do acesso (gateways que entregam produto digital com
+ * tempo de acesso — ex.: Nory). Ausente no evento = acesso vitalício.
+ *   - type "vitalicio": sem expiração (value ignorado)
+ *   - type "meses"/"dias": expira em `value` meses/dias após a compra
+ *   - trialDays: período de cortesia somado ao início (0 = sem trial)
+ */
+export interface AccessRule {
+  type: "vitalicio" | "meses" | "dias";
+  value: number | null;
+  trialDays: number;
+}
+
 export interface NormalizedEvent {
   eventType: GatewayEventType;
   externalOrderId: string;
   externalProductId: string;
+  /**
+   * Quando presente, o produto desta área de membros já vem resolvido pelo
+   * gateway (products.id direto) — o pipeline pula o gateway_product_mappings.
+   */
+  directProductId?: string;
   buyer: NormalizedBuyer;
   amountCents: number;
   paymentMethod: string;
@@ -63,6 +81,8 @@ export interface NormalizedEvent {
   parentExternalOrderId?: string;
   orderCreatedAt?: string; // ISO timestamp
   rawEvent: string; // nome original do evento (ex: "PURCHASE_APPROVED")
+  /** Régua de duração do acesso. Ausente = vitalício. */
+  access?: AccessRule;
 }
 
 /* ─── Interface do adapter (1 por gateway) ────────────────── */

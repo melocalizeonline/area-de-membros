@@ -55,6 +55,7 @@ export default function LessonPage() {
         .select("id")
         .eq("course_id", course!.id)
         .eq("user_id", user!.id)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .maybeSingle();
       if (cc) return true;
 

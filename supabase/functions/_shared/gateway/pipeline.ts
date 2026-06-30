@@ -12,8 +12,42 @@ import type {
   PipelineResult,
 } from "./types.ts";
 import { logEventReceived, updateEventLog } from "./event-logger.ts";
-import { resolveProduct } from "./product-resolver.ts";
+import { resolveProduct, resolveProductDirect } from "./product-resolver.ts";
 import { findOrCreateCustomer } from "./customer-manager.ts";
+
+import type { NormalizedEvent, ResolvedProduct } from "./types.ts";
+
+/**
+ * Resolve o produto desta área de membros para o evento: usa de-para DIRETO
+ * (event.directProductId, ex.: Nory members_product_id) quando presente, senão
+ * cai no gateway_product_mappings pelo externalProductId.
+ */
+async function resolveEventProduct(
+  admin: AdminClient,
+  tenantId: string,
+  provider: string,
+  event: NormalizedEvent,
+): Promise<ResolvedProduct | null> {
+  if (event.directProductId) {
+    return await resolveProductDirect(admin, tenantId, event.directProductId);
+  }
+  return await resolveProduct(admin, tenantId, provider, event.externalProductId);
+}
+
+/**
+ * Campos da régua de acesso (duração/trial) a gravar na order. Ausente no
+ * evento = vitalício → não grava nada (NULL), e reconcile concede acesso
+ * permanente. Anexa ao insert da order para o reconcile_order_access calcular
+ * o expires_at de forma idempotente (reprocess-safe).
+ */
+function accessOrderFields(event: NormalizedEvent): Record<string, unknown> {
+  if (!event.access) return {};
+  return {
+    access_type: event.access.type,
+    access_value: event.access.value,
+    access_trial_days: event.access.trialDays,
+  };
+}
 
 /* ─── Progressões de status válidas ──────────────────────── */
 
@@ -69,7 +103,7 @@ async function handleApproval(
 ): Promise<PipelineResult> {
   const { event, tenantId, integrationId, provider } = ctx;
 
-  if (!event.externalProductId) {
+  if (!event.externalProductId && !event.directProductId) {
     await updateEventLog(admin, logId, "failed", "product.id ausente no payload");
     return { status: "failed", error: "missing_product_id" };
   }
@@ -108,13 +142,13 @@ async function handleApproval(
     }
   }
 
-  // 2. Resolve produto via gateway_product_mappings
-  const product = await resolveProduct(admin, tenantId, provider, event.externalProductId);
+  // 2. Resolve produto: de-para direto (directProductId) ou gateway_product_mappings
+  const product = await resolveEventProduct(admin, tenantId, provider, event);
   if (!product) {
-    await updateEventLog(
-      admin, logId, "ignored",
-      `Produto ${provider} ${event.externalProductId} não vinculado. Vincule em Integrações > Mapeamento e reprocesse este evento.`,
-    );
+    const ref = event.directProductId
+      ? `produto ${event.directProductId} (de-para direto) inexistente neste tenant`
+      : `Produto ${provider} ${event.externalProductId} não vinculado. Vincule em Integrações > Mapeamento e reprocesse este evento.`;
+    await updateEventLog(admin, logId, "ignored", ref);
     return { status: "ignored", error: "product_not_mapped" };
   }
 
@@ -144,6 +178,7 @@ async function handleApproval(
     is_order_bump: event.isOrderBump,
     parent_gateway_external_id: event.parentExternalOrderId || null,
     source: "external_gateway",
+    ...accessOrderFields(event),
   };
 
   if (event.isSubscription) {
@@ -295,14 +330,14 @@ async function handleDispute(
   }
 
   // Order não existe: cria customer + order com status disputed (sem acesso, sem email)
-  if (!event.externalProductId) {
+  if (!event.externalProductId && !event.directProductId) {
     await updateEventLog(admin, logId, "failed", "product.id ausente no payload");
     return { status: "failed", error: "missing_product_id" };
   }
 
-  const product = await resolveProduct(admin, tenantId, provider, event.externalProductId);
+  const product = await resolveEventProduct(admin, tenantId, provider, event);
   if (!product) {
-    await updateEventLog(admin, logId, "ignored", `Produto ${event.externalProductId} não vinculado.`);
+    await updateEventLog(admin, logId, "ignored", `Produto ${event.directProductId || event.externalProductId} não vinculado.`);
     return { status: "ignored", error: "product_not_mapped" };
   }
 
