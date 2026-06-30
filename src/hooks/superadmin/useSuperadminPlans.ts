@@ -20,6 +20,8 @@ export interface PlanLimits {
   [key: string]: unknown;
 }
 
+export type PlanType = "free" | "trial" | "paid";
+
 export interface PlatformPlan {
   id: string;
   key: string;
@@ -29,6 +31,8 @@ export interface PlatformPlan {
   currency: string;
   is_active: boolean;
   sort_order: number;
+  plan_type: PlanType;
+  trial_days: number;
   features: PlanFeatures;
   limits: PlanLimits;
   updated_at: string;
@@ -40,6 +44,8 @@ export interface PlanConfigPatch {
   price_cents?: number;
   currency?: string;
   is_active?: boolean;
+  plan_type?: PlanType;
+  trial_days?: number;
   features?: PlanFeatures;
   limits?: PlanLimits;
   sort_order?: number;

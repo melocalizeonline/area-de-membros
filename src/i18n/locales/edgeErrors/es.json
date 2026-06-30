@@ -1,6 +1,8 @@
 {
   "_fallback": "Algo salio mal. Intentalo de nuevo.",
   "tenant_inactive": "Esta cuenta esta suspendida. Contacta con soporte para reactivar.",
+  "no_active_subscription": "Selecciona un plan para continuar.",
+  "paid_not_available": "Plan de pago aun no disponible.",
   "method_not_allowed": "Metodo no permitido.",
   "missing_required_field": "Falta un campo obligatorio.",
   "invalid_body": "Datos de la solicitud invalidos.",

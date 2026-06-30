@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/hooks/useTenant";
 import { useHasWorkspace } from "@/hooks/useHasWorkspace";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { TenantStatusBlock } from "@/components/TenantStatusBlock";
 import { AlertTriangle, Loader2 } from "lucide-react";
@@ -27,6 +28,10 @@ interface ProtectedRouteProps {
    * Se true, não redireciona para /admin/set-password (usado na própria página)
    */
   skipPasswordCheck?: boolean;
+  /**
+   * Se true, não redireciona para /admin/select-plan (usado na própria página)
+   */
+  skipPlanCheck?: boolean;
 }
 
 export function ProtectedRoute({
@@ -36,10 +41,12 @@ export function ProtectedRoute({
   skipProfileCheck = false,
   skipWorkspaceCheck = false,
   skipPasswordCheck = false,
+  skipPlanCheck = false,
 }: ProtectedRouteProps) {
   const { user, loading, roles, rolesError, profile, profileLoading } = useAuth();
   const { tenant, loading: tenantLoading, isFetching: tenantFetching } = useTenant();
   const { hasWorkspace, loading: hasWsLoading } = useHasWorkspace();
+  const { isValid: subscriptionValid, isLoading: subscriptionLoading } = useSubscription();
   const location = useLocation();
   const { t } = useTranslation();
 
@@ -153,6 +160,28 @@ export function ProtectedRoute({
     }
     if (!hasWorkspace) {
       return <Navigate to="/admin/new-workspace" replace />;
+    }
+  }
+
+  // Plan gate: tenant com workspace mas sem assinatura valida precisa escolher
+  // um plano antes de acessar o painel. Restrito a /admin.
+  if (
+    !skipPlanCheck &&
+    !skipWorkspaceCheck &&
+    roles.includes("tenant") &&
+    tenant &&
+    location.pathname.startsWith("/admin") &&
+    location.pathname !== "/admin/select-plan"
+  ) {
+    if (subscriptionLoading) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+    if (!subscriptionValid) {
+      return <Navigate to="/admin/select-plan" replace />;
     }
   }
 

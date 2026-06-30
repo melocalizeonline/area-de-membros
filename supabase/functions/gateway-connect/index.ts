@@ -10,7 +10,7 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { authenticateRequest, authorizeWorkspace, assertTenantActive, toErrorResponse } from "../_shared/auth.ts";
+import { authenticateRequest, authorizeWorkspace, assertTenantActive, assertActiveSubscription, toErrorResponse } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,6 +62,7 @@ Deno.serve(async (req: Request) => {
     /* ── Verificar permissão de editor ── */
     const auth = await authorizeWorkspace(identity, tenantId, admin, { minRole: "editor" });
     await assertTenantActive(admin, tenantId);
+    await assertActiveSubscription(admin, tenantId);
 
     /* ── Provider-specific: Nory auto-registra o webhook ──
        O tenant cola apenas a Chave de API. Chamamos a API pública da Nory

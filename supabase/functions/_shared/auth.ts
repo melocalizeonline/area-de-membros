@@ -185,6 +185,38 @@ export async function assertTenantActive(
   throw new AuthError(403, "tenant_inactive", `A conta deste workspace está ${status}.`);
 }
 
+// ── assertActiveSubscription ─────────────────────────
+
+/**
+ * Enforcement de assinatura da plataforma (defesa no backend do plan gate).
+ * Bloqueia acoes de escrita quando o tenant nao tem assinatura valida.
+ * Valida = status free/active, ou trialing com trial_ends_at no futuro.
+ * Throw AuthError(403, "no_active_subscription") caso contrario.
+ */
+export async function assertActiveSubscription(
+  adminClient: SupabaseClient,
+  tenantId: string
+): Promise<void> {
+  const { data, error } = await adminClient
+    .from("platform_subscriptions")
+    .select("status, trial_ends_at")
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+
+  if (error) {
+    throw new AuthError(500, "subscription_check_failed", "Failed to verify subscription");
+  }
+
+  const status = data?.status as string | undefined;
+  if (status === "free" || status === "active") return;
+  if (status === "trialing") {
+    const ends = data?.trial_ends_at ? new Date(data.trial_ends_at as string).getTime() : 0;
+    if (ends > Date.now()) return;
+  }
+
+  throw new AuthError(403, "no_active_subscription", "Selecione um plano para continuar.");
+}
+
 // ── toErrorResponse ──────────────────────────────────
 
 /**

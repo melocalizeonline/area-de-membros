@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { authenticateRequest, authorizeWorkspace, assertTenantActive, toErrorResponse } from "../_shared/auth.ts";
+import { authenticateRequest, authorizeWorkspace, assertTenantActive, assertActiveSubscription, toErrorResponse } from "../_shared/auth.ts";
 import { ensureGumletWorkspace, normalizeVideoSettings } from "../_shared/gumlet.ts";
 
 const corsHeaders = {
@@ -46,6 +46,7 @@ Deno.serve(async (req) => {
     // 3. Validate user is editor of tenant
     const auth = await authorizeWorkspace(identity, body.tenant_id, supabaseAdmin, { minRole: "editor" });
     await assertTenantActive(supabaseAdmin, body.tenant_id);
+    await assertActiveSubscription(supabaseAdmin, body.tenant_id);
 
     // 4. Check Gumlet credentials
     const gumletApiKey = Deno.env.get("GUMLET_API_KEY");

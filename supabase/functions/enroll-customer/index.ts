@@ -13,6 +13,7 @@ import {
   authenticateRequest,
   authorizeWorkspace,
   assertTenantActive,
+  assertActiveSubscription,
   toErrorResponse,
   AuthError,
 } from "../_shared/auth.ts";
@@ -63,6 +64,7 @@ Deno.serve(async (req) => {
     // AuthZ — precisa ser membro do workspace
     await authorizeWorkspace(identity, tenantId, admin, { minRole: "editor" });
     await assertTenantActive(admin, tenantId);
+    await assertActiveSubscription(admin, tenantId);
 
     // Toggle do tenant
     const { data: settings } = await admin

@@ -18,7 +18,8 @@ function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
-const EDITABLE_FIELDS = ["name", "description", "price_cents", "currency", "is_active", "features", "limits", "sort_order"] as const;
+const EDITABLE_FIELDS = ["name", "description", "price_cents", "currency", "is_active", "features", "limits", "sort_order", "plan_type", "trial_days"] as const;
+const PLAN_TYPES = ["free", "trial", "paid"];
 
 async function writeAudit(
   admin: SupabaseClient,
@@ -60,7 +61,7 @@ Deno.serve(async (req) => {
       case "list_plans": {
         const { data, error } = await admin
           .from("platform_plans")
-          .select("id, key, name, description, price_cents, currency, is_active, sort_order, features, limits, updated_at")
+          .select("id, key, name, description, price_cents, currency, is_active, sort_order, plan_type, trial_days, features, limits, updated_at")
           .order("sort_order");
         if (error) throw error;
         return json({ plans: data ?? [] });
@@ -76,10 +77,13 @@ Deno.serve(async (req) => {
         const update: Record<string, unknown> = {};
         for (const field of EDITABLE_FIELDS) {
           if (patch[field] === undefined) continue;
-          if (field === "price_cents" || field === "sort_order") {
+          if (field === "price_cents" || field === "sort_order" || field === "trial_days") {
             const n = Number(patch[field]);
             if (!Number.isFinite(n) || n < 0) return json({ error: `${field} invalido`, code: "invalid_value" }, 400);
             update[field] = Math.round(n);
+          } else if (field === "plan_type") {
+            if (!PLAN_TYPES.includes(String(patch[field]))) return json({ error: "plan_type invalido", code: "invalid_value" }, 400);
+            update[field] = String(patch[field]);
           } else if (field === "is_active") {
             update[field] = !!patch[field];
           } else if (field === "features" || field === "limits") {
@@ -99,7 +103,7 @@ Deno.serve(async (req) => {
 
         const { data: after, error } = await admin
           .from("platform_plans").update(update).eq("key", key)
-          .select("id, key, name, description, price_cents, currency, is_active, sort_order, features, limits, updated_at")
+          .select("id, key, name, description, price_cents, currency, is_active, sort_order, plan_type, trial_days, features, limits, updated_at")
           .maybeSingle();
         if (error) throw error;
 

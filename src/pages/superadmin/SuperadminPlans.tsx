@@ -15,8 +15,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   useSuperadminPlans, updatePlanConfig,
-  type PlatformPlan, type PlanFeatures, type PlanLimits,
+  type PlatformPlan, type PlanFeatures, type PlanLimits, type PlanType,
 } from "@/hooks/superadmin/useSuperadminPlans";
 import { translateEdgeError } from "@/lib/edge-function-utils";
 import { toast } from "sonner";
@@ -130,6 +133,8 @@ function PlanEditor({ plan, onClose }: { plan: PlatformPlan; onClose: () => void
   const [description, setDescription] = useState(plan.description ?? "");
   const [priceReais, setPriceReais] = useState((plan.price_cents / 100).toFixed(2));
   const [isActive, setIsActive] = useState(plan.is_active);
+  const [planType, setPlanType] = useState<PlanType>(plan.plan_type ?? "paid");
+  const [trialDays, setTrialDays] = useState(String(plan.trial_days ?? 0));
   const [features, setFeatures] = useState<PlanFeatures>({ ...plan.features });
   const [integrations, setIntegrations] = useState<Record<string, boolean>>({ ...(plan.features?.integrations ?? {}) });
   const [limits, setLimits] = useState<PlanLimits>({ ...plan.limits });
@@ -152,6 +157,8 @@ function PlanEditor({ plan, onClose }: { plan: PlatformPlan; onClose: () => void
         description: description.trim(),
         price_cents: cents,
         is_active: isActive,
+        plan_type: planType,
+        trial_days: Math.max(Number(trialDays) || 0, 0),
         features: { ...features, integrations },
         limits,
       });
@@ -191,6 +198,27 @@ function PlanEditor({ plan, onClose }: { plan: PlatformPlan; onClose: () => void
             <div className="flex items-center justify-between rounded-md border border-border px-3 py-2 sm:mt-6">
               <Label htmlFor="p-active" className="cursor-pointer">Plano ativo</Label>
               <Switch id="p-active" checked={isActive} onCheckedChange={setIsActive} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Tipo do plano</Label>
+              <Select value={planType} onValueChange={(v) => setPlanType(v as PlanType)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Gratuito</SelectItem>
+                  <SelectItem value="trial">Teste</SelectItem>
+                  <SelectItem value="paid">Pago</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="p-trial">Dias de teste</Label>
+              <Input
+                id="p-trial"
+                type="number"
+                value={trialDays}
+                onChange={(e) => setTrialDays(e.target.value)}
+                disabled={planType !== "trial"}
+              />
             </div>
           </div>
 

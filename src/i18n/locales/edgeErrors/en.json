@@ -1,6 +1,8 @@
 {
   "_fallback": "Something went wrong. Please try again.",
   "tenant_inactive": "This account is suspended. Please contact support to reactivate.",
+  "no_active_subscription": "Select a plan to continue.",
+  "paid_not_available": "Paid plan not available yet.",
   "method_not_allowed": "Method not allowed.",
   "missing_required_field": "A required field is missing.",
   "invalid_body": "Invalid request data.",

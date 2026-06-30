@@ -44,6 +44,7 @@ const AdminWistiaIntegration = lazy(() => import("@/pages/admin/AdminWistiaInteg
 // Auth / onboarding (no sidebar)
 const AdminCompleteProfile = lazy(() => import("@/pages/admin/AdminCompleteProfile"));
 const AdminNewWorkspace = lazy(() => import("@/pages/admin/AdminNewWorkspace"));
+const AdminSelectPlan = lazy(() => import("@/pages/admin/AdminSelectPlan"));
 const AcceptInvite = lazy(() => import("@/pages/admin/AcceptInvite"));
 const AdminResetPassword = lazy(() => import("@/pages/admin/AdminResetPassword"));
 const AdminSetPassword = lazy(() => import("@/pages/admin/AdminSetPassword"));
@@ -88,6 +89,16 @@ export default function AdminRoutes() {
             element={
               <ProtectedRoute skipWorkspaceCheck>
                 <AdminNewWorkspace />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ── Select Plan (workspace existe, mas sem assinatura valida) ── */}
+          <Route
+            path="/select-plan"
+            element={
+              <ProtectedRoute skipPlanCheck>
+                <AdminSelectPlan />
               </ProtectedRoute>
             }
           />

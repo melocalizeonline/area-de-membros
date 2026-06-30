@@ -2,17 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "./useTenant";
 
-export interface Subscription {
+export interface PlatformSubscription {
   id: string;
   tenant_id: string;
+  plan_key: string;
   status: string;
-  current_period_start: string | null;
+  trial_ends_at: string | null;
   current_period_end: string | null;
-  cancel_at_period_end: boolean;
   created_at: string;
   updated_at: string;
 }
 
+/**
+ * Assinatura da plataforma do tenant (platform_subscriptions).
+ * Fonte do estado de billing que dirige o plan gate no ProtectedRoute.
+ */
 export function useSubscription() {
   const { tenant } = useTenant();
   const tenantId = tenant?.id;
@@ -28,30 +32,41 @@ export function useSubscription() {
       if (!tenantId) return null;
 
       const { data, error } = await supabase
-        .from("subscriptions")
-        .select("*")
+        .from("platform_subscriptions")
+        .select("id, tenant_id, plan_key, status, trial_ends_at, current_period_end, created_at, updated_at")
         .eq("tenant_id", tenantId)
         .maybeSingle();
 
       if (error) throw error;
-      return data as Subscription | null;
+      return (data as PlatformSubscription) ?? null;
     },
     enabled: !!tenantId,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
   });
 
-  const isActive = subscription?.status === "active";
-  const isPastDue = subscription?.status === "past_due";
-  const isCanceled = subscription?.status === "canceled";
-  const willCancel = subscription?.cancel_at_period_end === true;
+  const status = subscription?.status ?? null;
+  const isTrialing = status === "trialing";
+  const trialExpired =
+    isTrialing &&
+    !!subscription?.trial_ends_at &&
+    new Date(subscription.trial_ends_at).getTime() <= Date.now();
+
+  // Assinatura valida (libera acesso ao painel): free, active, ou trial nao expirado.
+  const isValid = status === "free" || status === "active" || (isTrialing && !trialExpired);
 
   return {
     subscription: subscription ?? null,
-    isActive,
-    isPastDue,
-    isCanceled,
-    willCancel,
+    status,
+    planKey: subscription?.plan_key ?? null,
+    isValid,
+    isTrialing,
+    trialExpired,
+    isActive: status === "active",
+    isPastDue: status === "past_due",
+    isCanceled: status === "canceled",
+    // compat com consumidores legados (UpgradeModal)
+    willCancel: false,
     plan: null,
     isLoading,
     error: error as Error | null,

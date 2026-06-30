@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { authenticateRequest, authorizeWorkspace, assertTenantActive, toErrorResponse } from "../_shared/auth.ts";
+import { authenticateRequest, authorizeWorkspace, assertTenantActive, assertActiveSubscription, toErrorResponse } from "../_shared/auth.ts";
 import { resolvePublicSiteUrl } from "../_shared/site-url.ts";
 
 /* ─── Helpers ─── */
@@ -212,6 +212,7 @@ Deno.serve(async (req) => {
 
     const auth = await authorizeWorkspace(identity, tenant_id, supabaseAdmin, { minRole: "owner" });
     await assertTenantActive(supabaseAdmin, tenant_id);
+    await assertActiveSubscription(supabaseAdmin, tenant_id);
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedFirstName = typeof first_name === "string" ? first_name.trim() : "";
     const normalizedLastName = typeof last_name === "string" ? last_name.trim() : "";
