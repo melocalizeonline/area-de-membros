@@ -19,7 +19,7 @@ import { authenticateRequest, AuthError, toErrorResponse } from "../_shared/auth
 import { resolvePublicSiteUrl } from "../_shared/site-url.ts";
 import { sendAndLogEmail } from "../_shared/send-email.ts";
 import { resolveEmailLanguage, getEmailTranslations, type EmailLanguage } from "../_shared/email-i18n.ts";
-import { buildTeamInviteEmail } from "../_shared/email-templates.ts";
+import { buildTeamInviteEmail, buildCustomerInviteEmail, buildCustomerAccessEmail } from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -371,6 +371,212 @@ Deno.serve(async (req) => {
           action: "resend_member_invite", metadata: { email: memberEmail },
         });
         return json({ success: true });
+      }
+
+      // ── Operacoes de cliente/acesso (Fase 6) ───────────────────
+      case "list_tenant_courses": {
+        requireTenant();
+        const { data } = await admin
+          .from("courses").select("id, title, slug, is_active")
+          .eq("tenant_id", tenantId).order("title");
+        return json({ courses: data ?? [] });
+      }
+
+      case "list_customer_access": {
+        requireTenant();
+        const customerId = (body.customer_id ?? "").trim();
+        if (!customerId) return json({ error: "customer_id is required", code: "missing_required_field" }, 400);
+        const { data: customer } = await admin
+          .from("customers").select("id, user_id, email").eq("id", customerId).eq("tenant_id", tenantId).maybeSingle();
+        if (!customer) return json({ error: "Cliente nao encontrado", code: "customer_not_found" }, 404);
+        if (!customer.user_id) return json({ access: [], user_linked: false });
+
+        const { data: rows } = await admin
+          .from("course_customers")
+          .select("course_id, expires_at, created_at, courses(title, slug, tenant_id)")
+          .eq("user_id", customer.user_id);
+        const access = (rows ?? [])
+          .filter((r) => (r.courses as { tenant_id?: string } | null)?.tenant_id === tenantId)
+          .map((r) => ({
+            course_id: r.course_id,
+            title: (r.courses as { title?: string } | null)?.title ?? null,
+            slug: (r.courses as { slug?: string } | null)?.slug ?? null,
+            expires_at: r.expires_at,
+            created_at: r.created_at,
+          }));
+        return json({ access, user_linked: true });
+      }
+
+      case "grant_course_access":
+      case "revoke_course_access": {
+        requireTenant();
+        const customerId = (body.customer_id ?? "").trim();
+        const courseId = (body.course_id ?? "").trim();
+        if (!customerId || !courseId)
+          return json({ error: "customer_id and course_id are required", code: "missing_required_field" }, 400);
+
+        const { data: course } = await admin
+          .from("courses").select("id").eq("id", courseId).eq("tenant_id", tenantId).maybeSingle();
+        if (!course) return json({ error: "Curso nao encontrado", code: "course_not_found" }, 404);
+        const { data: customer } = await admin
+          .from("customers").select("id, user_id").eq("id", customerId).eq("tenant_id", tenantId).maybeSingle();
+        if (!customer) return json({ error: "Cliente nao encontrado", code: "customer_not_found" }, 404);
+        if (!customer.user_id)
+          return json({ error: "Cliente sem conta (convite nao aceito)", code: "customer_no_account" }, 409);
+
+        if (action === "grant_course_access") {
+          const { error } = await admin.from("course_customers")
+            .upsert({ course_id: courseId, user_id: customer.user_id }, { onConflict: "course_id,user_id", ignoreDuplicates: true });
+          if (error) throw error;
+        } else {
+          const { error } = await admin.from("course_customers")
+            .delete().eq("course_id", courseId).eq("user_id", customer.user_id);
+          if (error) throw error;
+        }
+        await writeAudit(admin, {
+          actorUserId: actor, tenantId, targetType: "customer", targetId: customerId,
+          action, after: { course_id: courseId },
+        });
+        return json({ success: true });
+      }
+
+      case "resend_customer_access": {
+        requireTenant();
+        const customerId = (body.customer_id ?? "").trim();
+        if (!customerId) return json({ error: "customer_id is required", code: "missing_required_field" }, 400);
+        const resendApiKey = Deno.env.get("RESEND_API_KEY") || "";
+        if (!resendApiKey) return json({ error: "Email nao configurado", code: "missing_resend_mkt_api_key" }, 500);
+
+        const { data: customer } = await admin
+          .from("customers").select("id, user_id, email, name, tenant_id")
+          .eq("id", customerId).eq("tenant_id", tenantId).maybeSingle();
+        if (!customer) return json({ error: "Cliente nao encontrado", code: "customer_not_found" }, 404);
+        if (!customer.user_id) return json({ error: "Cliente sem conta vinculada", code: "customer_no_account" }, 409);
+
+        const { data: tenantRaw } = await admin
+          .from("tenants").select("name, slug, tenant_settings(icon_url, email_sender_name)").eq("id", tenantId).maybeSingle();
+        const ts = (tenantRaw?.tenant_settings ?? {}) as { icon_url?: string; email_sender_name?: string };
+        const tenantName = tenantRaw?.name || "Portal";
+        const tenantSlug = tenantRaw?.slug || "";
+        const tenantLogoUrl = ts.icon_url || null;
+        const senderName = ts.email_sender_name || tenantName;
+
+        const { data: au } = await admin.auth.admin.getUserById(customer.user_id);
+        if (!au?.user) return json({ error: "Usuario nao encontrado", code: "user_not_found" }, 404);
+
+        let lang: EmailLanguage = resolveEmailLanguage(au.user.user_metadata);
+        if (!au.user.user_metadata?.language) {
+          const { data: profile } = await admin.from("profiles").select("preferences").eq("user_id", customer.user_id).maybeSingle();
+          lang = resolveEmailLanguage(au.user.user_metadata, profile?.preferences as Record<string, unknown> | null);
+        }
+        const t = getEmailTranslations(lang);
+        const siteUrl = resolvePublicSiteUrl(typeof body.origin === "string" ? body.origin : undefined);
+
+        let html: string; let subject: string; let emailType: "customer_invite" | "access_granted";
+        if (!au.user.email_confirmed_at) {
+          const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+            type: "invite", email: customer.email,
+            options: { data: { name: customer.name, signup_as: "customer", customer_tenant_id: tenantId }, redirectTo: `${siteUrl}/${tenantSlug}/portal` },
+          });
+          if (linkErr || !linkData?.properties?.action_link)
+            return json({ error: "Falha ao gerar link de convite", code: "internal_error" }, 500);
+          html = buildCustomerInviteEmail(lang, customer.name, tenantName, tenantLogoUrl, linkData.properties.action_link);
+          subject = t.customerInvite.subject(tenantName);
+          emailType = "customer_invite";
+        } else {
+          html = buildCustomerAccessEmail(lang, customer.name, tenantName, tenantLogoUrl, `${siteUrl}/${tenantSlug}/login`);
+          subject = t.customerAccess.subject(tenantName);
+          emailType = "access_granted";
+        }
+        const emailResult = await sendAndLogEmail({
+          resendApiKey, supabaseAdmin: admin, senderName, to: customer.email, subject, html,
+          tenantId, emailType, customerId: customer.id, userId: customer.user_id,
+        });
+        if (!emailResult.ok) return json({ error: "Falha ao enviar email", code: "email_send_failed" }, 500);
+        await writeAudit(admin, {
+          actorUserId: actor, tenantId, targetType: "customer", targetId: customerId,
+          action: "resend_customer_access", metadata: { email: customer.email, type: emailType },
+        });
+        return json({ success: true });
+      }
+
+      // ── Operacoes de pedido/integracao (Fase 7) ────────────────
+      case "reprocess_order": {
+        requireTenant();
+        const orderId = (body.order_id ?? "").trim();
+        const resendEmail = !!body.resend_email;
+        if (!orderId) return json({ error: "order_id is required", code: "missing_required_field" }, 400);
+        const { data: order } = await admin
+          .from("orders").select("id, status").eq("id", orderId).eq("tenant_id", tenantId).maybeSingle();
+        if (!order) return json({ error: "Pedido nao encontrado", code: "order_not_found" }, 404);
+
+        const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/reconcile-access`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ order_id: orderId, trigger_source: "admin_button", force_resend_email: resendEmail }),
+        });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok)
+          return json({ error: (result as { error?: string }).error ?? "Falha ao reprocessar", code: "reprocess_failed" }, 502);
+        await writeAudit(admin, {
+          actorUserId: actor, tenantId, targetType: "order", targetId: orderId,
+          action: "reprocess_order", metadata: { resend_email: resendEmail },
+        });
+        return json({ success: true, result });
+      }
+
+      case "update_order_status": {
+        requireTenant();
+        const orderId = (body.order_id ?? "").trim();
+        const status = (body.status ?? "").trim();
+        const ALLOWED = ["approved", "completed", "cancelled", "refunded", "disputed", "chargeback", "pending"];
+        if (!orderId) return json({ error: "order_id is required", code: "missing_required_field" }, 400);
+        if (!ALLOWED.includes(status)) return json({ error: "Status invalido", code: "invalid_status" }, 400);
+        const { data: order } = await admin
+          .from("orders").select("id, status").eq("id", orderId).eq("tenant_id", tenantId).maybeSingle();
+        if (!order) return json({ error: "Pedido nao encontrado", code: "order_not_found" }, 404);
+
+        const { error } = await admin.from("orders").update({ status }).eq("id", orderId);
+        if (error) throw error;
+        await writeAudit(admin, {
+          actorUserId: actor, tenantId, targetType: "order", targetId: orderId,
+          action: "update_order_status", before: { status: order.status }, after: { status },
+        });
+        return json({ success: true, order_id: orderId, status });
+      }
+
+      case "disconnect_integration": {
+        requireTenant();
+        const provider = (body.provider ?? "").trim();
+        if (!provider) return json({ error: "provider is required", code: "missing_required_field" }, 400);
+        const { data: integ } = await admin
+          .from("tenant_integrations").select("id, status").eq("tenant_id", tenantId).eq("provider", provider).maybeSingle();
+        if (!integ) return json({ error: "Integracao nao encontrada", code: "integration_not_found" }, 404);
+
+        await admin.from("tenant_integration_secrets").delete().eq("integration_id", integ.id);
+        const { error } = await admin.from("tenant_integrations")
+          .update({ status: "inactive", credentials_hint: null, last_error: "Desconectado pelo superadmin", updated_at: new Date().toISOString() })
+          .eq("id", integ.id);
+        if (error) throw error;
+        await writeAudit(admin, {
+          actorUserId: actor, tenantId, targetType: "integration", targetId: integ.id,
+          action: "disconnect_integration", before: { status: integ.status }, after: { status: "inactive" }, metadata: { provider },
+        });
+        return json({ success: true });
+      }
+
+      case "list_gateway_events": {
+        requireTenant();
+        const limit = Math.min(Math.max(Number(body.limit) || 30, 1), 100);
+        const { data, error } = await admin
+          .from("gateway_events")
+          .select("id, provider, event_type, external_event_type, external_order_id, buyer_email, status, error_message, retry_count, created_at")
+          .eq("tenant_id", tenantId).order("created_at", { ascending: false }).range(0, limit - 1);
+        if (error) throw error;
+        return json({ events: data ?? [] });
       }
 
       default:

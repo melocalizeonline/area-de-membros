@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, ExternalLink, Building2, Users, Package, BookOpen, ShoppingCart,
   DollarSign, Pencil, MoreHorizontal, ShieldCheck, ShieldX, PauseCircle, PlayCircle,
-  Mail, Loader2,
+  Mail, Loader2, RefreshCw, Unplug, KeyRound, Plus, Trash2, Activity,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import SuperadminLayout from "@/components/superadmin/SuperadminLayout";
@@ -34,7 +34,9 @@ import {
 } from "@/components/ui/table";
 import {
   useSuperadminTenantDetail, useSuperadminAuditLogs, tenantAdminAction,
+  listTenantCourses, listCustomerAccess, useTenantGatewayEvents,
   type AccountStatus, type TenantDetailMember,
+  type TenantCourseOption, type CustomerCourseAccess,
 } from "@/hooks/superadmin/useSuperadminTenantDetail";
 import { translateEdgeError } from "@/lib/edge-function-utils";
 import { formatDateTime } from "@/lib/utils";
@@ -182,7 +184,7 @@ export default function SuperadminTenantDetail() {
                   <MembersTab members={data.members} busy={busy} run={run} lang={lang} />
                 </TabsContent>
                 <TabsContent value="activity" className="mt-6">
-                  <ActivityTab data={data} lang={lang} />
+                  <ActivityTab data={data} lang={lang} busy={busy} run={run} tenantId={tenantId} />
                 </TabsContent>
                 <TabsContent value="audit" className="mt-6">
                   <AuditTab tenantId={tenantId} lang={lang} />
@@ -556,32 +558,51 @@ function MemberActions({
 
 /* ── Activity ──────────────────────────────────────────────── */
 
+const ORDER_STATUSES = ["approved", "completed", "pending", "cancelled", "refunded", "disputed", "chargeback"];
+
 function ActivityTab({
-  data, lang,
+  data, lang, busy, run, tenantId,
 }: {
-  data: NonNullable<ReturnType<typeof useSuperadminTenantDetail>["data"]>; lang: string;
+  data: NonNullable<ReturnType<typeof useSuperadminTenantDetail>["data"]>;
+  lang: string; busy: boolean; run: RunFn; tenantId: string | undefined;
 }) {
   return (
     <div className="flex flex-col gap-6">
+      {/* Integrações */}
       <Card variant="bordered" className="overflow-hidden">
         <CardContent className="p-5">
           <h3 className="mb-3 text-sm font-semibold text-foreground">Integrações</h3>
           {data.integrations.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma integração conectada.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <ul className="flex flex-col divide-y divide-border">
               {data.integrations.map((i) => (
-                <Badge key={i.provider} variant={i.status === "active" ? "green" : "gray"} className="gap-1">
-                  <span className="capitalize">{i.provider}</span>
-                  <span className="opacity-60">· {i.status}</span>
-                </Badge>
+                <li key={i.provider} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={i.status === "active" ? "green" : "gray"}>
+                      <span className="capitalize">{i.provider}</span>
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">{i.status}</span>
+                  </div>
+                  {i.status === "active" && (
+                    <ConfirmIconButton
+                      icon={Unplug}
+                      label="Desconectar"
+                      disabled={busy}
+                      title={`Desconectar ${i.provider}`}
+                      description="A integração será desativada e as credenciais removidas. O tenant precisará reconectar."
+                      onConfirm={() => run({ action: "disconnect_integration", provider: i.provider }, "Integração desconectada.")}
+                    />
+                  )}
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </CardContent>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Pedidos */}
         <Card variant="bordered" className="overflow-hidden">
           <CardContent className="p-5">
             <h3 className="mb-3 text-sm font-semibold text-foreground">Pedidos recentes</h3>
@@ -598,6 +619,7 @@ function ActivityTab({
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="font-medium">{formatCurrency(o.unit_amount)}</span>
                       <Badge variant="outline" className="text-[10px]">{o.status}</Badge>
+                      <OrderActions orderId={o.id} status={o.status} busy={busy} run={run} />
                     </div>
                   </li>
                 ))}
@@ -606,6 +628,7 @@ function ActivityTab({
           </CardContent>
         </Card>
 
+        {/* Clientes */}
         <Card variant="bordered" className="overflow-hidden">
           <CardContent className="p-5">
             <h3 className="mb-3 text-sm font-semibold text-foreground">Clientes recentes</h3>
@@ -619,7 +642,9 @@ function ActivityTab({
                       <p className="truncate text-foreground">{c.name || "—"}</p>
                       <p className="truncate text-xs text-muted-foreground">{c.email}</p>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">{formatDateTime(c.created_at, lang)}</span>
+                    <CustomerActions
+                      customer={c} tenantId={tenantId} busy={busy} run={run} lang={lang}
+                    />
                   </li>
                 ))}
               </ul>
@@ -627,7 +652,243 @@ function ActivityTab({
           </CardContent>
         </Card>
       </div>
+
+      {/* Eventos de gateway */}
+      <GatewayEventsCard tenantId={tenantId} lang={lang} />
     </div>
+  );
+}
+
+function OrderActions({
+  orderId, status, busy, run,
+}: {
+  orderId: string; status: string; busy: boolean; run: RunFn;
+}) {
+  const [statusDialog, setStatusDialog] = useState(false);
+  const [newStatus, setNewStatus] = useState(status);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" disabled={busy} className="size-7">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => run({ action: "reprocess_order", order_id: orderId }, "Acesso reprocessado.")}>
+            <RefreshCw className="size-4" /> Reprocessar acesso
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run({ action: "reprocess_order", order_id: orderId, resend_email: true }, "Acesso reprocessado e email reenviado.")}>
+            <Mail className="size-4" /> Reprocessar + reenviar email
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => { setNewStatus(status); setStatusDialog(true); }}>
+            <Pencil className="size-4" /> Alterar status
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={statusDialog} onOpenChange={setStatusDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar status do pedido</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Select value={newStatus} onValueChange={setNewStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ORDER_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Mudar o status recalcula o acesso do cliente (aprovado/concluído concede; cancelado/reembolsado revoga).
+            </p>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+            <Button
+              disabled={busy || newStatus === status}
+              onClick={async () => {
+                const ok = await run({ action: "update_order_status", order_id: orderId, status: newStatus }, "Status do pedido atualizado.");
+                if (ok) setStatusDialog(false);
+              }}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function CustomerActions({
+  customer, tenantId, busy, run, lang,
+}: {
+  customer: { id: string; name: string | null; email: string };
+  tenantId: string | undefined; busy: boolean; run: RunFn; lang: string;
+}) {
+  const [accessOpen, setAccessOpen] = useState(false);
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" disabled={busy} className="size-7">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => run({ action: "resend_customer_access", customer_id: customer.id, origin: window.location.origin }, "Email de acesso reenviado.")}>
+            <Mail className="size-4" /> Reenviar acesso
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setAccessOpen(true)}>
+            <KeyRound className="size-4" /> Gerenciar acesso
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {accessOpen && tenantId && (
+        <CustomerAccessDialog
+          tenantId={tenantId} customer={customer} busy={busy} run={run} lang={lang}
+          onClose={() => setAccessOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function CustomerAccessDialog({
+  tenantId, customer, busy, run, lang, onClose,
+}: {
+  tenantId: string; customer: { id: string; name: string | null; email: string };
+  busy: boolean; run: RunFn; lang: string; onClose: () => void;
+}) {
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const { data: accessData, refetch, isLoading } = useQuery({
+    queryKey: ["customer_access", tenantId, customer.id],
+    queryFn: () => listCustomerAccess(tenantId, customer.id),
+  });
+  const { data: courses } = useQuery({
+    queryKey: ["tenant_courses", tenantId],
+    queryFn: () => listTenantCourses(tenantId),
+    staleTime: 60_000,
+  });
+
+  const access = accessData?.access ?? [];
+  const userLinked = accessData?.user_linked ?? false;
+  const grantedIds = new Set(access.map((a) => a.course_id));
+  const grantable = (courses ?? []).filter((c: TenantCourseOption) => !grantedIds.has(c.id));
+
+  const grant = async () => {
+    if (!selectedCourse) return;
+    const ok = await run({ action: "grant_course_access", customer_id: customer.id, course_id: selectedCourse }, "Acesso concedido.");
+    if (ok) { setSelectedCourse(""); refetch(); }
+  };
+  const revoke = async (courseId: string) => {
+    const ok = await run({ action: "revoke_course_access", customer_id: customer.id, course_id: courseId }, "Acesso removido.");
+    if (ok) refetch();
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Acesso de {customer.name || customer.email}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 py-2">
+          {isLoading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : !userLinked ? (
+            <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+              Cliente ainda não tem conta vinculada (convite não aceito). Reenvie o acesso primeiro.
+            </p>
+          ) : (
+            <>
+              <div>
+                <h4 className="mb-2 text-sm font-semibold text-foreground">Cursos com acesso</h4>
+                {access.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum curso liberado.</p>
+                ) : (
+                  <ul className="flex flex-col divide-y divide-border">
+                    {access.map((a: CustomerCourseAccess) => (
+                      <li key={a.course_id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                        <div className="min-w-0">
+                          <p className="truncate text-foreground">{a.title || a.course_id}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {a.expires_at ? `Expira ${formatDateTime(a.expires_at, lang)}` : "Vitalício"}
+                          </p>
+                        </div>
+                        <Button variant="ghost" size="icon" className="size-7 text-destructive" disabled={busy} onClick={() => revoke(a.course_id)}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Label className="mb-1.5 block text-xs">Conceder acesso a curso</Label>
+                  <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                    <SelectTrigger><SelectValue placeholder="Selecione um curso" /></SelectTrigger>
+                    <SelectContent>
+                      {grantable.length === 0 ? (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Sem cursos disponíveis</div>
+                      ) : grantable.map((c: TenantCourseOption) => (
+                        <SelectItem key={c.id} value={c.id}>{c.title || c.slug || c.id}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={grant} disabled={busy || !selectedCourse} className="gap-1.5">
+                  <Plus className="size-4" /> Conceder
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Fechar</Button></DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function GatewayEventsCard({ tenantId, lang }: { tenantId: string | undefined; lang: string }) {
+  const { data: events, isLoading } = useTenantGatewayEvents(tenantId);
+  return (
+    <Card variant="bordered" className="overflow-hidden">
+      <CardContent className="p-5">
+        <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          <Activity className="size-4 text-muted-foreground" /> Eventos de gateway
+        </h3>
+        {isLoading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : !events || events.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum evento registrado.</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-border">
+            {events.map((e) => (
+              <li key={e.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate text-foreground">
+                    <span className="capitalize">{e.provider}</span> · {e.external_event_type || e.event_type || "—"}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {e.buyer_email || e.external_order_id || "—"} · {formatDateTime(e.created_at, lang)}
+                    {e.error_message && <span className="text-destructive"> · {e.error_message}</span>}
+                  </p>
+                </div>
+                <Badge variant={e.status === "processed" ? "green" : e.status === "failed" ? "red" : "gray"} className="text-[10px]">
+                  {e.status}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -734,6 +995,34 @@ function ConfirmButton({
     <>
       <Button variant={variant === "destructive" ? "destructive" : "default"} disabled={disabled} onClick={() => setOpen(true)}>
         {label}
+      </Button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{title}</AlertDialogTitle>
+            <AlertDialogDescription>{description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={onConfirm}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function ConfirmIconButton({
+  icon: Icon, label, title, description, onConfirm, disabled,
+}: {
+  icon: typeof Users; label: string; title: string; description: string;
+  onConfirm: () => void; disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="ghost" size="sm" disabled={disabled} onClick={() => setOpen(true)} className="gap-1.5 text-muted-foreground hover:text-destructive">
+        <Icon className="size-3.5" /> {label}
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>

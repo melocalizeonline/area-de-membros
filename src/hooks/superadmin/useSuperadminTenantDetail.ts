@@ -111,3 +111,63 @@ export async function tenantAdminAction<T = Record<string, unknown>>(
   const { data } = await invokeEdgeFunction<T>(FN, { body });
   return data;
 }
+
+// ── Fase 6/7: acesso de cliente, cursos e eventos de gateway ────────
+
+export interface TenantCourseOption {
+  id: string;
+  title: string | null;
+  slug: string | null;
+  is_active: boolean;
+}
+
+export interface CustomerCourseAccess {
+  course_id: string;
+  title: string | null;
+  slug: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface GatewayEvent {
+  id: string;
+  provider: string | null;
+  event_type: string | null;
+  external_event_type: string | null;
+  external_order_id: string | null;
+  buyer_email: string | null;
+  status: string | null;
+  error_message: string | null;
+  retry_count: number | null;
+  created_at: string;
+}
+
+export async function listTenantCourses(tenantId: string): Promise<TenantCourseOption[]> {
+  const data = await tenantAdminAction<{ courses: TenantCourseOption[] }>({ action: "list_tenant_courses", tenant_id: tenantId });
+  return data.courses;
+}
+
+export async function listCustomerAccess(
+  tenantId: string,
+  customerId: string,
+): Promise<{ access: CustomerCourseAccess[]; user_linked: boolean }> {
+  return tenantAdminAction<{ access: CustomerCourseAccess[]; user_linked: boolean }>({
+    action: "list_customer_access",
+    tenant_id: tenantId,
+    customer_id: customerId,
+  });
+}
+
+export function useTenantGatewayEvents(tenantId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ["superadmin_gateway_events", tenantId],
+    enabled: !!tenantId && enabled,
+    staleTime: 10_000,
+    queryFn: async () => {
+      const { data } = await invokeEdgeFunction<{ events: GatewayEvent[] }>(FN, {
+        body: { action: "list_gateway_events", tenant_id: tenantId },
+      });
+      return data.events;
+    },
+  });
+}
