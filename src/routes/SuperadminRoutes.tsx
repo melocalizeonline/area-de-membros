@@ -12,6 +12,7 @@ const SuperadminProducts = lazy(() => import("@/pages/superadmin/SuperadminProdu
 const SuperadminSellers = lazy(() => import("@/pages/superadmin/SuperadminSellers"));
 const SuperadminUsers = lazy(() => import("@/pages/superadmin/SuperadminUsers"));
 const SuperadminHosting = lazy(() => import("@/pages/superadmin/SuperadminHosting"));
+const SuperadminPlans = lazy(() => import("@/pages/superadmin/SuperadminPlans"));
 
 export default function SuperadminRoutes() {
   return (
@@ -86,6 +87,14 @@ export default function SuperadminRoutes() {
           element={
             <ProtectedRoute requiredRoles={["admin"]}>
               <SuperadminHosting />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/plans"
+          element={
+            <ProtectedRoute requiredRoles={["admin"]}>
+              <SuperadminPlans />
             </ProtectedRoute>
           }
         />
