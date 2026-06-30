@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction, translateEdgeError } from "@/lib/edge-function-utils";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -24,7 +25,9 @@ export default function DesignVideoProtectionCard({
   const [isToggling, setIsToggling] = useState(false);
   const [localEnabled, setLocalEnabled] = useState(videoProtectionEnabled);
 
-  const isPro = plan === "pro" || plan === "business";
+  // Entitlement resolvido a partir de platform_plans (Fase 0); fallback p/ o plano.
+  const { hasFeature } = useEntitlements();
+  const isPro = hasFeature("video_protection");
 
   const handleToggle = async (checked: boolean) => {
     if (!isPro) return;

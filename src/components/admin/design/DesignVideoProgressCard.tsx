@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { toast } from "sonner";
 
 export interface DesignMarketingFormData {
@@ -32,7 +33,8 @@ export default function DesignVideoProgressCard({
   const [isToggling, setIsToggling] = useState(false);
   const [localEnabled, setLocalEnabled] = useState(progressTrackingEnabled);
 
-  const isPro = plan === "pro" || plan === "business";
+  const { hasFeature } = useEntitlements();
+  const isPro = hasFeature("video_progress_tracking");
 
   const handleToggle = async (checked: boolean) => {
     if (!isPro) return;

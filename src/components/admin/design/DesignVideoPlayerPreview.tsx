@@ -1,6 +1,7 @@
 import { PlayCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { buildGumletEmbedUrl } from "@/lib/video-settings";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import type { VideoSettings } from "@/lib/video-settings";
 
 const DEFAULT_PREVIEW_ASSET_ID = "69de96da0e45fb2cfced7978";
@@ -23,9 +24,10 @@ export default function DesignVideoPlayerPreview({
   plan = "free",
 }: DesignVideoPlayerPreviewProps) {
   const { t } = useTranslation();
+  const { hasFeature } = useEntitlements();
   const isMobile = previewMode === "mobile";
   const resolvedAssetId = FALLBACK_PREVIEW_ASSET_ID;
-  const isPro = plan === "pro" || plan === "business";
+  const isPro = hasFeature("caption_display");
   // Espelha o gating do player do aluno: legenda só quando Pro/Business.
   const embedUrl = buildGumletEmbedUrl(resolvedAssetId, videoSettings, {
     fallbackColor,

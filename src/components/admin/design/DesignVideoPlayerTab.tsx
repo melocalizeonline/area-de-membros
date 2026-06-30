@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import type { VideoSettings } from "@/lib/video-settings";
 import ColorPalette from "./ColorPalette";
 
@@ -50,7 +51,8 @@ export default function DesignVideoPlayerTab({
   onChange,
 }: DesignVideoPlayerTabProps) {
   const { t } = useTranslation();
-  const isPro = plan === "pro" || plan === "business";
+  const { hasFeature } = useEntitlements();
+  const isPro = hasFeature("ai_captions");
   const safeFallbackColor = isHexColor(fallbackColor) ? fallbackColor : "#6366f1";
   const effectivePlayerColor = isHexColor(formData.player.player_color)
     ? formData.player.player_color

@@ -72,6 +72,7 @@ import { AssetDetailSheet } from "@/components/admin/AssetDetailSheet";
 import { useAssets, type AssetWithDetails, type UploadingAsset } from "@/hooks/useAssets";
 import { useFolders, type AssetFolder } from "@/hooks/useFolders";
 import { useTenant } from "@/hooks/useTenant";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, formatDateTime } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -751,7 +752,8 @@ export default function AdminAssets() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const { tenant } = useTenant();
-  const isPro = tenant?.plan === "pro" || tenant?.plan === "business";
+  const { hasFeature } = useEntitlements();
+  const isPro = hasFeature("caption_display");
   const isMobile = useIsMobile();
 
   // Folder state
