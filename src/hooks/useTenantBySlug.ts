@@ -17,6 +17,7 @@ export interface PublicTenant {
   portal_button_color: string | null;
   portal_button_style: string;
   portal_products_template: string;
+  account_status: string | null;
 }
 
 export function useTenantBySlug(slug: string | undefined) {

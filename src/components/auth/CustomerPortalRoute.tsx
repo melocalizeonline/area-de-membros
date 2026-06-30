@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePortalResolver, PortalProvider } from "@/contexts/PortalContext";
 import { Button } from "@/components/ui/button";
 import { SetPasswordDialog } from "@/components/portal/SetPasswordDialog";
+import { TenantStatusBlock } from "@/components/TenantStatusBlock";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CustomerPortalRouteProps {
@@ -48,6 +49,11 @@ export function CustomerPortalRoute({ children }: CustomerPortalRouteProps) {
         <p className="text-muted-foreground">{t("tenant.notFoundHint")}</p>
       </div>
     );
+  }
+
+  /* ── Tenant com conta bloqueada/cancelada → portal indisponível ── */
+  if (tenant.account_status === "blocked" || tenant.account_status === "cancelled") {
+    return <TenantStatusBlock status={tenant.account_status} context="portal" />;
   }
 
   /* ── Logado mas sem acesso ao portal deste tenant ── */

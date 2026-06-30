@@ -1963,6 +1963,20 @@
     "coverPlaceholder": "Cover image",
     "titlePlaceholder": "Area Title"
   },
+  "tenantStatus": {
+    "genericTitle": "Access unavailable",
+    "genericDescription": "This account is temporarily unavailable. Please contact support.",
+    "signOut": "Sign out",
+    "admin": {
+      "paused": { "title": "Account paused", "description": "Access to the dashboard is temporarily suspended. Contact support to reactivate." },
+      "blocked": { "title": "Account blocked", "description": "Access to this dashboard has been blocked. Please contact support." },
+      "cancelled": { "title": "Account cancelled", "description": "This account has been cancelled. Contact support to reactivate access." }
+    },
+    "portal": {
+      "blocked": { "title": "Area unavailable", "description": "This membership area is temporarily unavailable. Please try again later." },
+      "cancelled": { "title": "Area unavailable", "description": "This membership area is no longer available." }
+    }
+  },
   "tenant": {
     "notFound": "Page not found",
     "notFoundHint": "Check the address and try again.",

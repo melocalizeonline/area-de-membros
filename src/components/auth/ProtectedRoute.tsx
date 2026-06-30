@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/hooks/useTenant";
 import { useHasWorkspace } from "@/hooks/useHasWorkspace";
 import { Button } from "@/components/ui/button";
+import { TenantStatusBlock } from "@/components/TenantStatusBlock";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -153,6 +154,25 @@ export function ProtectedRoute({
     if (!hasWorkspace) {
       return <Navigate to="/admin/new-workspace" replace />;
     }
+  }
+
+  // Enforcement de account_status (Fase 5): bloqueia o painel do tenant quando
+  // a conta nao esta ativa. Restrito a /admin — nao afeta o console superadmin.
+  if (
+    !skipWorkspaceCheck &&
+    roles.includes("tenant") &&
+    tenant &&
+    location.pathname.startsWith("/admin") &&
+    tenant.account_status &&
+    tenant.account_status !== "active"
+  ) {
+    return (
+      <TenantStatusBlock
+        status={tenant.account_status}
+        reason={tenant.account_status_reason}
+        context="admin"
+      />
+    );
   }
 
   return <>{children}</>;

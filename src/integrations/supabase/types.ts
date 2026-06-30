@@ -2682,6 +2682,9 @@ export type Database = {
       tenant_settings: {
         Row: {
           accent_color: string | null
+          account_status: string
+          account_status_reason: string | null
+          account_status_updated_at: string | null
           checkout_bg_color: string | null
           checkout_button_color: string | null
           checkout_button_style: string
@@ -2724,6 +2727,9 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          account_status?: string
+          account_status_reason?: string | null
+          account_status_updated_at?: string | null
           checkout_bg_color?: string | null
           checkout_button_color?: string | null
           checkout_button_style?: string
@@ -2766,6 +2772,9 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          account_status?: string
+          account_status_reason?: string | null
+          account_status_updated_at?: string | null
           checkout_bg_color?: string | null
           checkout_button_color?: string | null
           checkout_button_style?: string

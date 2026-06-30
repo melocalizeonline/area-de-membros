@@ -1941,6 +1941,20 @@
     "coverPlaceholder": "Imagem de capa",
     "titlePlaceholder": "Título da Área"
   },
+  "tenantStatus": {
+    "genericTitle": "Acesso indisponível",
+    "genericDescription": "Esta conta está temporariamente indisponível. Entre em contato com o suporte.",
+    "signOut": "Sair",
+    "admin": {
+      "paused": { "title": "Conta pausada", "description": "O acesso ao painel está temporariamente suspenso. Fale com o suporte para reativar." },
+      "blocked": { "title": "Conta bloqueada", "description": "O acesso a este painel foi bloqueado. Entre em contato com o suporte." },
+      "cancelled": { "title": "Conta cancelada", "description": "Esta conta foi cancelada. Fale com o suporte para reativar o acesso." }
+    },
+    "portal": {
+      "blocked": { "title": "Área indisponível", "description": "Esta área de membros está temporariamente indisponível. Tente novamente mais tarde." },
+      "cancelled": { "title": "Área indisponível", "description": "Esta área de membros não está mais disponível." }
+    }
+  },
   "tenant": {
     "notFound": "Página não encontrada",
     "notFoundHint": "Verifique o endereço e tente novamente.",
