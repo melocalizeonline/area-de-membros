@@ -231,8 +231,10 @@ Renovações estendem (nunca encurtam) o acesso.
 - A idempotência é por **`order_id`** (chave única por tenant+provider+order_id). Reenviar
   o mesmo evento não duplica acesso — é seguro a Nory **reenviar** em caso de `5xx`/timeout.
 - Progressão de status é respeitada (ex.: `approved` → `completed`).
-- **Renovações de assinatura devem usar um `order_id` distinto por cobrança**, senão a
-  renovação é deduplicada como se fosse o mesmo pedido.
+- **Renovações de assinatura usam `order_id` distinto por cobrança**: o evento
+  `subscription.renewed` carrega o formato `<orcamentoId>:<itemId>:<chargeId>` (sufixo com
+  o id da cobrança), enquanto `order.approved`/`past_due`/`canceled` usam `<orcamentoId>:<itemId>`.
+  Cada renovação vira um novo pedido no membros e **estende** a régua de acesso.
 
 ---
 
