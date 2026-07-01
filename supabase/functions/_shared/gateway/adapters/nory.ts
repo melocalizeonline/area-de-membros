@@ -28,7 +28,12 @@ interface NoryPayload {
   // (campo "Conteúdo" escolhido no form da Nory via nory-catalog).
   members_product_id?: string;
   // Régua de acesso configurada na Nory.
-  access?: { type?: "vitalicio" | "meses" | "dias"; value?: number | null; trial_days?: number };
+  access?: {
+    type?: "vitalicio" | "meses" | "dias";
+    value?: number | null;
+    trial_days?: number;
+    cancel_policy?: "periodo" | "imediato";
+  };
 }
 
 /* ─── Mapeamentos ──────────────────────────────────────────── */
@@ -94,6 +99,10 @@ export const noryAdapter: ProviderAdapter = {
       }
       : undefined;
 
+    // Política de cancelamento de assinatura (default: natural = manter até o fim do ciclo).
+    const cancelPolicy: "natural" | "immediate" =
+      p.access?.cancel_policy === "imediato" ? "immediate" : "natural";
+
     return {
       eventType,
       externalOrderId: p.order_id ?? "",
@@ -115,6 +124,7 @@ export const noryAdapter: ProviderAdapter = {
       orderCreatedAt: p.created_at || undefined,
       rawEvent: p.event ?? "",
       access,
+      cancelPolicy,
     };
   },
 };

@@ -220,6 +220,7 @@ Define a duração do acesso concedido. Ausente = vitalício.
 | `type` | `vitalicio` \| `meses` \| `dias` | Tipo de duração. |
 | `value` | int \| null | Quantidade de meses/dias (ignorado em `vitalicio`). |
 | `trial_days` | int | Dias de trial somados ao início. |
+| `cancel_policy` | `periodo` \| `imediato` | Só p/ assinatura: `imediato` revoga **todos** os pedidos da assinatura no `subscription.canceled`; `periodo` (default) deixa expirar no fim do ciclo pago. |
 
 A área de membros calcula a expiração a partir de `created_at` (âncora) + trial + duração.
 Renovações estendem (nunca encurtam) o acesso.

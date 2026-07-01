@@ -83,6 +83,11 @@ export interface NormalizedEvent {
   rawEvent: string; // nome original do evento (ex: "PURCHASE_APPROVED")
   /** Régua de duração do acesso. Ausente = vitalício. */
   access?: AccessRule;
+  /**
+   * Política de cancelamento de assinatura: "immediate" revoga todos os pedidos
+   * da assinatura na hora; "natural" (default) deixa expirar no fim do ciclo pago.
+   */
+  cancelPolicy?: "natural" | "immediate";
 }
 
 /* ─── Interface do adapter (1 por gateway) ────────────────── */

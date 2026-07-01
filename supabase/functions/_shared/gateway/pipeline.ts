@@ -243,6 +243,45 @@ async function handleRevocation(
     return { status: "failed", error: "missing_order_id" };
   }
 
+  // Cancelamento IMEDIATO de assinatura: revoga TODOS os pedidos da assinatura
+  // (pedido base + renovações `base:<chargeId>`) de uma vez. Sem isso, um pedido
+  // de renovação ainda ativo protege os cursos e o acesso não cai.
+  if (event.cancelPolicy === "immediate") {
+    const base = event.externalOrderId;
+    const { data: siblings } = await admin
+      .from("orders")
+      .select("id, status")
+      .eq("tenant_id", tenantId)
+      .eq("gateway_provider", provider)
+      .or(`gateway_external_id.eq.${base},gateway_external_id.like.${base}:%`);
+
+    if (!siblings || siblings.length === 0) {
+      await updateEventLog(admin, logId, "ignored", `Nenhum pedido da assinatura ${base}`);
+      return { status: "ignored", error: "order_not_found" };
+    }
+
+    const toUpdate = siblings.filter((o) => o.status !== event.eventType).map((o) => o.id);
+    if (toUpdate.length > 0) {
+      const upd: Record<string, unknown> = { status: event.eventType };
+      if (event.subscriptionStatus) upd.subscription_status = event.subscriptionStatus;
+      const { error: bulkErr } = await admin.from("orders").update(upd).in("id", toUpdate);
+      if (bulkErr) {
+        await updateEventLog(admin, logId, "failed", bulkErr.message);
+        return { status: "failed", error: bulkErr.message };
+      }
+    }
+
+    // Todos cancelados → o reconcile não acha pedido ativo → deleta course_customers.
+    await invokeReconcileAccess(admin, siblings[0].id, provider);
+
+    await updateEventLog(admin, logId, "processed", null, {
+      action: "subscription_revoked_immediate",
+      orders: siblings.length,
+      base,
+    });
+    return { status: "processed", orderId: siblings[0].id, action: "subscription_revoked_immediate" };
+  }
+
   // Busca order existente
   const { data: existingOrder } = await admin
     .from("orders")
