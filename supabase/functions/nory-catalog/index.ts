@@ -105,7 +105,7 @@ Deno.serve(async (req: Request) => {
     nome: String(p.name ?? p.id),
     slug: p.public_id ? String(p.public_id) : undefined,
     tipo: p.benefit ? String(p.benefit) : undefined, // ex.: "courses"
-    ativo: p.status === "published",
+    ativo: p.status === "active", // status de products: draft | active (publicado) | archived
   }));
 
   return json(200, { items });
