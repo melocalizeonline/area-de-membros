@@ -107,6 +107,7 @@ export default function AdminIntegrations() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { isConnected: hotmartConnected } = useGatewayIntegration("hotmart");
+  const { isConnected: noryConnected } = useGatewayIntegration("nory");
   const { isConnected: vimeoConnected } = useVimeoIntegration();
   const { isConnected: openaiConnected } = useAIIntegration("openai");
   const { isConnected: anthropicConnected } = useAIIntegration("anthropic");
@@ -140,6 +141,7 @@ export default function AdminIntegrations() {
 
   function getIsConnected(key: ProviderKey): boolean {
     if (key === "hotmart") return hotmartConnected;
+    if (key === "nory") return noryConnected;
     if (key === "vimeo") return vimeoConnected;
     if (key === "openai") return openaiConnected;
     if (key === "anthropic") return anthropicConnected;
