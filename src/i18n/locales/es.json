@@ -846,7 +846,16 @@
       "phone": "Teléfono",
       "country": "País",
       "status": "Estado",
+      "products": "Productos",
+      "expiration": "Vencimiento",
       "createdAt": "Fecha de creación"
+    },
+    "access": {
+      "perpetual": "Perpetuo",
+      "expired": "Vencido",
+      "noProducts": "—",
+      "noAccess": "—",
+      "moreProducts": "+{{count}}"
     },
     "statusLabels": {
       "subscribed": "Suscrito",
@@ -2727,6 +2736,12 @@
     "setPassword": {
       "title": "Establece tu contraseña",
       "description": "Crea una contraseña para acceder al portal en el futuro.",
+      "onboardingTitle": "Crea tu acceso",
+      "onboardingDescription": "Establece una contraseña o conéctate con Google para entrar directamente la próxima vez, sin necesidad del enlace por correo.",
+      "orDivider": "o",
+      "googleButton": "Continuar con Google",
+      "googleError": "No se pudo conectar con Google. Intenta establecer una contraseña.",
+      "skip": "Omitir por ahora",
       "newPassword": "Nueva contraseña",
       "confirmPassword": "Confirmar contraseña",
       "minLength": "La contraseña debe tener al menos 6 caracteres.",

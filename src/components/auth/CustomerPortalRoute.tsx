@@ -90,10 +90,20 @@ export function CustomerPortalRoute({ children }: CustomerPortalRouteProps) {
     );
   }
 
+  /* ── Onboarding de acesso permanente ──
+     Cliente que entrou por magic link e ainda não tem senha nem Google
+     vinculado → oferecer definir senha/Google para os próximos acessos. */
+  const passwordSet = user.user_metadata?.password_set === true;
+  const hasGoogle = (user.identities ?? []).some((i) => i.provider === "google");
+  const customerNeedsOnboarding =
+    accessRole === "customer" && !passwordSet && !hasGoogle;
+
   /* ── Tudo OK → renderiza portal ── */
   return (
     <PortalProvider tenant={tenant} customer={customer} accessRole={accessRole}>
-      {accessRole === "customer" && <SetPasswordDialog />}
+      {accessRole === "customer" && (
+        <SetPasswordDialog customerNeedsOnboarding={customerNeedsOnboarding} />
+      )}
       {children}
     </PortalProvider>
   );

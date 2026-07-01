@@ -846,7 +846,16 @@
       "phone": "Phone",
       "country": "Country",
       "status": "Status",
+      "products": "Products",
+      "expiration": "Expiration",
       "createdAt": "Created at"
+    },
+    "access": {
+      "perpetual": "Lifetime",
+      "expired": "Expired",
+      "noProducts": "—",
+      "noAccess": "—",
+      "moreProducts": "+{{count}}"
     },
     "statusLabels": {
       "subscribed": "Subscribed",
@@ -2728,6 +2737,12 @@
     "setPassword": {
       "title": "Set your password",
       "description": "Create a password to access the portal in the future.",
+      "onboardingTitle": "Create your login",
+      "onboardingDescription": "Set a password or connect with Google to sign in directly next time, without needing the email link.",
+      "orDivider": "or",
+      "googleButton": "Continue with Google",
+      "googleError": "Couldn't connect with Google. Try setting a password instead.",
+      "skip": "Skip for now",
       "newPassword": "New password",
       "confirmPassword": "Confirm password",
       "minLength": "Password must be at least 6 characters.",

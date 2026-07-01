@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, formatDateOnly } from "@/lib/utils";
 import { translateAppError } from "@/lib/app-error-utils";
 import { TableSkeleton } from "@/components/admin/TableSkeleton";
 import CustomerSheet from "@/components/admin/CustomerSheet";
@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCustomers, type Customer } from "@/hooks/useCustomers";
+import { useCustomersAccess } from "@/hooks/useCustomersAccess";
 
 export default function AdminCustomers() {
   const { t, i18n } = useTranslation();
@@ -55,6 +56,8 @@ export default function AdminCustomers() {
     updateCustomer,
     removeCustomer,
   } = useCustomers(debouncedSearch);
+
+  const { data: accessMap } = useCustomersAccess(customers);
 
   // URL-driven edit: ?id= selects customer for sheet
   const selectedCustomerId = searchParams.get("id");
@@ -167,7 +170,7 @@ export default function AdminCustomers() {
           <div className="min-h-0 min-w-0 flex-1">
             {loading ? (
               <div className="h-full min-w-0 overflow-auto">
-                <TableSkeleton rows={5} columns={6} />
+                <TableSkeleton rows={5} columns={8} />
               </div>
             ) : customers.length === 0 && !debouncedSearch ? (
               <div className="h-full min-w-0 overflow-auto">
@@ -217,7 +220,7 @@ export default function AdminCustomers() {
             ) : (
               <Card variant="bordered" className="min-w-0 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <div className="min-w-[800px]">
+                  <div className="min-w-[1000px]">
                   <Table className="w-full text-xs md:text-sm">
                     <TableHeader>
                       <TableRow className="border-border hover:bg-transparent">
@@ -229,6 +232,12 @@ export default function AdminCustomers() {
                         </TableHead>
                         <TableHead className="h-9 bg-card px-3 text-[10px] font-semibold text-muted-foreground md:h-10 md:px-4 md:text-xs">
                           {t("customers.columns.country")}
+                        </TableHead>
+                        <TableHead className="h-9 bg-card px-3 text-[10px] font-semibold text-muted-foreground md:h-10 md:px-4 md:text-xs">
+                          {t("customers.columns.products")}
+                        </TableHead>
+                        <TableHead className="h-9 bg-card px-3 text-[10px] font-semibold text-muted-foreground md:h-10 md:px-4 md:text-xs">
+                          {t("customers.columns.expiration")}
                         </TableHead>
                         <TableHead className="h-9 bg-card px-3 text-[10px] font-semibold text-muted-foreground md:h-10 md:px-4 md:text-xs">
                           {t("customers.columns.status")}
@@ -282,6 +291,47 @@ export default function AdminCustomers() {
                             <span className="text-xs text-foreground md:text-sm">
                               {customer.country || "—"}
                             </span>
+                          </TableCell>
+
+                          <TableCell className="px-3 py-2.5 md:p-4">
+                            {(() => {
+                              const products = accessMap?.get(customer.id)?.products ?? [];
+                              if (products.length === 0)
+                                return <span className="text-xs text-muted-foreground md:text-sm">{t("customers.access.noProducts")}</span>;
+                              const shown = products.slice(0, 2);
+                              const extra = products.length - shown.length;
+                              return (
+                                <div className="flex max-w-[220px] flex-wrap items-center gap-1">
+                                  {shown.map((name) => (
+                                    <Badge key={name} variant="secondary" className="max-w-[160px] truncate text-[10px] md:text-xs" title={name}>
+                                      {name}
+                                    </Badge>
+                                  ))}
+                                  {extra > 0 && (
+                                    <Badge variant="outline" className="text-[10px] md:text-xs" title={products.join(", ")}>
+                                      {t("customers.access.moreProducts", { count: extra })}
+                                    </Badge>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
+
+                          <TableCell className="px-3 py-2.5 md:p-4">
+                            {(() => {
+                              const exp = accessMap?.get(customer.id)?.expiration;
+                              if (!exp || exp.kind === "none")
+                                return <span className="text-xs text-muted-foreground md:text-sm">{t("customers.access.noAccess")}</span>;
+                              if (exp.kind === "perpetual")
+                                return <Badge variant="success" className="text-[10px] md:text-xs">{t("customers.access.perpetual")}</Badge>;
+                              const expired = !!exp.date && new Date(exp.date).getTime() < Date.now();
+                              return (
+                                <span className={`text-xs md:text-sm ${expired ? "font-medium text-destructive" : "text-foreground"}`}>
+                                  {expired ? `${t("customers.access.expired")} · ` : ""}
+                                  {formatDateOnly(exp.date, lang)}
+                                </span>
+                              );
+                            })()}
                           </TableCell>
 
                           <TableCell className="px-3 py-2.5 md:p-4">

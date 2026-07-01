@@ -845,7 +845,16 @@
       "phone": "Telefone",
       "country": "País",
       "status": "Status",
+      "products": "Produtos",
+      "expiration": "Expiração",
       "createdAt": "Criação"
+    },
+    "access": {
+      "perpetual": "Perpétuo",
+      "expired": "Expirado",
+      "noProducts": "—",
+      "noAccess": "—",
+      "moreProducts": "+{{count}}"
     },
     "statusLabels": {
       "subscribed": "Inscrito",
@@ -2706,6 +2715,12 @@
     "setPassword": {
       "title": "Defina sua senha",
       "description": "Crie uma senha para acessar o portal no futuro.",
+      "onboardingTitle": "Crie seu acesso",
+      "onboardingDescription": "Defina uma senha ou conecte com o Google para entrar direto na próxima vez, sem precisar do link por e-mail.",
+      "orDivider": "ou",
+      "googleButton": "Continuar com Google",
+      "googleError": "Não foi possível conectar com o Google. Tente definir uma senha.",
+      "skip": "Pular por agora",
       "newPassword": "Nova senha",
       "confirmPassword": "Confirmar senha",
       "minLength": "A senha deve ter pelo menos 6 caracteres.",
