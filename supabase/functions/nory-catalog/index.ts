@@ -90,10 +90,11 @@ Deno.serve(async (req: Request) => {
     return json(401, { error: "Assinatura inválida." });
   }
 
-  // 4) Catálogo do tenant. Colunas reais de products: id, name, slug, status, benefit.
+  // 4) Catálogo do tenant. Colunas reais de products: id, name, status, benefit, public_id.
+  // (products NÃO tem coluna slug — usar public_id como referência estável.)
   const { data: produtos, error } = await admin
     .from("products")
-    .select("id, name, slug, status, benefit")
+    .select("id, name, status, benefit, public_id")
     .eq("tenant_id", tenantId)
     .order("name");
 
@@ -101,8 +102,8 @@ Deno.serve(async (req: Request) => {
 
   const items = (produtos ?? []).map((p: Record<string, unknown>) => ({
     id: String(p.id),
-    nome: String(p.name ?? p.slug ?? p.id),
-    slug: p.slug ? String(p.slug) : undefined,
+    nome: String(p.name ?? p.id),
+    slug: p.public_id ? String(p.public_id) : undefined,
     tipo: p.benefit ? String(p.benefit) : undefined, // ex.: "courses"
     ativo: p.status === "published",
   }));
